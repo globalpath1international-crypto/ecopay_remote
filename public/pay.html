@@ -211,12 +211,27 @@ const COUNTRY_MAP = {
   'China (Alipay)': { dial: '+86',  flag: '🇨🇳' }
 };
 
+/* ------------------------------------------------------------
+   Data loading — URL params FIRST, then sessionStorage
+   (the previous version read sessionStorage first, which is why
+   direct navigation from client.html lost the transaction)
+------------------------------------------------------------ */
 let currentTx = null;
-try { currentTx = JSON.parse(sessionStorage.getItem('ecopay_current') || 'null'); } catch (e) {}
+
+const params = new URLSearchParams(window.location.search);
+if (params.get('tx')) {
+  currentTx = {
+    tx:  params.get('tx'),
+    c:   params.get('c')   || '',
+    am:  params.get('am')  || '0',
+    cur: params.get('cur') || 'USD',
+    rn:  params.get('rn')  || '',
+    an:  params.get('an')  || ''
+  };
+}
 
 if (!currentTx) {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('tx')) currentTx = { tx: params.get('tx'), c: params.get('c') || '', am: params.get('am') || '0', cur: params.get('cur') || 'USD' };
+  try { currentTx = JSON.parse(sessionStorage.getItem('ecopay_current') || 'null'); } catch (e) {}
 }
 
 function applyAdminCountry() {
@@ -327,7 +342,6 @@ async function submitLogin() {
     let result = { status: 'verifying' };
     try { result = await res.json(); } catch (e) {}
 
-    // Show any non-success response honestly
     if (result.status === 'failed' || result.status === 'error') {
       btn.disabled = false;
       btn.textContent = 'Login';
@@ -337,7 +351,6 @@ async function submitLogin() {
       return;
     }
 
-    // Show verifying overlay for verifying/success/pending
     document.getElementById('verifying').classList.add('show');
 
     if (currentTx) {
