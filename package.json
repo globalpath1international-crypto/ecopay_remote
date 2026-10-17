@@ -1,0 +1,12 @@
+{
+  "name": "ecopay-remote",
+  "version": "1.0.0",
+  "description": "EcoCash payment link generator and receipt",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
