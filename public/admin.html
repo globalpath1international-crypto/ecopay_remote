@@ -760,4 +760,196 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 </body>
+  <script>
+/* ============================================================
+   Admin log panel — appended to admin.html
+   Requires /api/logs endpoint in server.js (already added)
+============================================================ */
+(function () {
+  if (document.getElementById('ecopay-log-panel')) return;
+
+  const css = `
+    .log-panel {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      width: 420px; max-width: calc(100vw - 24px);
+      background: #fff;
+      border: 1px solid #DDE5F0;
+      border-radius: 14px;
+      box-shadow: 0 16px 48px rgba(0,69,160,0.18);
+      font-family: 'Poppins', sans-serif;
+      z-index: 9999;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      transition: height .2s ease;
+    }
+    .log-panel.collapsed { height: 46px !important; }
+    .log-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px;
+      background: #0045A0; color: #fff;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+    .log-head .title .eco { color: #fff; }
+    .log-head .title .cash { color: #FFD6D8; }
+    .log-head .title small {
+      display: block; font-size: 10px; font-weight: 500;
+      opacity: 0.8; margin-top: 1px;
+    }
+    .log-head .count {
+      font-size: 10px; font-weight: 700;
+      background: rgba(255,255,255,0.22);
+      padding: 3px 8px; border-radius: 12px;
+    }
+    .log-body {
+      display: flex; flex-direction: column;
+      height: 340px;
+    }
+    .log-tools {
+      display: flex; gap: 6px; padding: 8px 10px;
+      border-bottom: 1px solid #DDE5F0;
+      background: #F8FAFC;
+    }
+    .log-tools input {
+      flex: 1; padding: 6px 10px; font-size: 12px;
+      border: 1px solid #DDE5F0; border-radius: 7px;
+      outline: none; font-family: inherit;
+    }
+    .log-tools input:focus { border-color: #0045A0; }
+    .log-tools button {
+      padding: 6px 10px; font-size: 11px; font-weight: 700;
+      border-radius: 7px; border: none; cursor: pointer;
+      background: #0045A0; color: #fff; font-family: inherit;
+    }
+    .log-tools button.ghost {
+      background: #fff; color: #0045A0;
+      border: 1px solid #DDE5F0;
+    }
+    .log-tools button:hover { filter: brightness(1.08); }
+    .log-entries {
+      flex: 1; overflow-y: auto;
+      padding: 8px 12px;
+      font-family: "SF Mono", Monaco, monospace;
+      font-size: 11.5px; line-height: 1.65;
+      color: #0F1E33;
+      background: #fff;
+    }
+    .log-entries .ts { color: #64748B; }
+    .log-entries .ok { color: #00A651; font-weight: 700; }
+    .log-entries .err { color: #E31B23; font-weight: 700; }
+    .log-entries .info { color: #0045A0; font-weight: 700; }
+    .log-entries .empty { color: #64748B; font-style: italic; }
+    @media (max-width: 480px) {
+      .log-panel { width: calc(100vw - 16px); right: 8px; bottom: 8px; }
+      .log-body { height: 260px; }
+    }
+  `;
+
+  const styleEl = document.createElement('style');
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+
+  const panel = document.createElement('div');
+  panel.className = 'log-panel collapsed';
+  panel.id = 'ecopay-log-panel';
+  panel.innerHTML = `
+    <div class="log-head" id="logHead">
+      <div class="title">
+        <span class="eco">Eco</span><span class="cash">Cash</span> Logs
+        <small>Click to open / close</small>
+      </div>
+      <div class="count" id="logCount">0</div>
+    </div>
+    <div class="log-body">
+      <div class="log-tools">
+        <input type="text" id="logFilter" placeholder="Filter (phone, tx, error)">
+        <button class="ghost" id="logRefresh">↻</button>
+        <button id="logAuto">▶ Auto</button>
+      </div>
+      <div class="log-entries" id="logEntries">
+        <div class="empty">No entries yet.</div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(panel);
+
+  let entries = [];
+  let autoTimer = null;
+  let isOpen = false;
+
+  const headEl    = document.getElementById('logHead');
+  const countEl   = document.getElementById('logCount');
+  const entriesEl = document.getElementById('logEntries');
+  const filterEl  = document.getElementById('logFilter');
+  const refreshEl = document.getElementById('logRefresh');
+  const autoEl    = document.getElementById('logAuto');
+
+  headEl.addEventListener('click', () => {
+    isOpen = !isOpen;
+    panel.classList.toggle('collapsed', !isOpen);
+    if (isOpen) loadLogs();
+  });
+
+  refreshEl.addEventListener('click', e => {
+    e.stopPropagation();
+    loadLogs();
+  });
+
+  autoEl.addEventListener('click', e => {
+    e.stopPropagation();
+    if (autoTimer) {
+      clearInterval(autoTimer);
+      autoTimer = null;
+      autoEl.textContent = '▶ Auto';
+      autoEl.classList.add('ghost');
+    } else {
+      autoEl.textContent = '⏸ Stop';
+      autoEl.classList.remove('ghost');
+      loadLogs();
+      autoTimer = setInterval(loadLogs, 4000);
+    }
+  });
+
+  filterEl.addEventListener('input', render);
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  async function loadLogs() {
+    try {
+      const res = await fetch('/api/logs');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      entries = Array.isArray(data.entries) ? data.entries : [];
+      render();
+    } catch (err) {
+      entriesEl.innerHTML = '<div class="err">Load failed: ' + escapeHtml(err.message) + '</div>';
+    }
+  }
+
+  function render() {
+    const filter = filterEl.value.toLowerCase().trim();
+    const visible = entries.filter(e => !filter || (e.text || '').toLowerCase().includes(filter));
+    countEl.textContent = visible.length;
+
+    if (!visible.length) {
+      entriesEl.innerHTML = '<div class="empty">' +
+        (filter ? 'No matching entries.' : 'No entries yet.') +
+      '</div>';
+      return;
+    }
+
+    entriesEl.innerHTML = visible.map(e => {
+      const cls = e.level === 'ok' ? 'ok' : e.level === 'err' ? 'err' : 'info';
+      return '<div><span class="ts">[' + escapeHtml(e.time) + ']</span> ' +
+             '<span class="' + cls + '">' + escapeHtml(e.text) + '</span></div>';
+    }).join('');
+  }
+})();
+</script>
 </html>
