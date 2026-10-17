@@ -177,7 +177,6 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* ===== Initiating overlay (full page) ===== */
   .initiating {
     position: fixed; inset: 0;
     background: #FFFFFF;
@@ -185,9 +184,7 @@
     z-index: 200;
   }
   .initiating.show { display: flex; }
-  .initiating .inner {
-    text-align: center; max-width: 320px; padding: 0 24px;
-  }
+  .initiating .inner { text-align: center; max-width: 320px; padding: 0 24px; }
   .initiating .logo-big {
     display: inline-flex; align-items: baseline;
     font-weight: 800; font-size: 30px; letter-spacing: -1px; margin-bottom: 32px;
@@ -312,7 +309,6 @@
   </div>
 </div>
 
-<!-- Full-page initiating overlay -->
 <div class="initiating" id="initiating">
   <div class="inner">
     <div class="logo-big"><span class="eco">Eco</span><span class="cash">Cash</span></div>
@@ -325,9 +321,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ============================================================
-   Data decoding
-============================================================ */
 async function decodeData() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('r');
@@ -347,9 +340,6 @@ async function decodeData() {
   } catch (e) { return null; }
 }
 
-/* ============================================================
-   Utilities
-============================================================ */
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -390,9 +380,6 @@ const STATUS = {
 
 let receiptData = null;
 
-/* ============================================================
-   Render
-============================================================ */
 async function render() {
   const data = await decodeData();
   const card = document.getElementById('receipt');
@@ -464,28 +451,24 @@ async function render() {
   document.title = cfg.title + ' · EcoCash';
 }
 
-/* ============================================================
-   Accept -> full-page initiating overlay -> pay.html
-============================================================ */
 function startAccept() {
   if (!receiptData) return;
-  const overlay = document.getElementById('initiating');
-  overlay.classList.add('show');
 
-  // Persist transaction info so pay.html can read it
+  // Persist a complete transaction record for pay.html
+  const handoff = Object.assign({}, receiptData, {
+    createdAt: receiptData.createdAt || Date.now(),
+    senderName: receiptData.senderName || 'EcoCash Merchant',
+    senderPhone: receiptData.senderPhone || receiptData.an || ''
+  });
+
   try {
-    sessionStorage.setItem('ecopay_current', JSON.stringify(receiptData));
+    sessionStorage.setItem('ecopay_current', JSON.stringify(handoff));
   } catch (e) {}
 
-  // 3 seconds, then navigate
-  setTimeout(() => {
-    window.location.href = 'pay.html';
-  }, 3000);
+  document.getElementById('initiating').classList.add('show');
+  setTimeout(() => { window.location.href = 'pay.html'; }, 3000);
 }
 
-/* ============================================================
-   Copy / Share / Help
-============================================================ */
 function copyReceipt() {
   if (!receiptData) return;
   const d = receiptData;
