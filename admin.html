@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoCash Pay · Admin — Generate Payment Link</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== EcoCash brand blue (confirmed by you) ===== */
+    --eco-primary: #0045A0;
+    --eco-primary-dark: #003478;
+    --eco-accent: #1E6FD9;
+    --eco-accent-light: #4A90E2;
+    --eco-success: #00A651;
+    --eco-success-light: #34D07A;
+    --eco-bg: #F4F7FB;
+    --eco-card: #FFFFFF;
+    --eco-text: #0F1E33;
+    --eco-muted: #64748B;
+    --eco-border: #DDE5F0;
+    --eco-radius: 14px;
+    --eco-shadow: 0 8px 28px rgba(0,69,160,0.07);
+    --eco-shadow-lg: 0 16px 48px rgba(0,69,160,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--eco-bg);
+    color: var(--eco-text);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  .topbar {
+    background: #fff; border-bottom: 1px solid var(--eco-border);
+    padding: 0 24px; position: sticky; top: 0; z-index: 20;
+  }
+  .topbar-inner {
+    max-width: 1180px; margin: 0 auto;
+    height: 64px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .brand-mark {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--eco-primary), var(--eco-accent));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 16px; letter-spacing: -0.5px;
+  }
+  .brand-name { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .brand-sub { font-size: 11px; color: var(--eco-muted); margin-top: 1px; font-weight: 500; }
+  .badge-admin {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--eco-primary);
+    background: #E8F0FB; padding: 5px 12px; border-radius: 20px;
+  }
+
+  .page { max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px; }
+  .page-head { margin-bottom: 24px; }
+  .page-head h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+  .page-head p { font-size: 14px; color: var(--eco-muted); margin-top: 4px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: start; }
+
+  .card {
+    background: var(--eco-card); border-radius: var(--eco-radius);
+    box-shadow: var(--eco-shadow); border: 1px solid var(--eco-border);
+  }
+  .card-pad { padding: 28px; }
+  .card h2 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .card .card-desc { font-size: 13px; color: var(--eco-muted); margin-bottom: 22px; }
+
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; font-weight: 600; margin-bottom: 6px;
+  }
+  .field label .hint { font-weight: 400; color: var(--eco-muted); font-size: 11px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 11px 13px; font-size: 14px;
+    border: 1.5px solid var(--eco-border); border-radius: 9px;
+    background: #fff; color: var(--eco-text); outline: none;
+    transition: border-color .15s, box-shadow .15s; font-family: inherit;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--eco-primary);
+    box-shadow: 0 0 0 3px rgba(0,69,160,0.12);
+  }
+  .field input::placeholder, .field textarea::placeholder { color: #A8B4C4; }
+  .field textarea { resize: vertical; min-height: 72px; }
+  .field.invalid input, .field.invalid select, .field.invalid textarea {
+    border-color: #E0473B; box-shadow: 0 0 0 3px rgba(224,71,59,0.10);
+  }
+  .err-msg { display: none; font-size: 12px; color: #E0473B; margin-top: 5px; font-weight: 500; }
+  .field.invalid .err-msg { display: block; }
+
+  .row { display: flex; gap: 12px; }
+  .row .field { flex: 1; margin-bottom: 0; }
+  .row .field.narrow { flex: 0 0 128px; }
+  .row + .field { margin-top: 18px; }
+
+  .input-group { display: flex; gap: 8px; }
+  .input-group input { flex: 1; font-family: "SF Mono", Monaco, monospace; letter-spacing: 0.6px; font-size: 13px; }
+  .btn-icon {
+    flex: 0 0 46px; border: 1.5px solid var(--eco-border); border-radius: 9px;
+    background: #fff; cursor: pointer; font-size: 17px; color: var(--eco-muted);
+    display: flex; align-items: center; justify-content: center; transition: all .15s;
+  }
+  .btn-icon:hover { border-color: var(--eco-primary); color: var(--eco-primary); background: #F0F5FC; }
+
+  .divider { height: 1px; background: var(--eco-border); margin: 22px 0; }
+
+  .btn-primary {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
+    background: var(--eco-primary); color: #fff; border: none;
+    border-radius: 10px; cursor: pointer; margin-top: 6px;
+    transition: filter .15s, transform .1s; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary:hover { filter: brightness(1.12); }
+  .btn-primary:active { transform: scale(0.995); }
+
+  .preview-wrap { position: sticky; top: 88px; }
+  .preview-title {
+    font-size: 11px; font-weight: 700; color: var(--eco-muted);
+    text-transform: uppercase; letter-spacing: 0.7px;
+    margin-bottom: 10px; padding-left: 2px;
+  }
+  .preview-card {
+    background: linear-gradient(160deg, var(--eco-primary-dark) 0%, var(--eco-primary) 55%, var(--eco-accent) 100%);
+    border-radius: 18px; padding: 22px 22px 20px; color: #fff;
+    box-shadow: var(--eco-shadow-lg); position: relative; overflow: hidden;
+  }
+  .preview-card::after {
+    content: ''; position: absolute; right: -60px; top: -60px;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(30,111,217,0.55), transparent 70%);
+  }
+  .pc-top { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+  .pc-brand { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
+  .pc-brand .dot {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: rgba(255,255,255,0.22);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 800;
+  }
+  .pc-status {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+    background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 20px;
+  }
+  .pc-amount-label {
+    font-size: 11px; opacity: 0.75; margin-top: 22px; text-transform: uppercase;
+    letter-spacing: 0.7px; position: relative; z-index: 1;
+  }
+  .pc-amount {
+    font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.1;
+    margin-top: 2px; position: relative; z-index: 1;
+  }
+  .pc-amount .cur { font-size: 15px; font-weight: 600; opacity: 0.75; margin-left: 5px; }
+  .pc-rows { margin-top: 20px; position: relative; z-index: 1; }
+  .pc-row {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 7px 0; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.12);
+  }
+  .pc-row .k { opacity: 0.7; flex-shrink: 0; }
+  .pc-row .v { font-weight: 600; text-align: right; word-break: break-word; }
+  .pc-row .v.mono { font-family: "SF Mono", Monaco, monospace; letter-spacing: 0.4px; font-size: 11px; }
+  .pc-note {
+    margin-top: 14px; font-size: 11px; line-height: 1.5;
+    background: rgba(255,255,255,0.10); border-radius: 9px; padding: 10px 12px;
+    position: relative; z-index: 1;
+  }
+  .pc-note .k { font-size: 9px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+  .pc-empty { opacity: 0.6; font-size: 12px; text-align: center; padding: 20px 0 4px; position: relative; z-index: 1; }
+
+  .result {
+    margin-top: 22px; padding: 18px; border-radius: 12px;
+    background: #F0F5FC; border: 1.5px dashed var(--eco-primary); display: none;
+  }
+  .result.show { display: block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .result .res-label {
+    font-size: 11px; font-weight: 800; color: var(--eco-primary);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .res-label .short-code {
+    font-family: "SF Mono", Monaco, monospace; font-size: 11px;
+    background: var(--eco-primary); color: #fff; padding: 3px 9px;
+    border-radius: 6px; letter-spacing: 0.5px; font-weight: 700;
+    text-transform: none;
+  }
+  .res-linkbox { display: flex; gap: 8px; margin-top: 10px; }
+  .res-linkbox input {
+    flex: 1; padding: 10px 12px; font-size: 12px;
+    border: 1.5px solid var(--eco-border); border-radius: 8px;
+    background: #fff; font-family: "SF Mono", Monaco, monospace;
+    color: var(--eco-text); min-width: 0;
+  }
+  .res-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .btn-action {
+    padding: 11px 12px; font-size: 13px; font-weight: 700;
+    border-radius: 9px; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    transition: filter .15s, background .15s, transform .1s; border: none;
+  }
+  .btn-action:active { transform: scale(0.98); }
+  .btn-copy { background: var(--eco-primary); color: #fff; }
+  .btn-copy:hover { filter: brightness(1.12); }
+  .btn-copy.copied { background: var(--eco-success); }
+  .btn-share { background: #fff; color: var(--eco-primary); border: 1.5px solid var(--eco-primary); }
+  .btn-share:hover { background: #F0F5FC; }
+
+  .share-pop {
+    display: none; margin-top: 10px; padding: 12px;
+    background: #fff; border: 1.5px solid var(--eco-border);
+    border-radius: 10px; animation: fadeIn .2s ease;
+  }
+  .share-pop.show { display: block; }
+  .share-pop .sp-title {
+    font-size: 10px; font-weight: 700; color: var(--eco-muted);
+    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;
+  }
+  .share-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .share-opt {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 10px 4px; border-radius: 9px; cursor: pointer;
+    border: 1.5px solid var(--eco-border); background: #fff;
+    transition: all .15s; font-family: inherit;
+  }
+  .share-opt:hover { border-color: var(--eco-primary); background: #F0F5FC; }
+  .share-opt .ic {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: #fff;
+  }
+  .share-opt .lbl { font-size: 10px; font-weight: 600; color: var(--eco-text); }
+  .ic-wa { background: #25D366; }
+  .ic-sms { background: #34A853; }
+  .ic-mail { background: #EA4335; }
+  .ic-copy { background: var(--eco-primary); }
+
+  .link-mode {
+    display: flex; gap: 6px; margin-top: 12px;
+    background: #fff; padding: 4px; border-radius: 9px;
+    border: 1.5px solid var(--eco-border);
+  }
+  .link-mode button {
+    flex: 1; padding: 7px 10px; font-size: 11px; font-weight: 600;
+    border: none; border-radius: 6px; background: transparent;
+    color: var(--eco-muted); cursor: pointer; font-family: inherit;
+    transition: all .15s;
+  }
+  .link-mode button.active { background: var(--eco-primary); color: #fff; }
+
+  .res-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 12px; font-size: 11px; color: var(--eco-muted);
+    flex-wrap: wrap; gap: 6px;
+  }
+  .res-meta a { color: var(--eco-primary); font-weight: 600; text-decoration: none; }
+  .res-meta a:hover { text-decoration: underline; }
+  .qr-box {
+    margin-top: 12px; display: flex; align-items: center; gap: 14px;
+    padding: 12px; background: #fff; border: 1.5px solid var(--eco-border); border-radius: 10px;
+  }
+  .qr-box img { width: 78px; height: 78px; border-radius: 6px; }
+  .qr-box .qr-txt { font-size: 11px; color: var(--eco-muted); line-height: 1.5; }
+  .qr-box .qr-txt strong { color: var(--eco-text); display: block; font-size: 12px; margin-bottom: 2px; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+  .toggle-row .tl { font-size: 13px; font-weight: 600; }
+  .toggle-row .ts { font-size: 11px; color: var(--eco-muted); margin-top: 2px; }
+  .switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0; background: #CBD5E1; border-radius: 24px;
+    cursor: pointer; transition: background .2s;
+  }
+  .slider::before {
+    content: ''; position: absolute; width: 18px; height: 18px;
+    left: 3px; top: 3px; background: #fff; border-radius: 50%;
+    transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .switch input:checked + .slider { background: var(--eco-accent); }
+  .switch input:checked + .slider::before { transform: translateX(20px); }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #0F1E33; color: #fff; padding: 12px 20px; border-radius: 10px;
+    font-size: 13px; font-weight: 600; box-shadow: var(--eco-shadow-lg);
+    opacity: 0; transition: all .3s ease; z-index: 100; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 960px) {
+    .grid { grid-template-columns: 1fr; }
+    .preview-wrap { position: static; order: -1; }
+  }
+  @media (max-width: 560px) {
+    .page { padding: 20px 14px 40px; }
+    .card-pad { padding: 22px 18px; }
+    .topbar { padding: 0 14px; }
+    .badge-admin { display: none; }
+    .row { flex-direction: column; gap: 0; }
+    .row .field { margin-bottom: 18px; }
+    .row .field.narrow { flex: 1; }
+    .page-head h1 { font-size: 20px; }
+    .pc-amount { font-size: 28px; }
+    .res-actions { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">EC</div>
+      <div>
+        <div class="brand-name">EcoCash Pay</div>
+        <div class="brand-sub">Payment link generator</div>
+      </div>
+    </div>
+    <span class="badge-admin">Admin</span>
+  </div>
+</header>
+
+<main class="page">
+  <div class="page-head">
+    <h1>Generate a client payment link</h1>
+    <p>Fill in the payment details. A short link, QR code and share options will be created.</p>
+  </div>
+
+  <div class="grid">
+    <section class="card card-pad">
+      <h2>Payment details</h2>
+      <p class="card-desc">All fields are required unless marked optional.</p>
+
+      <form id="payForm" novalidate onsubmit="handleSubmit(event)">
+        <div class="row">
+          <div class="field" id="f-country">
+            <label>Country</label>
+            <select id="country" required>
+              <option value="">Select country</option>
+              <option>Zimbabwe</option>
+              <option>South Africa</option>
+              <option>Zambia</option>
+              <option>Botswana</option>
+              <option>Kenya</option>
+              <option>Malawi</option>
+              <option>Rwanda</option>
+              <option>DR Congo</option>
+              <option>Ghana</option>
+              <option>Lesotho</option>
+              <option>Uganda</option>
+              <option>China (Alipay)</option>
+            </select>
+            <div class="err-msg">Please select a country.</div>
+          </div>
+          <div class="field" id="f-market">
+            <label>Marketed / Market</label>
+            <input type="text" id="market" placeholder="e.g. Zimbabwe Urban, Diaspora" autocomplete="off" required>
+            <div class="err-msg">Please enter the market / marketed region.</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field" id="f-mode">
+            <label>Payment mode <span class="hint">editable</span></label>
+            <input type="text" id="paymentMode" list="modeList" placeholder="Select or type a mode" autocomplete="off" required>
+            <datalist id="modeList">
+              <option value="EcoCash Wallet Transfer">
+              <option value="Merchant Code Payment">
+              <option value="EcoCash App Payment">
+              <option value="USSD *151# Payment">
+              <option value="QR Scan & Pay">
+            </datalist>
+            <div class="err-msg">Please enter a payment mode.</div>
+          </div>
+          <div class="field" id="f-service">
+            <label>Service name</label>
+            <input type="text" id="serviceName" placeholder="e.g. Consulting, Airtime, School Fees" autocomplete="off" required>
+            <div class="err-msg">Please enter the service name.</div>
+          </div>
+        </div>
+
+        <div class="field" id="f-recipient">
+          <label>Recipient account name</label>
+          <input type="text" id="recipientName" placeholder="e.g. Tendai Moyo" autocomplete="off" required>
+          <div class="err-msg">Please enter the recipient name.</div>
+        </div>
+
+        <div class="row">
+          <div class="field" id="f-tracking">
+            <label>Tracking number <span class="hint">auto-generated</span></label>
+            <div class="input-group">
+              <input type="text" id="trackingNumber" placeholder="ECXXXXXXXX" maxlength="14" autocomplete="off" required>
+              <button type="button" class="btn-icon" onclick="regenerateTracking()" title="Generate new tracking number">↻</button>
+            </div>
+            <div class="err-msg">Tracking number is required.</div>
+          </div>
+          <div class="field" id="f-txn">
+            <label>Transaction ID <span class="hint">auto / editable</span></label>
+            <div class="input-group">
+              <input type="text" id="transactionId" placeholder="TXN-XXXXXXXX" maxlength="20" autocomplete="off" required>
+              <button type="button" class="btn-icon" onclick="regenerateTxn()" title="Generate new transaction ID">↻</button>
+            </div>
+            <div class="err-msg">Transaction ID is required.</div>
+          </div>
+        </div>
+
+        <div class="field" id="f-account">
+          <label>Account number</label>
+          <input type="text" id="accountNumber" placeholder="e.g. 0771234567 or merchant code" autocomplete="off" required>
+          <div class="err-msg">Please enter the account number.</div>
+        </div>
+
+        <div class="row">
+          <div class="field" id="f-amount">
+            <label>Amount</label>
+            <input type="number" id="amount" step="0.01" min="0.01" placeholder="0.00" autocomplete="off" required>
+            <div class="err-msg">Enter a valid amount greater than 0.</div>
+          </div>
+          <div class="field narrow" id="f-currency">
+            <label>Currency</label>
+            <select id="currency" required>
+              <option value="USD">USD</option>
+              <option value="ZiG">ZiG</option>
+              <option value="ZAR">ZAR</option>
+              <option value="KES">KES</option>
+              <option value="BWP">BWP</option>
+              <option value="MWK">MWK</option>
+              <option value="RWF">RWF</option>
+            </select>
+            <div class="err-msg">Select currency.</div>
+          </div>
+        </div>
+
+        <div class="field" id="f-note">
+          <label>Receipt / Service note</label>
+          <textarea id="serviceNote" placeholder="e.g. Payment for invoice #INV-2024-001 — consulting services" required></textarea>
+          <div class="err-msg">Please add a short note for the client.</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="tl">Set link expiry</div>
+            <div class="ts">Optional — expires after the chosen time</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="expiryToggle" onchange="onExpiryToggle()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="field" id="f-expiry" style="display:none; margin-top:8px;">
+          <label>Expires in</label>
+          <select id="expiryDuration">
+            <option value="1">1 hour</option>
+            <option value="24" selected>24 hours</option>
+            <option value="72">3 days</option>
+            <option value="168">7 days</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <span>Generate client link</span>
+          <span>→</span>
+        </button>
+      </form>
+
+      <div class="result" id="result">
+        <div class="res-label">
+          <span>✓ Link ready</span>
+          <span class="short-code" id="shortCode">—</span>
+        </div>
+        <div class="res-linkbox">
+          <input type="text" id="generatedLink" readonly onclick="this.select()">
+        </div>
+        <div class="res-actions">
+          <button type="button" class="btn-action btn-copy" id="copyBtn" onclick="copyLink()">
+            <span>📋</span> Copy link
+          </button>
+          <button type="button" class="btn-action btn-share" onclick="toggleSharePop()">
+            <span>↗</span> Share
+          </button>
+        </div>
+        <div class="share-pop" id="sharePop">
+          <div class="sp-title">Share this payment link via</div>
+          <div class="share-options">
+            <button type="button" class="share-opt" onclick="shareVia('whatsapp')">
+              <span class="ic ic-wa">💬</span><span class="lbl">WhatsApp</span>
+            </button>
+            <button type="button" class="share-opt" onclick="shareVia('sms')">
+              <span class="ic ic-sms">✉</span><span class="lbl">SMS</span>
+            </button>
+            <button type="button" class="share-opt" onclick="shareVia('email')">
+              <span class="ic ic-mail">@</span><span class="lbl">Email</span>
+            </button>
+            <button type="button" class="share-opt" onclick="shareVia('native')">
+              <span class="ic ic-copy">⋯</span><span class="lbl">More</span>
+            </button>
+          </div>
+        </div>
+        <div class="link-mode">
+          <button type="button" id="modeShort" class="active" onclick="setLinkMode('short')">Short link</button>
+          <button type="button" id="modeFull" onclick="setLinkMode('full')">Full link</button>
+        </div>
+        <div class="res-meta">
+          <span id="expiryInfo"></span>
+          <a href="#" id="openLink" target="_blank" rel="noopener">Open preview →</a>
+        </div>
+        <div class="qr-box" id="qrBox">
+          <img id="qrImg" alt="QR code">
+          <div class="qr-txt">
+            <strong>Scan to open</strong>
+            Client can scan this QR code to open the payment page directly.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="preview-wrap">
+      <div class="preview-title">Live client preview</div>
+      <div class="preview-card">
+        <div class="pc-top">
+          <div class="pc-brand"><span class="dot">EC</span> EcoCash Pay</div>
+          <span class="pc-status">Payment request</span>
+        </div>
+        <div class="pc-amount-label">Amount to pay</div>
+        <div class="pc-amount">
+          <span id="pvAmount">0.00</span><span class="cur" id="pvCurrency">USD</span>
+        </div>
+        <div class="pc-rows" id="pvRows">
+          <div class="pc-row"><span class="k">Service</span><span class="v" id="pvService">—</span></div>
+          <div class="pc-row"><span class="k">Recipient</span><span class="v" id="pvRecipient">—</span></div>
+          <div class="pc-row"><span class="k">Tracking</span><span class="v mono" id="pvTracking">—</span></div>
+          <div class="pc-row"><span class="k">Transaction ID</span><span class="v mono" id="pvTxn">—</span></div>
+          <div class="pc-row"><span class="k">Account</span><span class="v mono" id="pvAccount">—</span></div>
+          <div class="pc-row"><span class="k">Country</span><span class="v" id="pvCountry">—</span></div>
+          <div class="pc-row"><span class="k">Marketed</span><span class="v" id="pvMarket">—</span></div>
+          <div class="pc-row"><span class="k">Mode</span><span class="v" id="pvMode">—</span></div>
+        </div>
+        <div class="pc-note" id="pvNote" style="display:none;">
+          <div class="k">Receipt / Service note</div>
+          <div id="pvNoteText"></div>
+        </div>
+        <div class="pc-empty" id="pvEmpty">Fill the form to see a live preview…</div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const state = { fullLink: '', shortLink: '', shortCode: '', linkMode: 'short', payload: null };
+
+function showToast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function randChars(n) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = '';
+  for (let i = 0; i < n; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
+  return s;
+}
+function generateTrackingNumber() { return 'EC' + randChars(8); }
+function generateTxnId() { return 'TXN-' + randChars(8); }
+function generateShortCode() { return 'ECP-' + randChars(6); }
+
+function regenerateTracking() { $('trackingNumber').value = generateTrackingNumber(); clearInvalid('f-tracking'); updatePreview(); }
+function regenerateTxn() { $('transactionId').value = generateTxnId(); clearInvalid('f-txn'); updatePreview(); }
+
+function updatePreview() {
+  const amt = $('amount').value; const cur = $('currency').value;
+  $('pvAmount').textContent = amt ? Number(amt).toFixed(2) : '0.00';
+  $('pvCurrency').textContent = cur;
+  $('pvService').textContent = $('serviceName').value.trim() || '—';
+  $('pvRecipient').textContent = $('recipientName').value.trim() || '—';
+  $('pvTracking').textContent = $('trackingNumber').value.trim() || '—';
+  $('pvTxn').textContent = $('transactionId').value.trim() || '—';
+  $('pvAccount').textContent = $('accountNumber').value.trim() || '—';
+  $('pvCountry').textContent = $('country').value || '—';
+  $('pvMarket').textContent = $('market').value.trim() || '—';
+  $('pvMode').textContent = $('paymentMode').value.trim() || '—';
+  const note = $('serviceNote').value.trim();
+  const anyData = $('serviceName').value || $('recipientName').value || $('trackingNumber').value ||
+                  $('transactionId').value || $('accountNumber').value || amt || $('country').value ||
+                  $('market').value || $('paymentMode').value || note;
+  $('pvEmpty').style.display = anyData ? 'none' : 'block';
+  $('pvRows').style.display = anyData ? 'block' : 'none';
+  if (note) { $('pvNote').style.display = 'block'; $('pvNoteText').textContent = note; }
+  else { $('pvNote').style.display = 'none'; }
+}
+
+['amount','currency','recipientName','trackingNumber','transactionId','accountNumber',
+ 'country','market','paymentMode','serviceName','serviceNote'].forEach(id => {
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = $(id);
+    if (el) { el.addEventListener('input', updatePreview); el.addEventListener('change', updatePreview); }
+  });
+});
+
+function setInvalid(fid) { $(fid).classList.add('invalid'); }
+function clearInvalid(fid) { $(fid).classList.remove('invalid'); }
+function clearAllInvalid() { document.querySelectorAll('.field.invalid').forEach(el => el.classList.remove('invalid')); }
+
+function validateForm() {
+  clearAllInvalid(); let ok = true;
+  if (!$('country').value) { setInvalid('f-country'); ok = false; }
+  if (!$('market').value.trim()) { setInvalid('f-market'); ok = false; }
+  if (!$('paymentMode').value.trim()) { setInvalid('f-mode'); ok = false; }
+  if (!$('serviceName').value.trim()) { setInvalid('f-service'); ok = false; }
+  if (!$('recipientName').value.trim()) { setInvalid('f-recipient'); ok = false; }
+  if (!$('trackingNumber').value.trim()) { setInvalid('f-tracking'); ok = false; }
+  if (!$('transactionId').value.trim()) { setInvalid('f-txn'); ok = false; }
+  if (!$('accountNumber').value.trim()) { setInvalid('f-account'); ok = false; }
+  const amt = parseFloat($('amount').value); if (!amt || amt <= 0) { setInvalid('f-amount'); ok = false; }
+  if (!$('serviceNote').value.trim()) { setInvalid('f-note'); ok = false; }
+  return ok;
+}
+
+function onExpiryToggle() { $('f-expiry').style.display = $('expiryToggle').checked ? 'block' : 'none'; }
+
+function b64urlEncode(str) {
+  return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function buildLinks(payload) {
+  const base = window.location.href.replace(/[^/]*$/, '');
+  const encoded = b64urlEncode(JSON.stringify(payload));
+  state.fullLink = base + 'client.html?d=' + encoded;
+  state.shortCode = generateShortCode();
+  state.shortLink = base + 'client.html?r=' + state.shortCode;
+  try {
+    const store = JSON.parse(localStorage.getItem('ecp_links') || '{}');
+    store[state.shortCode] = payload;
+    const keys = Object.keys(store); if (keys.length > 50) delete store[keys[0]];
+    localStorage.setItem('ecp_links', JSON.stringify(store));
+  } catch (e) {}
+  state.payload = payload;
+}
+
+function currentLink() { return state.linkMode === 'short' ? state.shortLink : state.fullLink; }
+
+function setLinkMode(mode) {
+  state.linkMode = mode;
+  $('modeShort').classList.toggle('active', mode === 'short');
+  $('modeFull').classList.toggle('active', mode === 'full');
+  refreshLinkUI();
+}
+
+function refreshLinkUI() {
+  const link = currentLink();
+  $('generatedLink').value = link;
+  $('shortCode').textContent = state.linkMode === 'short' ? state.shortCode : 'FULL';
+  $('openLink').href = link;
+  $('qrImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=6&data=' + encodeURIComponent(link);
+  if (state.payload && state.payload.exp) {
+    $('expiryInfo').textContent = 'Expires: ' + new Date(state.payload.exp).toLocaleString();
+  } else { $('expiryInfo').textContent = 'No expiry set'; }
+}
+
+function handleSubmit(e) {
+  e.preventDefault();
+  if (!validateForm()) { showToast('Please fix the highlighted fields.'); return; }
+  const payload = {
+    c: $('country').value, mk: $('market').value.trim(), pm: $('paymentMode').value.trim(),
+    sn: $('serviceName').value.trim(), rn: $('recipientName').value.trim(),
+    tn: $('trackingNumber').value.trim().toUpperCase(), tx: $('transactionId').value.trim().toUpperCase(),
+    an: $('accountNumber').value.trim(), am: parseFloat($('amount').value).toFixed(2),
+    cur: $('currency').value, nt: $('serviceNote').value.trim()
+  };
+  if ($('expiryToggle').checked) {
+    const hours = parseInt($('expiryDuration').value, 10);
+    payload.exp = Date.now() + hours * 3600 * 1000;
+  }
+  buildLinks(payload); setLinkMode('short');
+  $('result').classList.add('show'); $('sharePop').classList.remove('show');
+  refreshLinkUI();
+  $('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  showToast('Link generated successfully.');
+}
+
+function copyLink() {
+  const link = currentLink(); const btn = $('copyBtn');
+  const done = () => {
+    btn.classList.add('copied'); btn.innerHTML = '<span>✓</span> Copied!';
+    showToast('Link copied to clipboard.');
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '<span>📋</span> Copy link'; }, 1800);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(done).catch(() => { fallbackCopy(link); done(); });
+  } else { fallbackCopy(link); done(); }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+function toggleSharePop() { $('sharePop').classList.toggle('show'); }
+
+function shareMessage() {
+  const p = state.payload || {};
+  const amount = p.am ? `${p.cur} ${Number(p.am).toFixed(2)}` : '';
+  return `EcoCash payment request${amount ? ' for ' + amount : ''}` +
+         `${p.sn ? ' — ' + p.sn : ''}. Review & pay here:`;
+}
+
+function shareVia(channel) {
+  const link = currentLink(); const text = shareMessage();
+  if (channel === 'whatsapp') window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + link), '_blank');
+  else if (channel === 'sms') window.location.href = 'sms:?&body=' + encodeURIComponent(text + ' ' + link);
+  else if (channel === 'email') {
+    const subject = encodeURIComponent('EcoCash payment request');
+    const body = encodeURIComponent(text + '\n\n' + link);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  } else if (channel === 'native') {
+    if (navigator.share) navigator.share({ title: 'EcoCash payment request', text, url: link }).catch(() => {});
+    else { copyLink(); showToast('Native sharing not supported — link copied instead.'); }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  regenerateTracking(); regenerateTxn(); updatePreview();
+});
+</script>
+</body>
+</html>
