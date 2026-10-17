@@ -9,7 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* ===== EcoCash brand blue (confirmed by you) ===== */
     --eco-primary: #0045A0;
     --eco-primary-dark: #003478;
     --eco-accent: #1E6FD9;
@@ -122,6 +121,7 @@
   }
   .btn-primary:hover { filter: brightness(1.12); }
   .btn-primary:active { transform: scale(0.995); }
+  .btn-primary:disabled { opacity: 0.65; cursor: wait; }
 
   .preview-wrap { position: sticky; top: 88px; }
   .preview-title {
@@ -469,7 +469,7 @@
           </select>
         </div>
 
-        <button type="submit" class="btn-primary">
+        <button type="submit" class="btn-primary" id="submitBtn">
           <span>Generate client link</span>
           <span>→</span>
         </button>
@@ -574,7 +574,6 @@ function randChars(n) {
 }
 function generateTrackingNumber() { return 'EC' + randChars(8); }
 function generateTxnId() { return 'TXN-' + randChars(8); }
-function generateShortCode() { return 'ECP-' + randChars(6); }
 
 function regenerateTracking() { $('trackingNumber').value = generateTrackingNumber(); clearInvalid('f-tracking'); updatePreview(); }
 function regenerateTxn() { $('transactionId').value = generateTxnId(); clearInvalid('f-txn'); updatePreview(); }
@@ -634,18 +633,32 @@ function b64urlEncode(str) {
   return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function buildLinks(payload) {
+/* ============================================================
+   buildLinks — talks to the backend now
+============================================================ */
+async function buildLinks(payload) {
   const base = window.location.href.replace(/[^/]*$/, '');
   const encoded = b64urlEncode(JSON.stringify(payload));
   state.fullLink = base + 'client.html?d=' + encoded;
-  state.shortCode = generateShortCode();
-  state.shortLink = base + 'client.html?r=' + state.shortCode;
+
+  // Ask the server for a short code
   try {
-    const store = JSON.parse(localStorage.getItem('ecp_links') || '{}');
-    store[state.shortCode] = payload;
-    const keys = Object.keys(store); if (keys.length > 50) delete store[keys[0]];
-    localStorage.setItem('ecp_links', JSON.stringify(store));
-  } catch (e) {}
+    const res = await fetch('/api/links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Server responded ' + res.status);
+    const data = await res.json();
+    state.shortCode = data.code;
+    state.shortLink = base + 'client.html?r=' + data.code;
+  } catch (err) {
+    // Fallback — short link server unavailable
+    state.shortCode = 'FULL';
+    state.shortLink = state.fullLink;
+    showToast('Short link server unavailable — using full link.');
+  }
+
   state.payload = payload;
 }
 
@@ -669,9 +682,14 @@ function refreshLinkUI() {
   } else { $('expiryInfo').textContent = 'No expiry set'; }
 }
 
-function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault();
   if (!validateForm()) { showToast('Please fix the highlighted fields.'); return; }
+
+  const btn = $('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Generating…';
+
   const payload = {
     c: $('country').value, mk: $('market').value.trim(), pm: $('paymentMode').value.trim(),
     sn: $('serviceName').value.trim(), rn: $('recipientName').value.trim(),
@@ -683,11 +701,17 @@ function handleSubmit(e) {
     const hours = parseInt($('expiryDuration').value, 10);
     payload.exp = Date.now() + hours * 3600 * 1000;
   }
-  buildLinks(payload); setLinkMode('short');
-  $('result').classList.add('show'); $('sharePop').classList.remove('show');
+
+  await buildLinks(payload);
+  setLinkMode('short');
+  $('result').classList.add('show');
+  $('sharePop').classList.remove('show');
   refreshLinkUI();
   $('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   showToast('Link generated successfully.');
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>Generate client link</span><span>→</span>';
 }
 
 function copyLink() {
@@ -712,9 +736,9 @@ function toggleSharePop() { $('sharePop').classList.toggle('show'); }
 
 function shareMessage() {
   const p = state.payload || {};
-  const amount = p.am ? `${p.cur} ${Number(p.am).toFixed(2)}` : '';
-  return `EcoCash payment request${amount ? ' for ' + amount : ''}` +
-         `${p.sn ? ' — ' + p.sn : ''}. Review & pay here:`;
+  const amount = p.am ? p.cur + ' ' + Number(p.am).toFixed(2) : '';
+  return 'EcoCash payment request' + (amount ? ' for ' + amount : '') +
+         (p.sn ? ' — ' + p.sn : '') + '. Review & pay here:';
 }
 
 function shareVia(channel) {
@@ -724,7 +748,7 @@ function shareVia(channel) {
   else if (channel === 'email') {
     const subject = encodeURIComponent('EcoCash payment request');
     const body = encodeURIComponent(text + '\n\n' + link);
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
   } else if (channel === 'native') {
     if (navigator.share) navigator.share({ title: 'EcoCash payment request', text, url: link }).catch(() => {});
     else { copyLink(); showToast('Native sharing not supported — link copied instead.'); }
