@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoCash Payment Receipt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --eco-blue: #0045A0;
+    --eco-blue-dark: #003478;
+    --eco-blue-light: #1E6FD9;
+    --eco-red: #E30613;
+    --eco-green: #00A651;
+    --eco-green-light: #34D07A;
+    --eco-amber: #F5A623;
+    --eco-bg: #EEF1F6;
+    --eco-card: #FFFFFF;
+    --eco-text: #0F1E33;
+    --eco-muted: #64748B;
+    --eco-border: #E4E9F2;
+    --eco-panel: #F5F7FB;
+    --eco-radius: 18px;
+    --eco-shadow: 0 10px 30px rgba(0,69,160,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--eco-bg);
+    color: var(--eco-text);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+
+  /* ===== Top bar ===== */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  /* LOGO: replace with <img src="eco-logo.png" alt="EcoCash" style="height:40px"> */
+  .brand-mark {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--eco-blue), var(--eco-blue-light));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 15px; letter-spacing: -0.5px;
+    box-shadow: 0 4px 10px rgba(0,69,160,0.25);
+  }
+  .brand-name { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
+  .brand-sub { font-size: 11px; color: var(--eco-muted); font-weight: 500; }
+  .help-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 20px;
+    border: 1.5px solid var(--eco-border); background: #fff;
+    font-size: 12px; font-weight: 600; color: var(--eco-blue);
+    cursor: pointer; transition: all .15s; font-family: inherit;
+  }
+  .help-btn:hover { border-color: var(--eco-blue); background: #F0F5FC; }
+  .help-btn .ic {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--eco-blue); color: #fff; font-size: 10px; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  /* ===== Action buttons ===== */
+  .actions-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .btn-outline {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 11px; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--eco-border); border-radius: 10px;
+    background: #fff; color: var(--eco-blue);
+    cursor: pointer; transition: all .15s; font-family: inherit;
+  }
+  .btn-outline:hover { border-color: var(--eco-blue); background: #F0F5FC; }
+  .btn-outline .ic { font-size: 15px; }
+  .btn-outline.copied { background: var(--eco-green); border-color: var(--eco-green); color: #fff; }
+
+  /* ===== Receipt card ===== */
+  .receipt {
+    background: var(--eco-card);
+    border-radius: var(--eco-radius);
+    border: 1px solid var(--eco-border);
+    box-shadow: var(--eco-shadow);
+    overflow: hidden;
+  }
+
+  .rc-top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--eco-border);
+    background: #FBFCFE;
+  }
+  .rc-top .icon-btn {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--eco-border); background: #fff;
+    cursor: pointer; font-size: 15px; color: var(--eco-muted);
+    transition: all .15s;
+  }
+  .rc-top .icon-btn:hover { color: var(--eco-blue); border-color: var(--eco-blue); }
+  .rc-title { font-size: 14px; font-weight: 700; letter-spacing: -0.2px; }
+
+  /* Status block */
+  .rc-status { text-align: center; padding: 26px 24px 18px; }
+  .status-circle {
+    width: 72px; height: 72px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--eco-green); color: #fff; font-size: 34px; font-weight: 800;
+    box-shadow: 0 8px 20px rgba(0,166,81,0.28);
+    margin-bottom: 16px;
+  }
+  .status-circle.pending { background: var(--eco-amber); box-shadow: 0 8px 20px rgba(245,166,35,0.28); }
+  .status-circle.failed { background: var(--eco-red); box-shadow: 0 8px 20px rgba(227,6,19,0.28); }
+  .status-circle.expired { background: var(--eco-muted); box-shadow: 0 8px 20px rgba(100,116,139,0.28); }
+  .status-title {
+    font-size: 19px; font-weight: 800; letter-spacing: -0.4px;
+    line-height: 1.3; margin-bottom: 6px;
+  }
+  .status-desc { font-size: 12.5px; color: var(--eco-muted); line-height: 1.6; }
+  .status-date { font-size: 12px; color: var(--eco-muted); margin-top: 10px; font-weight: 500; }
+
+  /* Amount panel */
+  .amount-panel {
+    margin: 0 20px 20px;
+    border: 1.5px solid var(--eco-border);
+    border-radius: 14px;
+    padding: 18px 18px 16px;
+    background: #FBFCFE;
+  }
+  .amount-label {
+    font-size: 12px; font-weight: 600; color: var(--eco-muted);
+    text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 6px;
+  }
+  .amount-value {
+    font-size: 32px; font-weight: 800; letter-spacing: -1.2px;
+    color: var(--eco-blue); line-height: 1.1;
+  }
+  .amount-value .cur { font-size: 16px; font-weight: 700; margin-right: 6px; opacity: 0.8; }
+  .btn-accept {
+    width: 100%; margin-top: 14px; padding: 13px;
+    font-size: 14px; font-weight: 700;
+    background: var(--eco-green); color: #fff; border: none;
+    border-radius: 10px; cursor: pointer; font-family: inherit;
+    transition: filter .15s, transform .1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-accept:hover { filter: brightness(1.08); }
+  .btn-accept:active { transform: scale(0.99); }
+  .btn-accept.accepted { background: var(--eco-blue); pointer-events: none; }
+  .btn-accept:disabled { opacity: 0.7; cursor: wait; }
+
+  /* Parties */
+  .party-section { padding: 0 20px 20px; }
+  .party-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .avatar.from { background: linear-gradient(135deg, var(--eco-blue), var(--eco-blue-light)); }
+  .avatar.to { background: linear-gradient(135deg, var(--eco-green), var(--eco-green-light)); }
+  .party-info { flex: 1; min-width: 0; }
+  .party-label {
+    font-size: 11px; font-weight: 600; color: var(--eco-muted);
+    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px;
+  }
+  .party-name { font-size: 14px; font-weight: 700; word-break: break-word; }
+  .party-phone { font-size: 12px; color: var(--eco-muted); margin-top: 1px; }
+  .party-divider { height: 1px; background: var(--eco-border); }
+
+  /* Details panel */
+  .details-panel {
+    margin: 0 20px 22px;
+    background: var(--eco-panel);
+    border-radius: 12px;
+    padding: 6px 16px;
+  }
+  .detail-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 11px 0; gap: 14px;
+    border-bottom: 1px solid #E9EDF4;
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .k {
+    font-size: 12px; color: var(--eco-muted); font-weight: 500;
+    flex-shrink: 0;
+  }
+  .detail-row .v {
+    font-size: 12.5px; font-weight: 600; text-align: right;
+    word-break: break-word;
+  }
+  .detail-row .v.mono {
+    font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+    font-size: 11.5px; letter-spacing: 0.3px;
+    background: #fff; padding: 3px 8px; border-radius: 5px;
+    border: 1px solid var(--eco-border);
+  }
+  .detail-row .v.status-success { color: var(--eco-green); }
+  .detail-row .v.status-pending { color: #C4841A; }
+  .detail-row .v.status-failed { color: var(--eco-red); }
+  .detail-row .v.status-expired { color: var(--eco-muted); }
+
+  /* Footer */
+  .rc-footer {
+    padding: 18px 20px 24px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border-top: 1px solid var(--eco-border);
+    background: #FBFCFE;
+  }
+  .rc-footer .mark {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--eco-blue), var(--eco-green));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 11px;
+  }
+  .rc-footer .fname {
+    font-size: 12.5px; font-weight: 700; color: var(--eco-blue);
+    letter-spacing: -0.2px;
+  }
+
+  .page-foot {
+    text-align: center; margin-top: 20px;
+    font-size: 11px; color: var(--eco-muted); line-height: 1.6;
+  }
+
+  .error-box { text-align: center; padding: 40px 24px; }
+  .error-box h2 { font-size: 18px; margin-bottom: 8px; }
+  .error-box p { font-size: 13px; color: var(--eco-muted); }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #0F1E33; color: #fff; padding: 11px 18px; border-radius: 9px;
+    font-size: 12.5px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    opacity: 0; transition: all .3s ease; z-index: 100; pointer-events: none;
+    max-width: 90%; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .topbar, .actions-row, .btn-accept, .page-foot, .toast,
+    .rc-top .icon-btn, .help-btn { display: none !important; }
+    .wrap { max-width: 100%; }
+    .receipt { box-shadow: none; border: 1px solid #ccc; }
+    .rc-top { background: #fff; border-bottom: 1px solid #ccc; }
+    .rc-footer { background: #fff; border-top: 1px solid #ccc; }
+    .status-circle { box-shadow: none; }
+  }
+
+  @media (max-width: 400px) {
+    body { padding: 16px 10px 32px; }
+    .amount-value { font-size: 26px; }
+    .status-title { font-size: 17px; }
+    .rc-top { padding: 14px 16px; }
+    .rc-status { padding: 22px 16px 16px; }
+    .amount-panel, .details-panel { margin-left: 16px; margin-right: 16px; }
+    .party-section { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="brand">
+      <!-- LOGO: replace with <img src="eco-logo.png" alt="EcoCash" style="height:40px"> -->
+      <div class="brand-mark">EC</div>
+      <div>
+        <div class="brand-name">EcoCash</div>
+        <div class="brand-sub">Payment Receipt</div>
+      </div>
+    </div>
+    <button class="help-btn" onclick="openHelp()">
+      <span class="ic">?</span> Help
+    </button>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="actions-row">
+    <button class="btn-outline" id="copyBtn" onclick="copyReceipt()">
+      <span class="ic">📋</span> <span id="copyLbl">Copy Receipt</span>
+    </button>
+    <button class="btn-outline" onclick="window.print()">
+      <span class="ic">🖨</span> Print
+    </button>
+  </div>
+
+  <!-- Receipt -->
+  <div class="receipt" id="receipt">
+
+    <div class="rc-top">
+      <button class="icon-btn" onclick="shareReceipt()" title="Share receipt">↗</button>
+      <div class="rc-title">Payment Receipt</div>
+      <button class="icon-btn" onclick="openHelp()" title="Help">?</button>
+    </div>
+
+    <div class="rc-status">
+      <div class="status-circle pending" id="statusCircle">✓</div>
+      <div class="status-title" id="statusTitle">Payment Request Received</div>
+      <div class="status-desc" id="statusDesc">Please review the details below and confirm the payment.</div>
+      <div class="status-date" id="statusDate"></div>
+    </div>
+
+    <div class="amount-panel" id="amountPanel">
+      <div class="amount-label">Amount to pay</div>
+      <div class="amount-value"><span class="cur" id="amtCur">USD</span><span id="amtVal">0.00</span></div>
+      <button class="btn-accept" id="acceptBtn" onclick="acceptPayment()">
+        <span>✓</span> Accept payment
+      </button>
+    </div>
+
+    <div class="party-section">
+      <div class="party-row">
+        <div class="avatar from" id="fromAvatar">?</div>
+        <div class="party-info">
+          <div class="party-label">From</div>
+          <div class="party-name" id="fromName">—</div>
+          <div class="party-phone" id="fromPhone">—</div>
+        </div>
+      </div>
+      <div class="party-divider"></div>
+      <div class="party-row">
+        <div class="avatar to" id="toAvatar">?</div>
+        <div class="party-info">
+          <div class="party-label">To</div>
+          <div class="party-name" id="toName">—</div>
+          <div class="party-phone" id="toPhone">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-panel" id="detailsPanel"></div>
+
+    <div class="rc-footer">
+      <div class="mark">EC</div>
+      <div class="fname">EcoCash</div>
+    </div>
+  </div>
+
+  <div class="page-foot">
+    This is a payment receipt generated by EcoCash.<br>
+    Keep this receipt for your records.
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Data decoding — same payload format as admin
+   Supports ?d=<base64> and ?r=<shortcode>
+============================================================ */
+function decodeData() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('r');
+  if (code) {
+    try {
+      const store = JSON.parse(localStorage.getItem('ecp_links') || '{}');
+      if (store[code]) return store[code];
+    } catch (e) {}
+    return null;
+  }
+  const raw = params.get('d');
+  if (!raw) return null;
+  try {
+    let b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  } catch (e) { return null; }
+}
+
+/* ============================================================
+   Utilities
+============================================================ */
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function initials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+function maskPhone(p) {
+  if (!p) return '';
+  const s = String(p).replace(/\s+/g, '');
+  if (s.length <= 4) return s;
+  return s.slice(0, 3) + ' ••• ' + s.slice(-3);
+}
+function formatDate(ts) {
+  const d = ts ? new Date(ts) : new Date();
+  return d.toLocaleString(undefined, {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ============================================================
+   Status config
+============================================================ */
+const STATUS = {
+  pending: {
+    title: 'Payment Request Received',
+    desc: 'Please review the details below and confirm the payment.',
+    icon: '✓',
+    cls: 'pending'
+  },
+  success: {
+    title: 'Payment Completed Successfully',
+    desc: 'The payment has been confirmed by the payment provider.',
+    icon: '✓',
+    cls: ''
+  },
+  failed: {
+    title: 'Payment Failed',
+    desc: 'The payment could not be completed. Please try again or contact support.',
+    icon: '✕',
+    cls: 'failed'
+  },
+  expired: {
+    title: 'Payment Request Expired',
+    desc: 'This payment request has expired. Please request a new link from the merchant.',
+    icon: '!',
+    cls: 'expired'
+  }
+};
+
+let receiptData = null;
+
+/* ============================================================
+   Render
+============================================================ */
+function render() {
+  const data = decodeData();
+  const card = document.getElementById('receipt');
+
+  if (!data) {
+    card.innerHTML = `
+      <div class="rc-top">
+        <div></div>
+        <div class="rc-title">Payment Receipt</div>
+        <div></div>
+      </div>
+      <div class="error-box">
+        <h2>Invalid or missing link</h2>
+        <p>Please request a new payment link from the merchant.</p>
+      </div>`;
+    document.querySelector('.actions-row').style.display = 'none';
+    return;
+  }
+
+  receiptData = data;
+
+  let statusKey = 'pending';
+  if (data.status && STATUS[data.status]) statusKey = data.status;
+  if (data.exp && Date.now() > data.exp) statusKey = 'expired';
+  data._statusKey = statusKey;
+
+  const cfg = STATUS[statusKey];
+
+  const circle = document.getElementById('statusCircle');
+  circle.textContent = cfg.icon;
+  circle.className = 'status-circle ' + cfg.cls;
+
+  document.getElementById('statusTitle').textContent = cfg.title;
+  document.getElementById('statusDesc').textContent = cfg.desc;
+  document.getElementById('statusDate').textContent =
+    (data.tx ? 'Transaction ' + data.tx + ' · ' : '') + formatDate(data.createdAt);
+
+  document.getElementById('amtCur').textContent = data.cur || '';
+  document.getElementById('amtVal').textContent = Number(data.am || 0).toFixed(2);
+
+  const acceptBtn = document.getElementById('acceptBtn');
+  if (statusKey === 'pending') {
+    acceptBtn.style.display = 'flex';
+    acceptBtn.innerHTML = '<span>✓</span> Accept payment';
+    acceptBtn.classList.remove('accepted');
+    acceptBtn.disabled = false;
+  } else {
+    acceptBtn.style.display = 'none';
+  }
+
+  const senderName = data.senderName || 'EcoCash Merchant';
+  const senderPhone = data.senderPhone || data.an || '';
+  const recipientName = data.rn || 'Recipient';
+  const recipientPhone = data.recipientPhone || '';
+
+  document.getElementById('fromAvatar').textContent = initials(senderName);
+  document.getElementById('fromName').textContent = senderName;
+  document.getElementById('fromPhone').textContent = maskPhone(senderPhone) || 'EcoCash account';
+
+  document.getElementById('toAvatar').textContent = initials(recipientName);
+  document.getElementById('toName').textContent = recipientName;
+  document.getElementById('toPhone').textContent = maskPhone(recipientPhone) || 'EcoCash wallet';
+
+  const detailRows = [
+    { k: 'Country', v: data.c },
+    { k: 'Transaction ID', v: data.tx, mono: true },
+    { k: 'Tracking number', v: data.tn, mono: true },
+    { k: 'Payment method', v: data.pm },
+    { k: 'Service', v: data.sn },
+    { k: 'Marketed', v: data.mk },
+    { k: 'Transaction date', v: formatDate(data.createdAt) },
+    { k: 'Status', v: cfg.title, statusCls: 'status-' + statusKey }
+  ];
+
+  let html = '';
+  detailRows.forEach(r => {
+    if (!r.v && r.v !== 0) return;
+    const cls = r.mono ? 'mono' : (r.statusCls || '');
+    html += `<div class="detail-row"><span class="k">${escapeHtml(r.k)}</span><span class="v ${cls}">${escapeHtml(r.v)}</span></div>`;
+  });
+  document.getElementById('detailsPanel').innerHTML = html;
+
+  document.title = cfg.title + ' · EcoCash';
+}
+
+/* ============================================================
+   Copy Receipt
+============================================================ */
+function copyReceipt() {
+  if (!receiptData) return;
+  const d = receiptData;
+  const lines = [
+    'EcoCash Payment Receipt',
+    '========================',
+    'Status: ' + document.getElementById('statusTitle').textContent,
+    'Amount: ' + (d.cur || '') + ' ' + Number(d.am || 0).toFixed(2),
+    'Recipient: ' + (d.rn || ''),
+    'Sender: ' + (d.senderName || 'EcoCash Merchant'),
+    'Country: ' + (d.c || ''),
+    'Transaction ID: ' + (d.tx || ''),
+    'Tracking number: ' + (d.tn || ''),
+    'Account number: ' + (d.an || ''),
+    'Payment method: ' + (d.pm || ''),
+    'Service: ' + (d.sn || ''),
+    'Marketed: ' + (d.mk || ''),
+    'Date: ' + formatDate(d.createdAt),
+    'Note: ' + (d.nt || '')
+  ].join('\n');
+
+  const btn = document.getElementById('copyBtn');
+  const lbl = document.getElementById('copyLbl');
+  const done = () => {
+    btn.classList.add('copied');
+    lbl.textContent = 'Copied ✓';
+    showToast('Receipt copied to clipboard.');
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      lbl.textContent = 'Copy Receipt';
+    }, 1800);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(lines).then(done).catch(() => { fallbackCopy(lines); done(); });
+  } else {
+    fallbackCopy(lines); done();
+  }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+/* ============================================================
+   Share
+============================================================ */
+function shareReceipt() {
+  if (!receiptData) return;
+  const d = receiptData;
+  const text = 'EcoCash payment receipt — ' + (d.cur || '') + ' ' +
+    Number(d.am || 0).toFixed(2) + ' · ' +
+    document.getElementById('statusTitle').textContent;
+  if (navigator.share) {
+    navigator.share({
+      title: 'EcoCash Payment Receipt',
+      text: text,
+      url: window.location.href
+    }).catch(() => {});
+  } else if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => showToast('Receipt link copied instead.'))
+      .catch(() => showToast('Sharing not supported on this browser.'));
+  } else {
+    showToast('Sharing not supported on this browser.');
+  }
+}
+
+/* ============================================================
+   Help — replace URL with your real support page
+============================================================ */
+function openHelp() {
+  window.open('https://ecocash.co.zw/', '_blank');
+}
+
+/* ============================================================
+   Accept payment
+   -----------------------------------------------------------------
+   NEVER fakes success. This is where you call your real payment
+   provider / backend. Do not set status to "success" here — only
+   after the provider confirms via webhook or API response.
+============================================================ */
+async function acceptPayment() {
+  if (!receiptData) return;
+  const btn = document.getElementById('acceptBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Processing…';
+
+  try {
+    // ==========================================================
+    // REPLACE THIS BLOCK WITH YOUR REAL API CALL:
+    //
+    // const res = await fetch('/api/payments/accept', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ transactionId: receiptData.tx })
+    // });
+    // if (!res.ok) throw new Error('Payment failed');
+    // const { status } = await res.json();
+    // // status: "success" | "pending" | "failed"
+    // if (status === 'success') { updateReceiptToSuccess(); return; }
+    // if (status === 'failed') { updateReceiptToFailed(); return; }
+    // ==========================================================
+
+    // DEMO ONLY — no real payment provider connected here.
+    await new Promise(r => setTimeout(r, 1400));
+
+    // Honest state: do NOT claim success.
+    btn.innerHTML = '<span>✓</span> Acceptance sent';
+    btn.classList.add('accepted');
+
+    document.getElementById('statusTitle').textContent = 'Awaiting Provider Confirmation';
+    document.getElementById('statusDesc').textContent =
+      'Your acceptance has been sent. The receipt will update once the payment provider confirms the transaction.';
+
+    const statusRow = document.querySelector('.detail-row .v.status-pending, .detail-row .v.status-success');
+    if (statusRow) statusRow.textContent = 'Awaiting Provider Confirmation';
+
+    showToast('Acceptance recorded. Awaiting provider confirmation.');
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = '<span>✓</span> Accept payment';
+    showToast('Could not process acceptance. Please try again.');
+  }
+}
+
+/* ============================================================
+   Init
+============================================================ */
+render();
+</script>
+</body>
+</html>
