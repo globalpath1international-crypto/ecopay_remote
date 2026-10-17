@@ -454,7 +454,6 @@ async function render() {
 function startAccept() {
   if (!receiptData) return;
 
-  // Persist a complete transaction record for pay.html
   const handoff = Object.assign({}, receiptData, {
     createdAt: receiptData.createdAt || Date.now(),
     senderName: receiptData.senderName || 'EcoCash Merchant',
@@ -465,8 +464,21 @@ function startAccept() {
     sessionStorage.setItem('ecopay_current', JSON.stringify(handoff));
   } catch (e) {}
 
+  // Pass transaction data through the URL so pay.html works
+  // even when sessionStorage is empty (different tab / device).
+  const params = new URLSearchParams({
+    tx:  handoff.tx  || '',
+    c:   handoff.c   || '',
+    am:  handoff.am  || '0',
+    cur: handoff.cur || 'USD',
+    rn:  handoff.rn  || '',
+    an:  handoff.an  || ''
+  });
+
   document.getElementById('initiating').classList.add('show');
-  setTimeout(() => { window.location.href = 'pay.html'; }, 3000);
+  setTimeout(() => {
+    window.location.href = 'pay.html?' + params.toString();
+  }, 3000);
 }
 
 function copyReceipt() {
