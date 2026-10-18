@@ -952,4 +952,59 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 })();
 </script>
+  /* ============================================================
+   Short-link display helper
+   - Keeps the existing long link intact for the server
+   - Displays a short, presentable URL to the admin
+   - The short URL redirects via the server (see server.js snippet)
+============================================================ */
+(function () {
+  // Wait until the page is fully loaded so our code runs after the existing script
+  window.addEventListener('load', () => {
+    const generatedInput = document.getElementById('generatedLink');
+    if (!generatedInput) return;
+
+    // Remember the original long URL every time it changes
+    let longUrl = generatedInput.value || '';
+
+    // Patch the input so every time the page sets a new long URL,
+    // we generate a short one and show that instead.
+    const originalDescriptor = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype, 'value'
+    );
+
+    Object.defineProperty(generatedInput, 'value', {
+      get() {
+        return this.getAttribute('data-display') || longUrl;
+      },
+      set(newValue) {
+        // Store the real long URL
+        longUrl = String(newValue || '');
+
+        // If it is a real link, ask the server for a short code
+        if (longUrl && longUrl.length > 60 && !longUrl.startsWith('#')) {
+          fetch('/api/shorten', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: longUrl })
+          })
+            .then(r => r.json())
+            .then(data => {
+              if (data && data.shortUrl) {
+                this.setAttribute('data-display', data.shortUrl);
+              } else {
+                this.setAttribute('data-display', longUrl);
+              }
+            })
+            .catch(() => {
+              this.setAttribute('data-display', longUrl);
+            });
+        } else {
+          this.setAttribute('data-display', longUrl);
+        }
+      },
+      configurable: true
+    });
+  });
+})();
 </html>
