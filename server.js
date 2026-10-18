@@ -106,13 +106,15 @@ function tgBase() {
 }
 
 /* ============================================================
-   OTP store
+   OTP store + event de-dupe
 ============================================================ */
-const OTP_STORE = new Map();       // tx → { code, exp, attempts }
-const OTP_RATE  = new Map();       // tx → last request ms
+const OTP_STORE      = new Map();   // tx → { code, exp, attempts }
+const OTP_RATE       = new Map();   // tx → last request ms
+const EVENT_DEDUPE   = new Map();   // tx:type → last sent ms
 const OTP_MAX_ATTEMPTS = 5;
-const OTP_TTL_MS = 5 * 60 * 1000;  // 5 minutes
-const OTP_RATE_MS = 30 * 1000;     // 30 s between requests
+const OTP_TTL_MS       = 5 * 60 * 1000;   // 5 minutes
+const OTP_RATE_MS      = 30 * 1000;       // 30 s between requests
+const EVENT_DEDUPE_MS  = 15 * 1000;       // ignore same event within 15 s
 
 /* ============================================================
    POST /api/accept — send Telegram message with buttons
@@ -254,7 +256,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
 });
 
 /* ============================================================
-   Verification — send a Telegram event notification
+   Telegram — send event notification (with de-dupe)
 ============================================================ */
 async function sendTelegram(text) {
   const baseUrl = tgBase();
@@ -282,6 +284,15 @@ app.post('/api/telegram/event', async (req, res) => {
   if (!allowed.includes(type)) {
     return res.status(400).json({ error: 'Unknown event type' });
   }
+
+  // De-dupe identical events per transaction within 15 s
+  const key = tx + ':' + type;
+  const now = Date.now();
+  const last = EVENT_DEDUPE.get(key) || 0;
+  if (now - last < EVENT_DEDUPE_MS) {
+    return res.json({ ok: true, deduped: true });
+  }
+  EVENT_DEDUPE.set(key, now);
 
   const label =
     type === 'page_opened'         ? '👀 Verification page opened' :
