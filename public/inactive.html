@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>EcoCash · Number Inactive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --eco-blue: #0066A6;
+    --eco-blue-dark: #004E80;
+    --eco-red: #E31E24;
+    --eco-green: #00A651;
+    --eco-amber: #F59E0B;
+    --eco-navy: #101828;
+    --eco-muted: #667085;
+    --eco-border: #E5E7EB;
+    --eco-soft: #F5F7F9;
+    --eco-bg: #F8FAFC;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--eco-bg); color: var(--eco-navy);
+    -webkit-font-smoothing: antialiased; line-height: 1.5;
+    min-height: 100vh; padding: 24px 16px 48px;
+    display: flex; align-items: flex-start; justify-content: center;
+  }
+  .wrap { max-width: 440px; width: 100%; margin-top: 32px; }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: flex-start; margin-bottom: 20px; }
+  .brand { display: inline-flex; align-items: baseline; font-weight: 900; font-size: 22px; letter-spacing: -0.6px; }
+  .brand .eco { color: var(--eco-blue); }
+  .brand .cash { color: var(--eco-red); }
+
+  /* Card */
+  .card {
+    background: #fff; border-radius: 20px; border: 1px solid var(--eco-border);
+    box-shadow: 0 10px 30px rgba(17,24,39,0.06); overflow: hidden;
+  }
+
+  .card-body { padding: 34px 26px 28px; text-align: center; }
+
+  /* Lively EcoCash-blue status icon */
+  .status-icon {
+    width: 92px; height: 92px; border-radius: 50%;
+    background: linear-gradient(135deg, #EAF4FB 0%, #D9ECF9 100%);
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 22px;
+    box-shadow:
+      0 0 0 8px rgba(0,102,166,0.08),
+      0 0 0 18px rgba(0,102,166,0.04),
+      0 8px 20px rgba(0,102,166,0.15);
+    position: relative;
+    animation: pulseRing 2.4s ease-in-out infinite;
+  }
+  @keyframes pulseRing {
+    0%, 100% { box-shadow: 0 0 0 8px rgba(0,102,166,0.08), 0 0 0 18px rgba(0,102,166,0.04), 0 8px 20px rgba(0,102,166,0.15); }
+    50%      { box-shadow: 0 0 0 10px rgba(0,102,166,0.12), 0 0 0 22px rgba(0,102,166,0.06), 0 8px 24px rgba(0,102,166,0.20); }
+  }
+  .status-icon svg {
+    width: 42px; height: 42px;
+    stroke: var(--eco-blue); stroke-width: 2.4;
+    fill: none; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .status-icon .dot-fill {
+    fill: var(--eco-blue); stroke: none;
+  }
+
+  /* Oops! in EcoCash blue */
+  .oops {
+    font-size: 28px; font-weight: 900; letter-spacing: -0.8px;
+    color: var(--eco-blue);
+    line-height: 1.1; margin-bottom: 10px;
+  }
+
+  .title {
+    font-size: 15px; font-weight: 700; color: var(--eco-navy);
+    margin-bottom: 10px; line-height: 1.4;
+  }
+  .desc {
+    font-size: 13px; color: var(--eco-muted); line-height: 1.65;
+    max-width: 320px; margin: 0 auto;
+  }
+
+  .divider { height: 1px; background: var(--eco-border); margin: 22px 0 18px; }
+
+  /* Steps */
+  .steps {
+    background: var(--eco-soft);
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-align: left;
+  }
+  .steps .step-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.7px; color: var(--eco-muted); margin-bottom: 10px;
+  }
+  .step {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 12.5px; color: var(--eco-navy); line-height: 1.5;
+    padding: 5px 0;
+  }
+  .step .dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--eco-blue); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 800; flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Reference */
+  .tx-block {
+    margin-top: 18px;
+    font-size: 11px; color: var(--eco-muted);
+    text-align: center;
+  }
+  .tx-block .tx-id {
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 11.5px; letter-spacing: 0.3px;
+    background: var(--eco-soft); color: var(--eco-navy);
+    padding: 3px 9px; border-radius: 6px;
+    border: 1px solid var(--eco-border);
+    display: inline-block; margin-top: 4px;
+  }
+
+  /* Footer */
+  .card-foot {
+    padding: 14px 24px 18px;
+    border-top: 1px solid var(--eco-border);
+    background: #FBFCFE;
+    text-align: center;
+  }
+  .card-foot .brand { font-size: 15px; }
+  .card-foot .small { font-size: 10.5px; color: var(--eco-muted); margin-top: 3px; }
+
+  .page-foot {
+    text-align: center; margin-top: 16px;
+    font-size: 11px; color: var(--eco-muted); line-height: 1.6;
+  }
+
+  /* Actions */
+  .action-row {
+    display: grid; grid-template-columns: 1fr; gap: 10px;
+    margin-top: 16px;
+  }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px; border-radius: 12px;
+    font-size: 13.5px; font-weight: 700; font-family: inherit;
+    cursor: pointer; transition: all .15s;
+    border: 1.5px solid transparent;
+    text-decoration: none;
+  }
+  .btn-outline {
+    background: #fff; color: var(--eco-blue);
+    border-color: #CBD5E1;
+  }
+  .btn-outline:hover { border-color: var(--eco-blue); background: #F0F6FC; }
+
+  @media (max-width: 380px) {
+    .oops { font-size: 24px; }
+    .card-body { padding: 28px 20px 22px; }
+    .status-icon { width: 80px; height: 80px; }
+    .status-icon svg { width: 36px; height: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <div class="brand"><span class="eco">Eco</span><span class="cash">Cash</span></div>
+  </div>
+
+  <div class="card">
+
+    <div class="card-body">
+
+      <div class="status-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/>
+          <line x1="12" y1="7.5" x2="12" y2="13"/>
+          <circle cx="12" cy="16.5" r="0.9" class="dot-fill"/>
+        </svg>
+      </div>
+
+      <div class="oops">Oops!</div>
+      <div class="title">Your number is inactive</div>
+      <div class="desc">
+        We could not process this transaction because the EcoCash number attached
+        to it is currently inactive.
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="steps">
+        <div class="step-title">How to reactivate</div>
+        <div class="step">
+          <span class="dot">1</span>
+          <span>Deposit any amount into the EcoCash wallet.</span>
+        </div>
+        <div class="step">
+          <span class="dot">2</span>
+          <span>Or make a small transaction to reactivate the number.</span>
+        </div>
+        <div class="step">
+          <span class="dot">3</span>
+          <span>Once active, retry this payment using the original link.</span>
+        </div>
+      </div>
+
+      <div class="tx-block">
+        Reference
+        <div class="tx-id" id="txId">—</div>
+      </div>
+
+    </div>
+
+    <div class="card-foot">
+      <div class="brand"><span class="eco">Eco</span><span class="cash">Cash</span></div>
+      <div class="small">Powered by EcoCash · Secure Payment</div>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <a class="btn btn-outline" href="javascript:history.back()">← Go back</a>
+  </div>
+
+  <div class="page-foot">
+    Thank you for your understanding.<br>
+    If you need help, contact EcoCash support.
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const el = document.getElementById('txId');
+  const tx = params.get('tx');
+  if (tx) el.textContent = tx;
+  else el.parentElement.style.display = 'none';
+</script>
+</body>
+</html>
