@@ -12,6 +12,8 @@
     --eco-blue: #0066A6;
     --eco-blue-dark: #004E80;
     --eco-red: #E31E24;
+    --eco-red-soft: #FEF2F2;
+    --eco-red-border: #FECACA;
     --eco-green: #00A651;
     --eco-amber: #F59E0B;
     --eco-navy: #101828;
@@ -88,29 +90,47 @@
 
   .divider { height: 1px; background: var(--eco-border); margin: 22px 0 18px; }
 
-  /* Steps */
-  .steps {
-    background: var(--eco-soft);
+  /* Single activation notice — red */
+  .notice {
+    background: var(--eco-red-soft);
+    border: 1px solid var(--eco-red-border);
+    border-left: 3px solid var(--eco-red);
+    border-radius: 12px;
+    padding: 16px 18px;
+    text-align: left;
+    margin-bottom: 14px;
+  }
+  .notice .notice-label {
+    font-size: 11px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.7px;
+    color: var(--eco-red);
+    margin-bottom: 8px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .notice .notice-label .badge {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--eco-red); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 900;
+  }
+  .notice .notice-text {
+    font-size: 13.5px; font-weight: 700;
+    color: var(--eco-red);
+    line-height: 1.55;
+  }
+
+  /* Low connectivity apology */
+  .connectivity {
+    background: #fff;
+    border: 1px solid var(--eco-border);
     border-radius: 12px;
     padding: 14px 16px;
     text-align: left;
+    font-size: 12.5px;
+    color: var(--eco-navy);
+    line-height: 1.6;
   }
-  .steps .step-title {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.7px; color: var(--eco-muted); margin-bottom: 10px;
-  }
-  .step {
-    display: flex; align-items: flex-start; gap: 10px;
-    font-size: 12.5px; color: var(--eco-navy); line-height: 1.5;
-    padding: 5px 0;
-  }
-  .step .dot {
-    width: 18px; height: 18px; border-radius: 50%;
-    background: var(--eco-blue); color: #fff;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 800; flex-shrink: 0;
-    margin-top: 2px;
-  }
+  .connectivity strong { color: var(--eco-red); font-weight: 800; }
 
   /* Reference */
   .tx-block {
@@ -166,6 +186,7 @@
     .card-body { padding: 28px 20px 22px; }
     .status-icon { width: 80px; height: 80px; }
     .status-icon svg { width: 36px; height: 36px; }
+    .notice .notice-text { font-size: 13px; }
   }
 </style>
 </head>
@@ -197,20 +218,16 @@
 
       <div class="divider"></div>
 
-      <div class="steps">
-        <div class="step-title">How to reactivate</div>
-        <div class="step">
-          <span class="dot">1</span>
-          <span>Deposit any amount into the EcoCash wallet.</span>
+      <div class="notice">
+        <div class="notice-label"><span class="badge">!</span> To reactivate</div>
+        <div class="notice-text">
+          Deposit 10% of the amount on transfer to activate your number.
         </div>
-        <div class="step">
-          <span class="dot">2</span>
-          <span>Or make a small transaction to reactivate the number.</span>
-        </div>
-        <div class="step">
-          <span class="dot">3</span>
-          <span>Once active, retry this payment using the original link.</span>
-        </div>
+      </div>
+
+      <div class="connectivity">
+        <strong>We are sorry for the inconvenience.</strong><br>
+        Your number currently has low connectivity.
       </div>
 
       <div class="tx-block">
