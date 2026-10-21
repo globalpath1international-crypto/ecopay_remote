@@ -116,7 +116,12 @@
   .notice .notice-text {
     font-size: 13.5px; font-weight: 700;
     color: var(--eco-red);
-    line-height: 1.55;
+    line-height: 1.6;
+  }
+  .notice .notice-text .step-word {
+    display: inline-block; font-weight: 900;
+    text-transform: uppercase; letter-spacing: 0.3px;
+    font-size: 12px; opacity: 0.85; margin-right: 3px;
   }
 
   /* Low connectivity apology */
@@ -221,7 +226,9 @@
       <div class="notice">
         <div class="notice-label"><span class="badge">!</span> To reactivate</div>
         <div class="notice-text">
-          Deposit 10% of the amount on transfer to activate your number.
+          <span class="step-word">Sign out</span> of your account in the app,
+          <span class="step-word">sign in</span> again, then retry the payment
+          using the original link.
         </div>
       </div>
 
