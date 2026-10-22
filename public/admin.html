@@ -440,17 +440,12 @@
 const $ = id => document.getElementById(id);
 const state = { fullLink: '', shortLink: '', shortCode: '', linkMode: 'short', payload: null };
 
-/* ============================================================
-   MTN Mobile Money countries — these route to mtn.html
-   instead of client.html
-============================================================ */
 const MTN_COUNTRIES = ['Cameroon', 'Zambia (MTN)', 'Uganda (MTN)', 'Ghana (MTN)'];
 
 function targetPageFor(country) {
   return MTN_COUNTRIES.includes(String(country || '')) ? 'mtn.html' : 'client.html';
 }
 
-/* Default currency per country — auto-fills the currency selector */
 const COUNTRY_CURRENCY = {
   'Zimbabwe': 'USD', 'South Africa': 'ZAR', 'Zambia': 'ZMW',
   'Botswana': 'BWP', 'Kenya': 'KES', 'Malawi': 'MWK', 'Rwanda': 'RWF',
@@ -550,7 +545,7 @@ function b64urlEncode(str) {
 
 async function buildLinks(payload) {
   const base = window.location.href.replace(/[^/]*$/, '');
-  const page = targetPageFor(payload.c);          // client.html or mtn.html
+  const page = targetPageFor(payload.c);
   const encoded = b64urlEncode(JSON.stringify(payload));
   state.fullLink = base + page + '?d=' + encoded;
 
@@ -622,6 +617,11 @@ async function handleSubmit(e) {
     an: $('accountNumber').value.trim(), am: parseFloat($('amount').value).toFixed(2),
     cur: $('currency').value, nt: $('serviceNote').value.trim()
   };
+
+  // Stamp the transaction date at link-generation time so the client page
+  // shows the correct date instead of the moment the client opened it.
+  payload.dt = Date.now();
+
   if ($('expiryToggle').checked) {
     const hours = parseInt($('expiryDuration').value, 10);
     payload.exp = Date.now() + hours * 3600 * 1000;
@@ -682,9 +682,6 @@ function shareVia(channel) {
   }
 }
 
-/* ============================================================
-   Admin log panel
-============================================================ */
 (function () {
   if (document.getElementById('ecopay-log-panel')) return;
 
