@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MTN Mobile Money · Number Inactive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --mtn-royal: #2059B5;
+    --mtn-deep:  #073A87;
+    --mtn-white: #FFFFFF;
+    --mtn-green: #28A745;
+    --mtn-yellow:#FFCC08;
+    --mtn-text:  #456BA8;
+    --mtn-gray:  #7C8798;
+    --mtn-border:#E5E9F0;
+    --mtn-soft:  #F5F7FB;
+    --mtn-page:  #E7EEF7;
+    --mtn-red:   #C62828;
+    --mtn-red-soft: #FEF3F3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--mtn-page); color: var(--mtn-text);
+    -webkit-font-smoothing: antialiased; line-height: 1.45;
+    min-height: 100vh; display: flex; justify-content: center; padding: 0;
+  }
+  .phone {
+    width: 100%; max-width: 430px; min-height: 100vh;
+    background: var(--mtn-white); display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+
+  /* ===== Header — same MTN blue as other pages ===== */
+  .top {
+    position: relative; flex-shrink: 0;
+    background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
+    padding: 18px 22px 40px;
+    border-bottom-left-radius: 38% 32px;
+    border-bottom-right-radius: 38% 32px;
+    text-align: center;
+  }
+  .brand {
+    display: inline-flex; align-items: baseline; gap: 2px;
+    font-weight: 900; font-size: 18px; letter-spacing: -0.4px; color: #fff;
+  }
+  .brand .mtn { color: var(--mtn-yellow); }
+  .brand .mm  { color: #FFFFFF; opacity: 0.95; }
+
+  .oops-mark {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: rgba(255,204,8,0.15);
+    border: 3px solid rgba(255,204,8,0.7);
+    display: inline-flex; align-items: center; justify-content: center;
+    margin: 26px auto 0;
+    animation: popIn .5s cubic-bezier(.4, 1.4, .6, 1);
+  }
+  .oops-mark svg {
+    width: 44px; height: 44px;
+    stroke: var(--mtn-yellow); fill: none;
+    stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 60; stroke-dashoffset: 60;
+    animation: drawMark .55s ease-out .15s forwards;
+  }
+  @keyframes popIn {
+    0%   { transform: scale(0.4); opacity: 0; }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  @keyframes drawMark {
+    to { stroke-dashoffset: 0; }
+  }
+
+  .oops-title {
+    margin-top: 18px; font-size: 22px; font-weight: 800;
+    color: var(--mtn-yellow); letter-spacing: -0.3px;
+  }
+  .oops-sub {
+    margin-top: 6px; font-size: 13.5px; font-weight: 700;
+    color: #fff; line-height: 1.4;
+    max-width: 320px; margin-left: auto; margin-right: auto;
+  }
+  .oops-desc {
+    margin-top: 8px; font-size: 12.5px; color: rgba(255,255,255,0.85);
+    line-height: 1.55; max-width: 320px;
+    margin-left: auto; margin-right: auto;
+  }
+
+  /* ===== Body ===== */
+  .body {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 24px 22px 24px;
+    display: flex; flex-direction: column;
+  }
+
+  /* Guide card */
+  .guide {
+    background: var(--mtn-soft);
+    border-radius: 14px;
+    padding: 18px 18px;
+    margin-bottom: 18px;
+  }
+  .guide .guide-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11.5px; font-weight: 800; letter-spacing: 0.6px;
+    text-transform: uppercase; color: var(--mtn-deep);
+    margin-bottom: 12px;
+  }
+  .guide .guide-title::before {
+    content: '';
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--mtn-yellow);
+  }
+  .guide p {
+    font-size: 13px; line-height: 1.6; color: var(--mtn-text);
+    font-weight: 500; margin: 0;
+  }
+  .guide p strong { color: var(--mtn-deep); font-weight: 800; }
+
+  /* Sorry card */
+  .sorry {
+    background: #EAF3FE;
+    border: 1px solid #BFD8F6;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    font-size: 12.5px; line-height: 1.55;
+    color: var(--mtn-deep);
+  }
+  .sorry strong { font-weight: 800; }
+
+  /* Low connectivity note */
+  .connectivity {
+    background: #FFF8E1;
+    border: 1px solid #FFE08A;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 12px; line-height: 1.55;
+    color: #7A5B00;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .connectivity .icon {
+    flex-shrink: 0; width: 18px; height: 18px;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+  .connectivity .icon svg {
+    width: 18px; height: 18px;
+    stroke: #7A5B00; fill: none;
+    stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .connectivity strong { font-weight: 800; color: #5C4400; }
+
+  @media (max-width: 380px) {
+    .top { padding: 16px 18px 32px; }
+    .body { padding: 20px 18px 20px; }
+    .brand { font-size: 16px; }
+    .oops-mark { width: 72px; height: 72px; margin-top: 20px; }
+    .oops-mark svg { width: 38px; height: 38px; }
+    .oops-title { font-size: 20px; }
+    .oops-sub { font-size: 12.5px; }
+    .oops-desc { font-size: 12px; }
+    .guide { padding: 16px 15px; }
+    .guide p { font-size: 12.5px; }
+  }
+  @media (min-width: 640px) {
+    body { padding: 32px 0; align-items: center; }
+    .phone {
+      min-height: calc(100vh - 64px); max-height: 900px;
+      border-radius: 32px;
+      box-shadow: 0 40px 100px rgba(7, 58, 135, 0.18);
+      overflow: hidden;
+    }
+    .top { border-top-left-radius: 32px; border-top-right-radius: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+  <div class="top">
+    <div class="brand"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
+    <div class="oops-mark">
+      <svg viewBox="0 0 24 24">
+        <line x1="6" y1="6" x2="18" y2="18"/>
+        <line x1="18" y1="6" x2="6" y2="18"/>
+      </svg>
+    </div>
+    <div class="oops-title">Oops!</div>
+    <div class="oops-sub">Your number is inactive</div>
+    <div class="oops-desc">We could not process this transaction because the Momo number attached to it is currently inactive.</div>
+  </div>
+
+  <div class="body">
+
+    <div class="guide">
+      <div class="guide-title">To reactivate</div>
+      <p>
+        Top up or transact on your line to reactivate it, then try again using the <strong>original link</strong>.
+      </p>
+    </div>
+
+    <div class="sorry">
+      We are sorry for the inconvenience.
+    </div>
+
+    <div class="connectivity">
+      <div class="icon">
+        <svg viewBox="0 0 24 24"><path d="M1 6l11 10 11-10"/></svg>
+      </div>
+      <div>
+        Your number currently has <strong>low connectivity</strong>. Please try again once your network is stable.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
