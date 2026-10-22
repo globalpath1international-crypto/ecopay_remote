@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MTN Mobile Money · Terms & Conditions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --mtn-teal:   #005572;
+    --mtn-teal-dark: #003F55;
+    --mtn-white:  #FFFFFF;
+    --mtn-yellow: #FFCC08;
+    --mtn-muted:  rgba(255,255,255,0.65);
+    --mtn-border: rgba(255,255,255,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--mtn-teal);
+    color: var(--mtn-white);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+  }
+  .phone {
+    width: 100%; max-width: 430px; min-height: 100vh;
+    background: var(--mtn-teal);
+    display: flex; flex-direction: column;
+    position: relative;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* ===== Top bar with back button ===== */
+  .topbar {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 12px;
+    padding: 20px 20px 14px;
+    border-bottom: 1px solid var(--mtn-border);
+  }
+  .back-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.10);
+    border: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--mtn-white);
+    transition: background .15s;
+    flex-shrink: 0;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.18); }
+  .back-btn svg {
+    width: 20px; height: 20px; stroke: currentColor;
+    fill: none; stroke-width: 2.4;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  .topbar-title {
+    font-size: 15px; font-weight: 700;
+    letter-spacing: -0.2px;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    padding: 28px 24px 20px;
+    text-align: center;
+  }
+  .yello-mini {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--mtn-yellow);
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.20);
+    margin-bottom: 16px;
+  }
+  .yello-mini .eye { width: 5px; height: 5px; border-radius: 50%; background: #005572; display: inline-block; margin: 0 2px; }
+  .yello-mini .smile {
+    width: 14px; height: 7px;
+    border: 2px solid #005572; border-top: none; border-left: none; border-right: none;
+    border-radius: 0 0 16px 16px; margin-top: 1px;
+  }
+  .header h1 {
+    font-size: 21px; font-weight: 800; letter-spacing: -0.4px;
+    margin-bottom: 6px;
+  }
+  .header .updated {
+    font-size: 11.5px; color: var(--mtn-muted);
+    font-weight: 500;
+  }
+
+  /* ===== Content ===== */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 24px 28px;
+  }
+  .content section {
+    margin-bottom: 22px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--mtn-border);
+  }
+  .content section:last-child { border-bottom: none; }
+  .content h2 {
+    font-size: 14px; font-weight: 800;
+    letter-spacing: 0.4px; text-transform: uppercase;
+    color: var(--mtn-yellow);
+    margin-bottom: 8px;
+  }
+  .content p {
+    font-size: 13px; color: rgba(255,255,255,0.85);
+    line-height: 1.7; margin-bottom: 8px;
+  }
+  .content p:last-child { margin-bottom: 0; }
+  .content ul {
+    margin: 6px 0 8px 18px;
+    font-size: 13px; color: rgba(255,255,255,0.85);
+    line-height: 1.7;
+  }
+  .content ul li { margin-bottom: 4px; }
+  .content strong { color: var(--mtn-white); font-weight: 700; }
+
+  /* ===== Accept / footer ===== */
+  .footer {
+    flex-shrink: 0;
+    padding: 16px 24px calc(20px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--mtn-border);
+    background: var(--mtn-teal);
+  }
+  .btn-accept {
+    width: 100%; height: 50px;
+    background: var(--mtn-white); color: var(--mtn-teal);
+    font-family: inherit; font-size: 14px; font-weight: 900;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    border: none; border-radius: 999px; cursor: pointer;
+    transition: filter .15s, transform .1s;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.20);
+  }
+  .btn-accept:hover { filter: brightness(1.05); }
+  .btn-accept:active { transform: scale(0.985); }
+
+  @media (max-width: 380px) {
+    .header h1 { font-size: 18px; }
+    .content { padding: 8px 18px 24px; }
+    .content h2 { font-size: 13px; }
+    .content p, .content ul { font-size: 12.5px; }
+    .footer { padding: 14px 18px calc(16px + env(safe-area-inset-bottom, 0px)); }
+    .btn-accept { height: 46px; font-size: 13px; }
+  }
+  @media (min-width: 640px) {
+    body { padding: 32px 0; align-items: center; }
+    .phone {
+      min-height: calc(100vh - 64px); max-height: 900px;
+      border-radius: 32px;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.30);
+      overflow: hidden;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+  <!-- Top bar with back -->
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()" aria-label="Back">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="topbar-title">Terms &amp; Conditions</div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="yello-mini" aria-hidden="true">
+      <div style="display:flex;flex-direction:column;align-items:center">
+        <div><span class="eye"></span><span class="eye"></span></div>
+        <div class="smile"></div>
+      </div>
+    </div>
+    <h1>MTN Mobile Money</h1>
+    <div class="updated">Last updated: 22 October 2026</div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <section>
+      <h2>1. Acceptance of Terms</h2>
+      <p>
+        By accessing or using this payment page, you agree to be bound by these Terms &amp; Conditions
+        and by the applicable MTN Mobile Money terms published in your country of registration.
+        If you do not agree, please do not proceed with the transaction.
+      </p>
+    </section>
+
+    <section>
+      <h2>2. Eligibility</h2>
+      <p>
+        You must be the registered holder of the MTN Mobile Money wallet associated with the phone
+        number shown on this payment request. Use of someone else's wallet without their explicit
+        consent is prohibited.
+      </p>
+    </section>
+
+    <section>
+      <h2>3. Authorisation</h2>
+      <p>
+        A payment is only considered completed after the payment provider (MTN Mobile Money) confirms
+        the transaction. Entering a PIN on this page submits an authorisation request; it does not by
+        itself confirm a successful payment.
+      </p>
+      <p>
+        You are responsible for keeping your PIN confidential. Never share your PIN with anyone,
+        including any person claiming to represent MTN or the merchant.
+      </p>
+    </section>
+
+    <section>
+      <h2>4. Fees and Charges</h2>
+      <p>
+        Standard MTN Mobile Money transaction fees may apply in addition to the amount shown on this
+        page. Fees are determined by your network operator and are displayed inside the MTN app or
+        USSD flow before final authorisation.
+      </p>
+    </section>
+
+    <section>
+      <h2>5. Refunds</h2>
+      <p>
+        Refunds, reversals, and disputes are handled by MTN Mobile Money in accordance with the
+        operator's published dispute resolution policy. Please contact MTN customer care for any
+        transaction-related concern.
+      </p>
+    </section>
+
+    <section>
+      <h2>6. Data and Privacy</h2>
+      <p>
+        Information submitted on this page is used only to process the payment you requested. We do
+        not store your PIN. All personal data is handled in accordance with the applicable privacy
+        laws of your country and the MTN privacy policy.
+      </p>
+    </section>
+
+    <section>
+      <h2>7. Limitation of Liability</h2>
+      <p>
+        To the maximum extent permitted by law, the merchant and the platform are not liable for
+        losses arising from: incorrect data entered by you, delays or failures in the MTN network,
+        or unauthorised use of your wallet resulting from your failure to protect your PIN.
+      </p>
+    </section>
+
+    <section>
+      <h2>8. Changes to These Terms</h2>
+      <p>
+        These Terms may be updated from time to time. Continued use of the service after changes are
+        posted constitutes acceptance of the revised Terms.
+      </p>
+    </section>
+
+    <section>
+      <h2>9. Contact</h2>
+      <p>
+        For any questions about these Terms or your payment, contact MTN customer care using the
+        number listed on the sign-in page for your country.
+      </p>
+    </section>
+
+  </div>
+
+  <!-- Footer accept -->
+  <div class="footer">
+    <button class="btn-accept" onclick="goBack()">Accept &amp; Return</button>
+  </div>
+</div>
+
+<script>
+  function goBack() {
+    if (history.length > 1) history.back();
+    else window.location.href = 'mtn-signin.html';
+  }
+</script>
+</body>
+</html>
