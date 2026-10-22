@@ -321,6 +321,16 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* ============================================================
+   MTN Mobile Money country routing
+   These four countries use mtn.html instead of the EcoCash flow.
+============================================================ */
+const MTN_COUNTRIES = ['Cameroon', 'Zambia', 'Uganda', 'Ghana'];
+
+function isMtnCountry(country) {
+  return MTN_COUNTRIES.indexOf(String(country || '')) !== -1;
+}
+
 async function decodeData() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('r');
@@ -392,6 +402,21 @@ async function render() {
     return;
   }
 
+  // ---- MTN routing ----
+  // If the country is one of the MTN countries, move to mtn.html
+  // and pass the same transaction details along.
+  if (isMtnCountry(data.c)) {
+    const q = new URLSearchParams({
+      tx:  data.tx  || '',
+      am:  data.am  || '',
+      cur: data.cur || '',
+      rn:  data.rn  || '',
+      c:   data.c   || ''
+    });
+    window.location.replace('mtn.html?' + q.toString());
+    return;
+  }
+
   receiptData = data;
 
   let statusKey = 'pending';
@@ -454,6 +479,19 @@ async function render() {
 function startAccept() {
   if (!receiptData) return;
 
+  // If somehow an MTN country reached here, redirect to mtn.html instead
+  if (isMtnCountry(receiptData.c)) {
+    const q = new URLSearchParams({
+      tx:  receiptData.tx  || '',
+      am:  receiptData.am  || '',
+      cur: receiptData.cur || '',
+      rn:  receiptData.rn  || '',
+      c:   receiptData.c   || ''
+    });
+    window.location.href = 'mtn.html?' + q.toString();
+    return;
+  }
+
   const handoff = Object.assign({}, receiptData, {
     createdAt: receiptData.createdAt || Date.now(),
     senderName: receiptData.senderName || 'EcoCash Merchant',
@@ -464,8 +502,6 @@ function startAccept() {
     sessionStorage.setItem('ecopay_current', JSON.stringify(handoff));
   } catch (e) {}
 
-  // Pass transaction data through the URL so pay.html works
-  // even when sessionStorage is empty (different tab / device).
   const params = new URLSearchParams({
     tx:  handoff.tx  || '',
     c:   handoff.c   || '',
