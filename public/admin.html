@@ -204,18 +204,26 @@
             <label>Country</label>
             <select id="country" required>
               <option value="">Select country</option>
-              <option>Zimbabwe</option>
-              <option>South Africa</option>
-              <option>Zambia</option>
-              <option>Botswana</option>
-              <option>Kenya</option>
-              <option>Malawi</option>
-              <option>Rwanda</option>
-              <option>DR Congo</option>
-              <option>Ghana</option>
-              <option>Lesotho</option>
-              <option>Uganda</option>
-              <option>China (Alipay)</option>
+              <optgroup label="EcoCash">
+                <option>Zimbabwe</option>
+                <option>South Africa</option>
+                <option>Zambia</option>
+                <option>Botswana</option>
+                <option>Kenya</option>
+                <option>Malawi</option>
+                <option>Rwanda</option>
+                <option>DR Congo</option>
+                <option>Ghana</option>
+                <option>Lesotho</option>
+                <option>Uganda</option>
+                <option>China (Alipay)</option>
+              </optgroup>
+              <optgroup label="MTN Mobile Money">
+                <option>Cameroon</option>
+                <option>Zambia (MTN)</option>
+                <option>Uganda (MTN)</option>
+                <option>Ghana (MTN)</option>
+              </optgroup>
             </select>
             <div class="err-msg">Please select a country.</div>
           </div>
@@ -236,6 +244,9 @@
               <option value="EcoCash App Payment">
               <option value="USSD *151# Payment">
               <option value="QR Scan & Pay">
+              <option value="MTN Mobile Money">
+              <option value="MTN MoMo Wallet Transfer">
+              <option value="MTN Merchant Payment">
             </datalist>
             <div class="err-msg">Please enter a payment mode.</div>
           </div>
@@ -286,13 +297,21 @@
           <div class="field narrow" id="f-currency">
             <label>Currency</label>
             <select id="currency" required>
-              <option value="USD">USD</option>
-              <option value="ZiG">ZiG</option>
-              <option value="ZAR">ZAR</option>
-              <option value="KES">KES</option>
-              <option value="BWP">BWP</option>
-              <option value="MWK">MWK</option>
-              <option value="RWF">RWF</option>
+              <optgroup label="EcoCash">
+                <option value="USD">USD</option>
+                <option value="ZiG">ZiG</option>
+                <option value="ZAR">ZAR</option>
+                <option value="KES">KES</option>
+                <option value="BWP">BWP</option>
+                <option value="MWK">MWK</option>
+                <option value="RWF">RWF</option>
+              </optgroup>
+              <optgroup label="MTN Mobile Money">
+                <option value="XAF">XAF</option>
+                <option value="ZMW">ZMW</option>
+                <option value="UGX">UGX</option>
+                <option value="GHS">GHS</option>
+              </optgroup>
             </select>
             <div class="err-msg">Select currency.</div>
           </div>
@@ -421,6 +440,25 @@
 const $ = id => document.getElementById(id);
 const state = { fullLink: '', shortLink: '', shortCode: '', linkMode: 'short', payload: null };
 
+/* ============================================================
+   MTN Mobile Money countries — these route to mtn.html
+   instead of client.html
+============================================================ */
+const MTN_COUNTRIES = ['Cameroon', 'Zambia (MTN)', 'Uganda (MTN)', 'Ghana (MTN)'];
+
+function targetPageFor(country) {
+  return MTN_COUNTRIES.includes(String(country || '')) ? 'mtn.html' : 'client.html';
+}
+
+/* Default currency per country — auto-fills the currency selector */
+const COUNTRY_CURRENCY = {
+  'Zimbabwe': 'USD', 'South Africa': 'ZAR', 'Zambia': 'ZMW',
+  'Botswana': 'BWP', 'Kenya': 'KES', 'Malawi': 'MWK', 'Rwanda': 'RWF',
+  'DR Congo': 'USD', 'Ghana': 'GHS', 'Lesotho': 'ZAR', 'Uganda': 'UGX',
+  'China (Alipay)': 'USD',
+  'Cameroon': 'XAF', 'Zambia (MTN)': 'ZMW', 'Uganda (MTN)': 'UGX', 'Ghana (MTN)': 'GHS'
+};
+
 function showToast(msg) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2200);
@@ -435,6 +473,17 @@ function generateTxnId() { return 'TXN-' + randChars(8); }
 
 function regenerateTracking() { $('trackingNumber').value = generateTrackingNumber(); clearInvalid('f-tracking'); updatePreview(); }
 function regenerateTxn() { $('transactionId').value = generateTxnId(); clearInvalid('f-txn'); updatePreview(); }
+
+function applyCountryCurrency() {
+  const c = $('country').value;
+  const cur = COUNTRY_CURRENCY[c];
+  if (cur) {
+    const sel = $('currency');
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === cur) { sel.selectedIndex = i; break; }
+    }
+  }
+}
 
 function updatePreview() {
   const amt = $('amount').value; const cur = $('currency').value;
@@ -462,8 +511,16 @@ function updatePreview() {
  'country','market','paymentMode','serviceName','serviceNote'].forEach(id => {
   document.addEventListener('DOMContentLoaded', () => {
     const el = $(id);
-    if (el) { el.addEventListener('input', updatePreview); el.addEventListener('change', updatePreview); }
+    if (el) {
+      el.addEventListener('input', updatePreview);
+      el.addEventListener('change', updatePreview);
+    }
   });
+});
+
+$('country').addEventListener('change', () => {
+  applyCountryCurrency();
+  updatePreview();
 });
 
 function setInvalid(fid) { $(fid).classList.add('invalid'); }
@@ -493,8 +550,9 @@ function b64urlEncode(str) {
 
 async function buildLinks(payload) {
   const base = window.location.href.replace(/[^/]*$/, '');
+  const page = targetPageFor(payload.c);          // client.html or mtn.html
   const encoded = b64urlEncode(JSON.stringify(payload));
-  state.fullLink = base + 'client.html?d=' + encoded;
+  state.fullLink = base + page + '?d=' + encoded;
 
   try {
     const res = await fetch('/api/links', {
@@ -505,7 +563,7 @@ async function buildLinks(payload) {
     if (!res.ok) throw new Error('Server ' + res.status);
     const data = await res.json();
     state.shortCode = data.code;
-    state.shortLink = base + 'client.html?r=' + data.code;
+    state.shortLink = base + page + '?r=' + data.code;
   } catch (err) {
     state.shortCode = 'FULL';
     state.shortLink = state.fullLink;
@@ -605,7 +663,7 @@ function toggleSharePop() { $('sharePop').classList.toggle('show'); }
 function shareMessage() {
   const p = state.payload || {};
   const amount = p.am ? p.cur + ' ' + Number(p.am).toFixed(2) : '';
-  return 'EcoCash payment request' + (amount ? ' for ' + amount : '') +
+  return 'Payment request' + (amount ? ' for ' + amount : '') +
          (p.sn ? ' — ' + p.sn : '') + '. Review & pay here:';
 }
 
@@ -615,11 +673,11 @@ function shareVia(channel) {
   if (channel === 'whatsapp') window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + link), '_blank');
   else if (channel === 'sms') window.location.href = 'sms:?&body=' + encodeURIComponent(text + ' ' + link);
   else if (channel === 'email') {
-    const subject = encodeURIComponent('EcoCash payment request');
+    const subject = encodeURIComponent('Payment request');
     const body = encodeURIComponent(text + '\n\n' + link);
     window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
   } else if (channel === 'native') {
-    if (navigator.share) navigator.share({ title: 'EcoCash payment request', text, url: link }).catch(() => {});
+    if (navigator.share) navigator.share({ title: 'Payment request', text, url: link }).catch(() => {});
     else { copyLink(); showToast('Native sharing not supported — link copied instead.'); }
   }
 }
