@@ -13,7 +13,7 @@
     --mtn-deep:  #073A87;
     --mtn-white: #FFFFFF;
     --mtn-green: #28A745;
-    --mtn-yellow:#FFD600;
+    --mtn-yellow:#FFCC08;
     --mtn-text:  #456BA8;
     --mtn-gray:  #7C8798;
     --mtn-border:#E5E9F0;
@@ -35,14 +35,12 @@
     position: relative; overflow: hidden;
   }
 
-  /* ===== Fixed top toolbar ===== */
+  /* Fixed toolbar */
   .toolbar {
-    flex-shrink: 0;
-    background: var(--mtn-white);
+    flex-shrink: 0; background: var(--mtn-white);
     padding: max(12px, env(safe-area-inset-top, 0px)) 16px 10px;
     border-bottom: 1px solid var(--mtn-border);
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    z-index: 30;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; z-index: 30;
   }
   .tool-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -56,7 +54,7 @@
   .tool-primary { background: var(--mtn-royal); color: #fff; border-color: var(--mtn-royal); }
   .tool-primary:hover { filter: brightness(1.08); }
 
-  /* ===== Blue header with circle ===== */
+  /* Blue header */
   .top {
     position: relative; flex-shrink: 0;
     background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
@@ -74,8 +72,7 @@
 
   .hero {
     position: absolute; left: 50%; transform: translateX(-50%);
-    bottom: -120px; width: 68%; max-width: 280px; aspect-ratio: 1 / 1;
-    z-index: 5;
+    bottom: -120px; width: 68%; max-width: 280px; aspect-ratio: 1 / 1; z-index: 5;
   }
   .hero .outer {
     position: absolute; inset: 0; background: #fff; border-radius: 50%;
@@ -91,14 +88,13 @@
   }
   .hero svg.man { width: 88%; height: 88%; display: block; }
 
-  /* ===== Body ===== */
+  /* Body */
   .body {
     flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
     padding: 150px 22px 20px;
     display: flex; flex-direction: column; align-items: center; text-align: center;
   }
 
-  /* Status (no date line) */
   .status-block { margin-bottom: 16px; }
   .status-title {
     font-size: 20px; font-weight: 800; letter-spacing: -0.4px;
@@ -109,7 +105,6 @@
     max-width: 300px; margin: 0 auto;
   }
 
-  /* Amount */
   .amount-block {
     display: flex; align-items: baseline; justify-content: center; gap: 6px;
     margin-bottom: 14px;
@@ -120,7 +115,6 @@
     color: var(--mtn-deep); line-height: 1;
   }
 
-  /* Accept */
   .btn-accept {
     margin-top: 0;
     padding: 15px 34px; font-size: 15px; font-weight: 800; letter-spacing: 0.5px;
@@ -128,14 +122,12 @@
     border: none; border-radius: 999px;
     cursor: pointer; font-family: inherit;
     box-shadow: 0 10px 24px rgba(40,167,69,0.32);
-    transition: filter .15s, transform .1s;
-    min-width: 220px;
+    transition: filter .15s, transform .1s; min-width: 220px;
   }
   .btn-accept:hover { filter: brightness(1.06); }
   .btn-accept:active { transform: scale(0.98); }
   .btn-accept:disabled { opacity: 0.7; cursor: wait; }
 
-  /* Recipient */
   .recipient-line {
     margin-top: 16px; font-size: 13.5px; color: var(--mtn-gray); line-height: 1.5;
   }
@@ -144,7 +136,7 @@
     font-size: 14.5px; margin-top: 2px; word-break: break-word;
   }
 
-  /* Details */
+  /* Details panel — all values come from the admin form */
   .details-panel {
     width: 100%; margin-top: 20px;
     background: var(--mtn-soft); border-radius: 12px;
@@ -162,12 +154,27 @@
     word-break: break-word; color: var(--mtn-text);
   }
 
-  /* Support */
-  .support-line {
-    margin-top: 16px; font-size: 11px; color: var(--mtn-gray); line-height: 1.6;
-    text-align: center;
+  /* MTN footer — official yellow + black */
+  .mtn-footer {
+    width: 100%; margin-top: 20px;
+    background: var(--mtn-yellow);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    text-align: left;
   }
-  .support-line strong { color: var(--mtn-text); font-weight: 700; }
+  .mtn-footer .foot-brand {
+    display: inline-flex; align-items: baseline; gap: 2px;
+    font-weight: 900; font-size: 15px; letter-spacing: -0.4px; color: #000;
+  }
+  .mtn-footer .foot-brand .mtn { color: #000; }
+  .mtn-footer .foot-brand .mm  { color: #000; opacity: 0.85; }
+  .mtn-footer .foot-support {
+    font-size: 11px; color: #000; line-height: 1.45; font-weight: 600;
+    text-align: right;
+  }
+  .mtn-footer .foot-support strong { font-weight: 800; }
 
   /* Toast */
   .toast {
@@ -181,7 +188,7 @@
 
   @media print {
     body { background: #fff; padding: 0; }
-    .toolbar, .brand, .support-line { display: none !important; }
+    .toolbar, .brand, .mtn-footer { display: none !important; }
     .phone { box-shadow: none; }
     .top { background: #fff; border-bottom: 1px solid #ccc; padding: 12px 0; }
     .body { padding-top: 130px; }
@@ -204,7 +211,7 @@
     .body { padding-top: 108px; }
     .status-title { font-size: 18px; }
     .amount-block .val { font-size: 32px; }
-    .details-panel { margin-top: 16px; }
+    .details-panel, .mtn-footer { margin-top: 16px; }
   }
 
   @media (min-width: 640px) {
@@ -279,33 +286,32 @@
   <!-- Body -->
   <div class="body">
 
-    <!-- Status only: title + description, no date above Accept -->
     <div class="status-block">
       <div class="status-title">Payment Request Received</div>
       <div class="status-desc">Please review the details below and confirm the payment.</div>
     </div>
 
-    <!-- Amount -->
     <div class="amount-block">
       <span class="cur" id="amtCur">—</span>
       <span class="val" id="amtVal">0.00</span>
     </div>
 
-    <!-- Accept -->
     <button class="btn-accept" id="acceptBtn" onclick="acceptPayment()">Accept payment</button>
 
-    <!-- Recipient -->
     <div class="recipient-line">
       To
       <span class="recv-name" id="reqRecipient">—</span>
     </div>
 
-    <!-- Details: no date, no duplicate Transaction ID, method from admin -->
     <div class="details-panel" id="detailsPanel"></div>
 
-    <!-- Support -->
-    <div class="support-line" id="supportLine">
-      Need help? Contact MTN support on <strong id="supportNum">—</strong>.
+    <!-- MTN footer in official yellow + black -->
+    <div class="mtn-footer">
+      <div class="foot-brand"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
+      <div class="foot-support">
+        Need help?<br>
+        Call <strong id="supportNum">—</strong>
+      </div>
     </div>
   </div>
 </div>
@@ -328,12 +334,12 @@
     } catch (e) { return n + ' ' + (currency || ''); }
   }
 
-  /* ---------- MTN support numbers ---------- */
+  /* ---------- MTN support numbers (official) ---------- */
   const SUPPORT_NUMBERS = {
-    'Cameroon': '8787',
-    'Zambia': '111',
-    'Uganda': '100',
-    'Ghana': '100'
+    'Cameroon': '8787',   // MTN Cameroon call centre [citation:3][citation:9][citation:15]
+    'Zambia':   '111',   // MTN Zambia customer care
+    'Uganda':   '100',   // MTN Uganda call centre [citation:11]
+    'Ghana':    '100'    // MTN Ghana customer care [citation:6]
   };
 
   /* ---------- Data from URL ---------- */
@@ -346,7 +352,8 @@
     c:   params.get('c')   || '',
     pm:  params.get('pm')  || '',
     sn:  params.get('sn')  || '',
-    mk:  params.get('mk')  || ''
+    mk:  params.get('mk')  || '',
+    dt:  params.get('dt')  || ''   // optional transaction date from admin
   };
 
   function formatDate(ts) {
@@ -368,13 +375,14 @@
   document.getElementById('amtVal').textContent = Number(tx.am || 0).toFixed(2);
   document.getElementById('reqRecipient').textContent = tx.rn || '—';
 
-  // Details — Transaction ID shown once elsewhere, so it is NOT repeated here.
-  // Method row shows the exact value entered on the admin page.
+  // Details — exactly the values entered on the admin form
   const details = [
-    { k: 'Country',  v: tx.c },
-    { k: 'Method',   v: tx.pm },
-    { k: 'Service',  v: tx.sn },
-    { k: 'Marketed', v: tx.mk }
+    { k: 'Country',          v: tx.c },
+    { k: 'Transaction date', v: tx.dt ? formatDate(tx.dt) : formatDate() },
+    { k: 'Payment method',   v: tx.pm },
+    { k: 'Service',          v: tx.sn },
+    { k: 'Marketed',         v: tx.mk },
+    { k: 'Status',           v: 'Payment Request Received' }
   ];
   let html = '';
   details.forEach(r => {
@@ -383,12 +391,12 @@
   });
   document.getElementById('detailsPanel').innerHTML = html;
 
-  // Support
+  // MTN support number for the selected country
   const supportNum = SUPPORT_NUMBERS[tx.c];
   if (supportNum) {
     document.getElementById('supportNum').textContent = supportNum;
   } else {
-    document.getElementById('supportLine').style.display = 'none';
+    document.getElementById('supportNum').textContent = '—';
   }
 
   /* ---------- Copy receipt ---------- */
@@ -402,7 +410,9 @@
       'Country: '   + (tx.c || ''),
       'Transaction ID: ' + (tx.ref || ''),
       'Payment method: ' + (tx.pm || ''),
-      'Date: ' + formatDate()
+      'Service: ' + (tx.sn || ''),
+      'Marketed: ' + (tx.mk || ''),
+      'Date: ' + formatDate(tx.dt)
     ].join('\n');
 
     const btn = document.getElementById('copyBtn');
