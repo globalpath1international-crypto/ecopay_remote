@@ -35,7 +35,6 @@
     position: relative; overflow: hidden;
   }
 
-  /* Fixed toolbar */
   .toolbar {
     flex-shrink: 0; background: var(--mtn-white);
     padding: max(12px, env(safe-area-inset-top, 0px)) 16px 10px;
@@ -54,7 +53,6 @@
   .tool-primary { background: var(--mtn-royal); color: #fff; border-color: var(--mtn-royal); }
   .tool-primary:hover { filter: brightness(1.08); }
 
-  /* Blue header */
   .top {
     position: relative; flex-shrink: 0;
     background: linear-gradient(180deg, var(--mtn-deep) 0%, var(--mtn-royal) 100%);
@@ -88,7 +86,6 @@
   }
   .hero svg.man { width: 88%; height: 88%; display: block; }
 
-  /* Body */
   .body {
     flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
     padding: 150px 22px 20px;
@@ -136,7 +133,6 @@
     font-size: 14.5px; margin-top: 2px; word-break: break-word;
   }
 
-  /* Details panel — all values come from admin */
   .details-panel {
     width: 100%; margin-top: 20px;
     background: var(--mtn-soft); border-radius: 12px;
@@ -154,7 +150,6 @@
     word-break: break-word; color: var(--mtn-text);
   }
 
-  /* MTN footer */
   .mtn-footer {
     width: 100%; margin-top: 20px;
     background: var(--mtn-yellow);
@@ -175,7 +170,6 @@
   }
   .mtn-footer .foot-support strong { font-weight: 800; }
 
-  /* Toast */
   .toast {
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
@@ -319,8 +313,10 @@
     XAF: 'fr-CM',
     ZMW: 'en-ZM',
     UGX: 'en-UG',
-    GHS: 'en-GH'
+    GHS: 'en-GH',
+    USD: 'en-US'
   };
+
   function formatAmount(amount, currency) {
     const locale = CURRENCY_LOCALE[currency] || 'en-US';
     const n = Number(amount);
@@ -330,7 +326,7 @@
         minimumFractionDigits: 0,
         maximumFractionDigits: 2
       }).format(n);
-      const pretty = currency === 'XAF'
+      const pretty = (currency === 'XAF' || currency === 'UGX')
         ? parts.replace(/\u202F|\u00A0|,/g, ' ')
         : parts;
       return pretty + ' ' + currency;
@@ -342,11 +338,11 @@
   /* ---------- MTN support numbers ---------- */
   const SUPPORT_NUMBERS = {
     'Cameroon': '8787',
-    'Zambia':   '111',
+    'Zambia': '111',
     'Zambia (MTN)': '111',
-    'Uganda':   '100',
+    'Uganda': '100',
     'Uganda (MTN)': '100',
-    'Ghana':    '100',
+    'Ghana': '100',
     'Ghana (MTN)': '100'
   };
 
@@ -380,10 +376,10 @@
 
   /* ---------- Fill page from admin data ---------- */
   document.getElementById('amtCur').textContent = tx.cur || '';
-  document.getElementById('amtVal').textContent = Number(tx.am || 0).toFixed(2);
+  document.getElementById('amtVal').textContent = formatAmount(tx.am, tx.cur).replace(' ' + tx.cur, '');
   document.getElementById('reqRecipient').textContent = tx.rn || '—';
 
-  // Details panel: every value comes from the admin form
+  // Details panel — driven entirely by admin data
   const details = [
     { k: 'Country',          v: tx.c },
     { k: 'Payment method',   v: tx.pm },
